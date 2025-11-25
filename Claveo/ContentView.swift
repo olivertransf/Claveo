@@ -8,17 +8,39 @@
 import SwiftUI
 
 struct ContentView: View {
+    @EnvironmentObject var themeManager: ThemeManager
+    
     var body: some View {
-        VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("Hello, world!")
+        TabView {
+            RecordingListView()
+                .tabItem {
+                    Label("Recordings", systemImage: "waveform")
+                }
+            
+            MetronomeView()
+                .tabItem {
+                    Label("Metronome", systemImage: "metronome")
+                }
+            
+            TunerView()
+                .tabItem {
+                    Label("Tuner", systemImage: "tuningfork")
+                }
+            
+            MusicDictionaryView()
+                .tabItem {
+                    Label("Dictionary", systemImage: "book")
+                }
+            
+            SettingsView()
+                .tabItem {
+                    Label("Settings", systemImage: "gearshape")
+                }
         }
-        .padding()
     }
 }
 
 #Preview {
     ContentView()
+        .environmentObject(ThemeManager.shared)
 }
