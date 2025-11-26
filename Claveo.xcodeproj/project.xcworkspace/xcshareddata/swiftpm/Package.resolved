@@ -1,0 +1,15 @@
+{
+  "originHash" : "d9dd2aa7cfc86869b0822370701cd52c888ec04ddb5992d65e3f154be45604a9",
+  "pins" : [
+    {
+      "identity" : "tuna",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/alladinian/Tuna",
+      "state" : {
+        "revision" : "cfcfaf9e6e0d605b242c91f1b3decc9486c1b173",
+        "version" : "0.9.1"
+      }
+    }
+  ],
+  "version" : 3
+}

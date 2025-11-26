@@ -10,9 +10,13 @@ import SwiftUI
 struct MusicDictionaryView: View {
     @EnvironmentObject var themeManager: ThemeManager
     @StateObject private var dictionaryService = MusicDictionaryService.shared
-    @AppStorage("showAdvancedDictionaryItems") private var showAdvancedDictionaryItems: Bool = true
+    @StateObject private var settingsManager = SettingsManager.shared
     @State private var searchText = ""
     @State private var selectedTab: DictionaryTab = .dictionary
+    
+    private var showAdvancedDictionaryItems: Bool {
+        settingsManager.settings.showAdvancedDictionaryItems
+    }
     
     enum DictionaryTab: String, CaseIterable, Hashable {
         case dictionary = "Dictionary"
@@ -20,11 +24,15 @@ struct MusicDictionaryView: View {
     }
     
     var filteredTerms: [MusicTerm] {
-        dictionaryService.searchAllTerms(query: searchText)
+        // Force refresh when toggle changes by accessing showAdvancedDictionaryItems
+        _ = showAdvancedDictionaryItems
+        return dictionaryService.searchAllTerms(query: searchText)
     }
     
     var filteredSymbols: [MusicSymbol] {
-        dictionaryService.searchSymbols(query: searchText)
+        // Force refresh when toggle changes by accessing showAdvancedDictionaryItems
+        _ = showAdvancedDictionaryItems
+        return dictionaryService.searchSymbols(query: searchText)
     }
     
     var body: some View {

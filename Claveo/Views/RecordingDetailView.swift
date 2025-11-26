@@ -107,8 +107,13 @@ struct RecordingDetailView: View {
             }
             
             Section("Duration") {
-                Text(recording.formattedDuration)
-                    .foregroundColor(.secondary)
+                HStack {
+                    Text("Duration")
+                    Spacer()
+                    Text(recording.formattedDuration)
+                        .foregroundColor(.secondary)
+                        .monospacedDigit()
+                }
             }
             
             Section("Notes") {
@@ -119,6 +124,12 @@ struct RecordingDetailView: View {
         .navigationTitle("Recording Details")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
+            ToolbarItem(placement: .navigationBarLeading) {
+                Button("Cancel") {
+                    dismiss()
+                }
+            }
+            
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button("Save") {
                     onSave(recording)
@@ -140,19 +151,35 @@ struct RecordingDetailView: View {
         let documentsPath = iCloudManager.shared.getDocumentsURL()
         let fileURL = documentsPath.appendingPathComponent("pieces.json")
         
+        // Try to load from iCloud first
         do {
             let data = try iCloudManager.shared.readFile(from: fileURL)
             if let decoded = try? JSONDecoder().decode([Piece].self, from: data) {
                 availablePieces = decoded.sorted { $0.name < $1.name }
+                // Update local cache
+                UserDefaults.standard.set(data, forKey: "pieces_cache")
+                return
             }
         } catch {
-            // Fallback to direct read if coordination fails
-            if let data = try? Data(contentsOf: fileURL),
-               let decoded = try? JSONDecoder().decode([Piece].self, from: data) {
-                availablePieces = decoded.sorted { $0.name < $1.name }
-            }
+            // iCloud file doesn't exist or can't be read - try fallback
+        }
+        
+        // Fallback to direct read from iCloud directory
+        if let data = try? Data(contentsOf: fileURL),
+           let decoded = try? JSONDecoder().decode([Piece].self, from: data) {
+            availablePieces = decoded.sorted { $0.name < $1.name }
+            // Update local cache
+            UserDefaults.standard.set(data, forKey: "pieces_cache")
+            return
+        }
+        
+        // Last resort: load from local cache (for offline access)
+        if let cachedData = UserDefaults.standard.data(forKey: "pieces_cache"),
+           let decoded = try? JSONDecoder().decode([Piece].self, from: cachedData) {
+            availablePieces = decoded.sorted { $0.name < $1.name }
         }
     }
+    
 }
 
 struct PieceManagementView: View {
@@ -213,11 +240,17 @@ struct PieceManagementView: View {
         let documentsPath = iCloudManager.shared.getDocumentsURL()
         let fileURL = documentsPath.appendingPathComponent("pieces.json")
         
+        // Save to local cache first (UserDefaults) for offline access
+        UserDefaults.standard.set(encoded, forKey: "pieces_cache")
+        
+        // Then save to iCloud (will queue if offline)
         do {
             try iCloudManager.shared.writeFile(data: encoded, to: fileURL)
         } catch {
-            print("Failed to save pieces: \(error.localizedDescription)")
-            // Fallback to direct write if coordination fails
+            #if DEBUG
+            print("Failed to save pieces to iCloud: \(error.localizedDescription)")
+            #endif
+            // Fallback to direct write if coordination fails (iOS will queue for sync)
             try? encoded.write(to: fileURL, options: [.atomic])
         }
     }

@@ -41,7 +41,10 @@ class ThemeManager: ObservableObject {
     
     @Published var accentColorOption: AccentColorOption = .blue {
         didSet {
-            UserDefaults.standard.set(accentColorOption.rawValue, forKey: "accentColor")
+            // Sync to SettingsManager (but only if not already syncing)
+            if !isSyncingFromSettings {
+                SettingsManager.shared.setAccentColor(accentColorOption)
+            }
         }
     }
     
@@ -49,11 +52,26 @@ class ThemeManager: ObservableObject {
         accentColorOption.color
     }
     
+    private var settingsObserver: AnyCancellable?
+    private var isSyncingFromSettings = false
+    
     private init() {
-        if let savedColor = UserDefaults.standard.string(forKey: "accentColor"),
-           let colorOption = AccentColorOption(rawValue: savedColor) {
-            accentColorOption = colorOption
-        }
+        // Load from SettingsManager
+        accentColorOption = SettingsManager.shared.accentColorOption
+        
+        // Observe SettingsManager changes
+        settingsObserver = SettingsManager.shared.$settings
+            .map { $0.accentColor }
+            .removeDuplicates()
+            .sink { [weak self] colorRaw in
+                guard let self = self else { return }
+                if let colorOption = AccentColorOption(rawValue: colorRaw),
+                   colorOption != self.accentColorOption {
+                    self.isSyncingFromSettings = true
+                    self.accentColorOption = colorOption
+                    self.isSyncingFromSettings = false
+                }
+            }
     }
 }
 

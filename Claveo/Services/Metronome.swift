@@ -9,6 +9,7 @@ import AVFoundation
 import Foundation
 import Combine
 import UIKit
+import QuartzCore
 
 enum MetronomeSound: String, CaseIterable {
     case click = "Click"
@@ -51,23 +52,27 @@ class Metronome: ObservableObject {
     @Published var hapticEnabled: Bool = true
     
     private var timer: Timer?
+    private var displayLink: CADisplayLink?
     private var interval: TimeInterval = 0.5
+    private var nextBeatTime: TimeInterval = 0
+    private var startTime: TimeInterval = 0
     
     private let hapticGenerator = UIImpactFeedbackGenerator(style: .medium)
     private let hapticGeneratorLight = UIImpactFeedbackGenerator(style: .light)
     
     init() {
-        let defaultTempo = UserDefaults.standard.integer(forKey: "defaultMetronomeTempo")
-        if defaultTempo > 0 {
-            tempo = defaultTempo
+        let settings = SettingsManager.shared.settings
+        
+        // Load default tempo
+        if settings.defaultMetronomeTempo > 0 {
+            tempo = settings.defaultMetronomeTempo
         }
         
         // Load saved preferences
-        if let soundRaw = UserDefaults.standard.string(forKey: "metronomeSound"),
-           let sound = MetronomeSound(rawValue: soundRaw) {
+        if let sound = MetronomeSound(rawValue: settings.metronomeSound) {
             soundType = sound
         }
-        hapticEnabled = UserDefaults.standard.bool(forKey: "metronomeHapticEnabled")
+        hapticEnabled = settings.metronomeHapticEnabled
         
         updateInterval()
         updateBeatPattern()
@@ -80,29 +85,46 @@ class Metronome: ObservableObject {
     private func setupAudioSession() {
         do {
             let session = AVAudioSession.sharedInstance()
-            try session.setCategory(.playback, mode: .default, options: [.mixWithOthers])
+            // Use .playback for lower latency and better timing
+            try session.setCategory(.playback, mode: .default, options: [])
             try session.setActive(true, options: [])
         } catch {
+            #if DEBUG
             print("Failed to setup audio session: \(error)")
+            #endif
         }
     }
     
-    private var accentPlayer: AVAudioPlayer?
-    private var normalPlayer: AVAudioPlayer?
+    // Use multiple players to avoid latency from reusing the same player
+    private var accentPlayers: [AVAudioPlayer] = []
+    private var normalPlayers: [AVAudioPlayer] = []
+    private var accentPlayerIndex = 0
+    private var normalPlayerIndex = 0
     
     private func setupAudioPlayer() {
         let (accentSound, normalSound) = createSounds(for: soundType)
         
+        // Create multiple players for each sound to avoid latency
+        accentPlayers.removeAll()
+        normalPlayers.removeAll()
+        
         do {
-            let accent = try AVAudioPlayer(data: accentSound)
-            accentPlayer = accent
-            accent.prepareToPlay()
-            
-            let normal = try AVAudioPlayer(data: normalSound)
-            normalPlayer = normal
-            normal.prepareToPlay()
+            // Create 4 players for each sound type for better timing
+            for _ in 0..<4 {
+                let accent = try AVAudioPlayer(data: accentSound)
+                accent.prepareToPlay()
+                accent.enableRate = false
+                accentPlayers.append(accent)
+                
+                let normal = try AVAudioPlayer(data: normalSound)
+                normal.prepareToPlay()
+                normal.enableRate = false
+                normalPlayers.append(normal)
+            }
         } catch {
+            #if DEBUG
             print("Failed to create metronome audio players: \(error.localizedDescription)")
+            #endif
         }
     }
     
@@ -143,11 +165,13 @@ class Metronome: ObservableObject {
     private func createClickSound(frequency: Double = 1000.0, volume: Double = 0.3) -> Data {
         // Create audio format for the drum-like click sound
         let sampleRate = 44100.0
-        let duration = 0.08 // Slightly longer for drum sound
+        let duration = 0.05 // Shorter for better timing
         
-        let format = AVAudioFormat(commonFormat: .pcmFormatFloat32, sampleRate: sampleRate, channels: 1, interleaved: false)!
+        guard let format = AVAudioFormat(commonFormat: .pcmFormatFloat32, sampleRate: sampleRate, channels: 1, interleaved: false),
+              let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: AVAudioFrameCount(sampleRate * duration)) else {
+            return Data()
+        }
         let frameCount = AVAudioFrameCount(sampleRate * duration)
-        let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: frameCount)!
         buffer.frameLength = frameCount
         
         guard let channelData = buffer.floatChannelData else {
@@ -250,11 +274,13 @@ class Metronome: ObservableObject {
     // Wood block sound - sharper attack, shorter decay
     private func createWoodBlockSound(frequency: Double = 200.0, volume: Double = 0.5) -> Data {
         let sampleRate = 44100.0
-        let duration = 0.05 // Shorter than click
+        let duration = 0.03 // Very short for precise timing
         
-        let format = AVAudioFormat(commonFormat: .pcmFormatFloat32, sampleRate: sampleRate, channels: 1, interleaved: false)!
+        guard let format = AVAudioFormat(commonFormat: .pcmFormatFloat32, sampleRate: sampleRate, channels: 1, interleaved: false),
+              let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: AVAudioFrameCount(sampleRate * duration)) else {
+            return Data()
+        }
         let frameCount = AVAudioFrameCount(sampleRate * duration)
-        let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: frameCount)!
         buffer.frameLength = frameCount
         
         guard let channelData = buffer.floatChannelData else { return Data() }
@@ -277,14 +303,16 @@ class Metronome: ObservableObject {
         return convertPCMBufferToWAV(buffer)
     }
     
-    // Bell sound - harmonic-rich, longer decay
+    // Bell sound - harmonic-rich, shorter for better timing
     private func createBellSound(frequency: Double = 440.0, volume: Double = 0.4) -> Data {
         let sampleRate = 44100.0
-        let duration = 0.15 // Longer decay
+        let duration = 0.08 // Shorter for better timing
         
-        let format = AVAudioFormat(commonFormat: .pcmFormatFloat32, sampleRate: sampleRate, channels: 1, interleaved: false)!
+        guard let format = AVAudioFormat(commonFormat: .pcmFormatFloat32, sampleRate: sampleRate, channels: 1, interleaved: false),
+              let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: AVAudioFrameCount(sampleRate * duration)) else {
+            return Data()
+        }
         let frameCount = AVAudioFrameCount(sampleRate * duration)
-        let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: frameCount)!
         buffer.frameLength = frameCount
         
         guard let channelData = buffer.floatChannelData else { return Data() }
@@ -311,11 +339,13 @@ class Metronome: ObservableObject {
     // Simple beep - pure tone
     private func createBeepSound(frequency: Double = 440.0, volume: Double = 0.5) -> Data {
         let sampleRate = 44100.0
-        let duration = 0.1
+        let duration = 0.04 // Shorter for better timing
         
-        let format = AVAudioFormat(commonFormat: .pcmFormatFloat32, sampleRate: sampleRate, channels: 1, interleaved: false)!
+        guard let format = AVAudioFormat(commonFormat: .pcmFormatFloat32, sampleRate: sampleRate, channels: 1, interleaved: false),
+              let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: AVAudioFrameCount(sampleRate * duration)) else {
+            return Data()
+        }
         let frameCount = AVAudioFrameCount(sampleRate * duration)
-        let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: frameCount)!
         buffer.frameLength = frameCount
         
         guard let channelData = buffer.floatChannelData else { return Data() }
@@ -335,9 +365,11 @@ class Metronome: ObservableObject {
         let sampleRate = 44100.0
         let duration = 0.02 // Very short
         
-        let format = AVAudioFormat(commonFormat: .pcmFormatFloat32, sampleRate: sampleRate, channels: 1, interleaved: false)!
+        guard let format = AVAudioFormat(commonFormat: .pcmFormatFloat32, sampleRate: sampleRate, channels: 1, interleaved: false),
+              let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: AVAudioFrameCount(sampleRate * duration)) else {
+            return Data()
+        }
         let frameCount = AVAudioFrameCount(sampleRate * duration)
-        let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: frameCount)!
         buffer.frameLength = frameCount
         
         guard let channelData = buffer.floatChannelData else { return Data() }
@@ -370,21 +402,31 @@ class Metronome: ObservableObject {
         
         isPlaying = true
         currentBeat = -1 // Start at -1 so first beat will be 0
+        
+        // Initialize timing
+        startTime = CACurrentMediaTime()
+        nextBeatTime = startTime
+        
         startTimer()
-        playBeat() // This will increment to 0 and play
+        playBeat() // Play first beat immediately
     }
     
     func stop() {
         isPlaying = false
         timer?.invalidate()
         timer = nil
+        displayLink?.invalidate()
+        displayLink = nil
         currentBeat = 0
     }
         
     private func startTimer() {
         timer?.invalidate()
-        timer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] timer in
-            guard let self = self else {
+        displayLink?.invalidate()
+        
+        // Use Timer with high precision for metronome timing
+        timer = Timer(timeInterval: interval, repeats: true) { [weak self] timer in
+            guard let self = self, self.isPlaying else {
                 timer.invalidate()
                 return
             }
@@ -392,10 +434,17 @@ class Metronome: ObservableObject {
                 self.playBeat()
             }
         }
+        
+        // Add to common run loop modes for better timing accuracy
+        guard let timer = timer else { return }
+        RunLoop.current.add(timer, forMode: .common)
+        RunLoop.current.add(timer, forMode: .tracking)
     }
     
     private func restartTimer() {
         guard isPlaying else { return }
+        startTime = CACurrentMediaTime()
+        nextBeatTime = startTime
         startTimer()
     }
     
@@ -406,7 +455,7 @@ class Metronome: ObservableObject {
         // Determine if this beat should be accented
         let isAccent = currentBeat < beatPattern.count && beatPattern[currentBeat]
         
-        // Haptic feedback
+        // Haptic feedback - do this synchronously before audio
         if hapticEnabled {
             if isAccent {
                 hapticGenerator.impactOccurred(intensity: 1.0)
@@ -415,23 +464,37 @@ class Metronome: ObservableObject {
             }
         }
         
-        // Play appropriate sound
-        let player = isAccent ? accentPlayer : normalPlayer
-        guard let player = player else {
-            print("Metronome: audio player is nil")
+        // Play appropriate sound with minimal latency
+        let players = isAccent ? accentPlayers : normalPlayers
+        guard !players.isEmpty else {
+            #if DEBUG
+            print("Metronome: audio players are empty")
+            #endif
             return
         }
         
-        player.currentTime = 0
-        guard player.play() else {
-            print("Metronome: Failed to play beat sound")
-            return
+        // Use round-robin to avoid latency from reusing the same player
+        let index = isAccent ? accentPlayerIndex : normalPlayerIndex
+        let player = players[index % players.count]
+        
+        if isAccent {
+            accentPlayerIndex = (accentPlayerIndex + 1) % accentPlayers.count
+        } else {
+            normalPlayerIndex = (normalPlayerIndex + 1) % normalPlayers.count
         }
+        
+        // Reset and play immediately - critical for timing
+        if player.isPlaying {
+            player.stop()
+        }
+        player.currentTime = 0
+        // Play synchronously for better timing
+        player.play()
     }
     
     func savePreferences() {
-        UserDefaults.standard.set(soundType.rawValue, forKey: "metronomeSound")
-        UserDefaults.standard.set(hapticEnabled, forKey: "metronomeHapticEnabled")
+        SettingsManager.shared.setMetronomeSound(soundType)
+        SettingsManager.shared.update(\.metronomeHapticEnabled, value: hapticEnabled)
     }
     
     func setTimeSignature(_ signature: TimeSignature) {

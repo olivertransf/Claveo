@@ -36,7 +36,9 @@ class AudioPlayer: NSObject, ObservableObject {
             try session.setCategory(.playback, mode: .default)
             try session.setActive(true)
         } catch {
+            #if DEBUG
             print("Failed to setup audio session: \(error)")
+            #endif
         }
     }
     
@@ -51,6 +53,14 @@ class AudioPlayer: NSObject, ObservableObject {
         stop()
         
         do {
+            // Check if file exists before trying to play
+            guard FileManager.default.fileExists(atPath: recording.fileURL.path) else {
+                #if DEBUG
+                print("Audio file does not exist at: \(recording.fileURL.path)")
+                #endif
+                return
+            }
+            
             audioPlayer = try AVAudioPlayer(contentsOf: recording.fileURL)
             audioPlayer?.delegate = self
             audioPlayer?.enableRate = true
@@ -61,8 +71,14 @@ class AudioPlayer: NSObject, ObservableObject {
             audioPlayer?.play()
             isPlaying = true
             startTimer()
+            
+            // Haptic feedback for playback start
+            let impactFeedback = UIImpactFeedbackGenerator(style: .light)
+            impactFeedback.impactOccurred()
         } catch {
+            #if DEBUG
             print("Failed to play recording: \(error)")
+            #endif
         }
     }
     
@@ -71,6 +87,10 @@ class AudioPlayer: NSObject, ObservableObject {
         isPlaying = false
         timer?.invalidate()
         timer = nil
+        
+        // Haptic feedback for playback pause
+        let impactFeedback = UIImpactFeedbackGenerator(style: .soft)
+        impactFeedback.impactOccurred()
     }
     
     func stop() {
@@ -87,6 +107,32 @@ class AudioPlayer: NSObject, ObservableObject {
     func seek(to time: TimeInterval) {
         audioPlayer?.currentTime = time
         currentTime = time
+    }
+    
+    func skipBackward(seconds: TimeInterval = 15) {
+        guard let player = audioPlayer else { return }
+        let wasPlaying = isPlaying
+        let newTime = max(0, player.currentTime - seconds)
+        seek(to: newTime)
+        // Auto-resume if it was playing
+        if wasPlaying {
+            player.play()
+            isPlaying = true
+            startTimer()
+        }
+    }
+    
+    func skipForward(seconds: TimeInterval = 15) {
+        guard let player = audioPlayer else { return }
+        let wasPlaying = isPlaying
+        let newTime = min(duration, player.currentTime + seconds)
+        seek(to: newTime)
+        // Auto-resume if it was playing
+        if wasPlaying {
+            player.play()
+            isPlaying = true
+            startTimer()
+        }
     }
     
     private func startTimer() {

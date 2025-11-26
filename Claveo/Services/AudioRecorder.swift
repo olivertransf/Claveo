@@ -8,6 +8,7 @@
 import AVFoundation
 import Foundation
 import Combine
+import UIKit
 
 @MainActor
 class AudioRecorder: NSObject, ObservableObject {
@@ -15,6 +16,7 @@ class AudioRecorder: NSObject, ObservableObject {
     @Published var recordings: [Recording] = []
     @Published var recordingTime: TimeInterval = 0
     @Published var audioLevel: Float = 0.0
+    @Published var waveformLevels: [Float] = []
     @Published var permissionError: String?
     @Published var newlyCreatedRecordingId: UUID?
     
@@ -22,15 +24,56 @@ class AudioRecorder: NSObject, ObservableObject {
     private var recordingTimer: Timer?
     private var levelTimer: Timer?
     private var currentRecordingURL: URL?
+    private let maxWaveformLevels = 100 // Store last 100 samples for waveform
     
     override init() {
         super.init()
         loadRecordings()
         setupAudioSession()
         
+        // Listen for app becoming active to sync recordings
+        NotificationCenter.default.addObserver(
+            forName: UIApplication.willEnterForegroundNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            self?.syncRecordingsFromiCloud()
+        }
+        
+        #if DEBUG
         // Debug: Print storage location
         print("📁 Storage Location: \(iCloudManager.shared.getStorageLocation())")
         print("📁 Storage Path: \(iCloudManager.shared.getStoragePath())")
+        #endif
+    }
+    
+    private func syncRecordingsFromiCloud() {
+        // When coming back online, sync recordings from iCloud
+        // This ensures offline changes are preserved (they're already saved)
+        // and iCloud changes are merged in
+        let documentsPath = iCloudManager.shared.getDocumentsURL()
+        let fileURL = documentsPath.appendingPathComponent("recordings.json")
+        
+        do {
+            let data = try iCloudManager.shared.readFile(from: fileURL)
+            if let decoded = try? JSONDecoder().decode([Recording].self, from: data) {
+                // Merge: keep local recordings that don't exist in iCloud, update existing ones
+                var mergedRecordings = decoded
+                for localRecording in recordings {
+                    if !mergedRecordings.contains(where: { $0.id == localRecording.id }) {
+                        mergedRecordings.append(localRecording)
+                    }
+                }
+                recordings = mergedRecordings.sorted { $0.createdAt > $1.createdAt }
+                // Update local cache
+                UserDefaults.standard.set(data, forKey: "recordings_cache")
+                // Save merged version back to iCloud
+                saveRecordings()
+            }
+        } catch {
+            // If iCloud file doesn't exist, ensure local recordings are synced to iCloud
+            saveRecordings()
+        }
     }
     
     private func setupAudioSession() {
@@ -112,23 +155,34 @@ class AudioRecorder: NSObject, ObservableObject {
             // Prepare the recorder before starting
             guard recorder.prepareToRecord() else {
                 permissionError = "Failed to prepare recorder. Check microphone availability."
+                #if DEBUG
                 print("ERROR: prepareToRecord() returned false")
+                #endif
                 return
             }
             
             // Start recording
             guard recorder.record() else {
                 permissionError = "Failed to start recording. Please check your microphone settings."
+                #if DEBUG
                 print("ERROR: record() returned false")
                 print("Recorder isRecording: \(recorder.isRecording)")
+                #endif
                 return
             }
             
+            #if DEBUG
             print("Recording started successfully at: \(fileURL)")
+            #endif
+            
+            // Haptic feedback for recording start
+            let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
+            impactFeedback.impactOccurred()
             
             isRecording = true
             currentRecordingURL = fileURL
             recordingTime = 0
+            waveformLevels = [] // Reset waveform buffer
             
             let recorderRef = audioRecorder
             recordingTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
@@ -148,6 +202,13 @@ class AudioRecorder: NSObject, ObservableObject {
                         // Convert from dB to 0-1 range
                         let normalizedLevel = pow(10, level / 20)
                         self.audioLevel = max(0, min(1, normalizedLevel))
+                        
+                        // Add to waveform buffer
+                        self.waveformLevels.append(self.audioLevel)
+                        // Keep only the most recent samples
+                        if self.waveformLevels.count > self.maxWaveformLevels {
+                            self.waveformLevels.removeFirst()
+                        }
                     }
                 }
             }
@@ -159,6 +220,10 @@ class AudioRecorder: NSObject, ObservableObject {
     func stopRecording() {
         guard isRecording else { return }
         
+        // Haptic feedback for recording stop
+        let impactFeedback = UIImpactFeedbackGenerator(style: .light)
+        impactFeedback.impactOccurred()
+        
         audioRecorder?.stop()
         isRecording = false
         
@@ -169,6 +234,7 @@ class AudioRecorder: NSObject, ObservableObject {
         levelTimer = nil
         
         audioLevel = 0.0
+        waveformLevels = [] // Clear waveform buffer
         
         if let url = currentRecordingURL {
             let duration = recordingTime
@@ -206,11 +272,17 @@ class AudioRecorder: NSObject, ObservableObject {
         let documentsPath = iCloudManager.shared.getDocumentsURL()
         let fileURL = documentsPath.appendingPathComponent("recordings.json")
         
+        // Save to local cache first (UserDefaults) for offline access
+        UserDefaults.standard.set(encoded, forKey: "recordings_cache")
+        
+        // Then save to iCloud (will queue if offline)
         do {
             try iCloudManager.shared.writeFile(data: encoded, to: fileURL)
         } catch {
-            print("Failed to save recordings: \(error.localizedDescription)")
-            // Fallback to direct write if coordination fails
+            #if DEBUG
+            print("Failed to save recordings to iCloud: \(error.localizedDescription)")
+            #endif
+            // Fallback to direct write if coordination fails (iOS will queue for sync)
             try? encoded.write(to: fileURL, options: [.atomic])
         }
     }
@@ -219,17 +291,32 @@ class AudioRecorder: NSObject, ObservableObject {
         let documentsPath = iCloudManager.shared.getDocumentsURL()
         let fileURL = documentsPath.appendingPathComponent("recordings.json")
         
+        // Try to load from iCloud first
         do {
             let data = try iCloudManager.shared.readFile(from: fileURL)
             if let decoded = try? JSONDecoder().decode([Recording].self, from: data) {
                 recordings = decoded.sorted { $0.createdAt > $1.createdAt }
+                // Update local cache
+                UserDefaults.standard.set(data, forKey: "recordings_cache")
+                return
             }
         } catch {
-            // Fallback to direct read if coordination fails
-            if let data = try? Data(contentsOf: fileURL),
-               let decoded = try? JSONDecoder().decode([Recording].self, from: data) {
-                recordings = decoded.sorted { $0.createdAt > $1.createdAt }
-            }
+            // iCloud file doesn't exist or can't be read - try fallback
+        }
+        
+        // Fallback to direct read from iCloud directory
+        if let data = try? Data(contentsOf: fileURL),
+           let decoded = try? JSONDecoder().decode([Recording].self, from: data) {
+            recordings = decoded.sorted { $0.createdAt > $1.createdAt }
+            // Update local cache
+            UserDefaults.standard.set(data, forKey: "recordings_cache")
+            return
+        }
+        
+        // Last resort: load from local cache (for offline access)
+        if let cachedData = UserDefaults.standard.data(forKey: "recordings_cache"),
+           let decoded = try? JSONDecoder().decode([Recording].self, from: cachedData) {
+            recordings = decoded.sorted { $0.createdAt > $1.createdAt }
         }
     }
 }
@@ -245,6 +332,7 @@ extension AudioRecorder: AVAudioRecorderDelegate {
                 recordingTimer?.invalidate()
                 levelTimer?.invalidate()
                 audioLevel = 0.0
+                waveformLevels = []
             }
         }
     }

@@ -10,21 +10,24 @@ import SwiftUI
 struct MetronomeView: View {
     @EnvironmentObject var themeManager: ThemeManager
     @StateObject private var metronome = Metronome()
+    @StateObject private var settingsManager = SettingsManager.shared
     @State private var tapTimes: [Date] = []
     @State private var showingTimeSignaturePicker = false
-    @State private var showingSettings = false
-    @AppStorage("favoriteTempos") private var favoriteTemposData: Data = Data()
-    @State private var favoriteTempos: [Int] = []
     
-    private func loadFavoriteTempos() {
-        if let decoded = try? JSONDecoder().decode([Int].self, from: favoriteTemposData) {
-            favoriteTempos = decoded
-        }
+    private var favoriteTempos: [Int] {
+        settingsManager.settings.favoriteTempos
     }
     
-    private func saveFavoriteTempos() {
-        if let encoded = try? JSONEncoder().encode(favoriteTempos) {
-            favoriteTemposData = encoded
+    private var autoStopOnTabSwitch: Bool {
+        settingsManager.settings.metronomeAutoStopOnTabSwitch
+    }
+    
+    private func addFavoriteTempo(_ tempo: Int) {
+        var tempos = settingsManager.settings.favoriteTempos
+        if !tempos.contains(tempo) {
+            tempos.append(tempo)
+            tempos.sort()
+            settingsManager.update(\.favoriteTempos, value: tempos)
         }
     }
     
@@ -43,7 +46,7 @@ struct MetronomeView: View {
                     
                     // Tempo slider
                     HStack(spacing: 16) {
-                        Text("40")
+                        Text("20")
                             .font(.caption)
                             .foregroundColor(.secondary)
                             .frame(width: 30)
@@ -51,9 +54,9 @@ struct MetronomeView: View {
                         Slider(value: Binding(
                             get: { Double(metronome.tempo) },
                             set: { metronome.tempo = Int($0) }
-                        ), in: 40...200, step: 1)
+                        ), in: 20...300, step: 1)
                         
-                        Text("200")
+                        Text("300")
                             .font(.caption)
                             .foregroundColor(.secondary)
                             .frame(width: 30)
@@ -63,7 +66,7 @@ struct MetronomeView: View {
                     // Tempo adjustment buttons
                     HStack(spacing: 20) {
                         Button(action: {
-                            metronome.tempo = max(40, metronome.tempo - 1)
+                            metronome.tempo = max(20, metronome.tempo - 1)
                         }) {
                             Image(systemName: "minus.circle.fill")
                                 .font(.title2)
@@ -71,7 +74,7 @@ struct MetronomeView: View {
                         }
                         
                         Button(action: {
-                            metronome.tempo = min(200, metronome.tempo + 1)
+                            metronome.tempo = min(300, metronome.tempo + 1)
                         }) {
                             Image(systemName: "plus.circle.fill")
                                 .font(.title2)
@@ -104,11 +107,7 @@ struct MetronomeView: View {
                     
                     // Add to favorites button
                     Button(action: {
-                        if !favoriteTempos.contains(metronome.tempo) {
-                            favoriteTempos.append(metronome.tempo)
-                            favoriteTempos.sort()
-                            saveFavoriteTempos()
-                        }
+                        addFavoriteTempo(metronome.tempo)
                     }) {
                         HStack(spacing: 4) {
                             Image(systemName: favoriteTempos.contains(metronome.tempo) ? "star.fill" : "star")
@@ -185,6 +184,8 @@ struct MetronomeView: View {
                         .foregroundColor(.primary)
                         .frame(width: 60, height: 60)
                     }
+                    .accessibilityLabel("Tap Tempo")
+                    .accessibilityHint("Tap to set the tempo")
                     
                     // Play/Stop button
                     Button(action: {
@@ -196,7 +197,7 @@ struct MetronomeView: View {
                     }) {
                         ZStack {
                             Circle()
-                                .fill(metronome.isPlaying ? Color.red : Color.primary)
+                                .fill(metronome.isPlaying ? Color.red : Color.themeAccent)
                                 .frame(width: 80, height: 80)
                             
                             Image(systemName: metronome.isPlaying ? "stop.fill" : "play.fill")
@@ -204,46 +205,52 @@ struct MetronomeView: View {
                                 .foregroundColor(.white)
                         }
                     }
+                    .accessibilityLabel(metronome.isPlaying ? "Stop Metronome" : "Start Metronome")
                 }
                 .padding(.bottom, 40)
             }
             .padding()
             .navigationTitle("Metronome")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(action: {
-                        showingSettings = true
-                    }) {
-                        Image(systemName: "gearshape")
-                    }
-                }
-            }
             .sheet(isPresented: $showingTimeSignaturePicker) {
                 TimeSignaturePickerView(selectedSignature: Binding(
                     get: { metronome.timeSignature },
                     set: { metronome.setTimeSignature($0) }
                 ))
             }
-            .sheet(isPresented: $showingSettings) {
-                MetronomeSettingsView(
-                    soundType: $metronome.soundType,
-                    hapticEnabled: $metronome.hapticEnabled,
-                    favoriteTempos: Binding(
-                        get: { favoriteTempos },
-                        set: { newValue in
-                            favoriteTempos = newValue
-                            saveFavoriteTempos()
-                        }
-                    ),
-                    onDismiss: {
-                        metronome.savePreferences()
-                    }
-                )
-            }
             .onAppear {
-                loadFavoriteTempos()
+                // Sync settings from SettingsManager
+                syncSettingsFromManager()
             }
+            .onDisappear {
+                // Auto-stop metronome when switching tabs if setting is enabled
+                if autoStopOnTabSwitch && metronome.isPlaying {
+                    metronome.stop()
+                }
+            }
+            .onChange(of: metronome.soundType) { _, _ in
+                settingsManager.setMetronomeSound(metronome.soundType)
+            }
+            .onChange(of: metronome.hapticEnabled) { _, _ in
+                settingsManager.update(\.metronomeHapticEnabled, value: metronome.hapticEnabled)
+            }
+            .onChange(of: settingsManager.settings.metronomeSound) { _, _ in
+                syncSettingsFromManager()
+            }
+            .onChange(of: settingsManager.settings.metronomeHapticEnabled) { _, _ in
+                syncSettingsFromManager()
+            }
+        }
+    }
+    
+    private func syncSettingsFromManager() {
+        let sound = settingsManager.metronomeSoundEnum
+        if metronome.soundType != sound {
+            metronome.soundType = sound
+        }
+        let hapticEnabled = settingsManager.settings.metronomeHapticEnabled
+        if metronome.hapticEnabled != hapticEnabled {
+            metronome.hapticEnabled = hapticEnabled
         }
     }
     
@@ -267,69 +274,13 @@ struct MetronomeView: View {
             let calculatedTempo = Int(60.0 / averageInterval)
             
             // Clamp to valid range
-            metronome.tempo = max(40, min(200, calculatedTempo))
+            metronome.tempo = max(20, min(300, calculatedTempo))
         }
         
         // Clear taps after 2 seconds
         DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
             if tapTimes.count > 0 {
                 tapTimes.removeAll()
-            }
-        }
-    }
-}
-
-struct MetronomeSettingsView: View {
-    @Binding var soundType: MetronomeSound
-    @Binding var hapticEnabled: Bool
-    @Binding var favoriteTempos: [Int]
-    let onDismiss: () -> Void
-    @Environment(\.dismiss) private var dismiss
-    
-    var body: some View {
-        NavigationStack {
-            Form {
-                Section("Sound") {
-                    Picker("Sound Type", selection: $soundType) {
-                        ForEach(MetronomeSound.allCases, id: \.self) { sound in
-                            Text(sound.rawValue).tag(sound)
-                        }
-                    }
-                }
-                
-                Section("Haptic Feedback") {
-                    Toggle("Enable Haptic Feedback", isOn: $hapticEnabled)
-                }
-                
-                Section("Favorite Tempos") {
-                    if favoriteTempos.isEmpty {
-                        Text("No favorite tempos yet")
-                            .foregroundColor(.secondary)
-                    } else {
-                        ForEach(favoriteTempos, id: \.self) { tempo in
-                            HStack {
-                                Text("\(tempo) BPM")
-                                Spacer()
-                                Button(action: {
-                                    favoriteTempos.removeAll { $0 == tempo }
-                                }) {
-                                    Image(systemName: "xmark.circle.fill")
-                                        .foregroundColor(.red)
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            .navigationTitle("Metronome Settings")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Done") {
-                        onDismiss()
-                        dismiss()
-                    }
-                }
             }
         }
     }

@@ -24,33 +24,46 @@ class FontHelper {
         // Try to load Bravura font
         if let font = UIFont(name: "Bravura", size: 16) {
             bravuraFont = font
+            #if DEBUG
             print("✅ Bravura font loaded successfully")
+            #endif
         } else {
+            #if DEBUG
             print("❌ Bravura font NOT found")
+            #endif
             
             // Check if font file exists in bundle
             if let fontURL = Bundle.main.url(forResource: "Bravura", withExtension: "otf") {
+                #if DEBUG
                 print("✅ Bravura.otf found in bundle at: \(fontURL.path)")
+                #endif
                 
                 // Try to register font manually using modern API
                 var error: Unmanaged<CFError>?
                 if CTFontManagerRegisterFontsForURL(fontURL as CFURL, .process, &error) {
+                    #if DEBUG
                     print("✅ Bravura font registered manually")
+                    #endif
                     if let font = UIFont(name: "Bravura", size: 16) {
                         bravuraFont = font
                     }
                 } else {
+                    #if DEBUG
                     if let errorRef = error?.takeUnretainedValue() {
                         let errorDescription = CFErrorCopyDescription(errorRef) as String? ?? "unknown error"
                         print("❌ Failed to register font: \(errorDescription)")
                     } else {
                         print("❌ Failed to register font: unknown error")
                     }
+                    #endif
                 }
             } else {
+                #if DEBUG
                 print("❌ Bravura.otf NOT found in bundle")
+                #endif
             }
             
+            #if DEBUG
             // List all available fonts for debugging
             print("Available fonts containing 'brav':")
             for family in UIFont.familyNames.sorted() {
@@ -61,6 +74,7 @@ class FontHelper {
                     }
                 }
             }
+            #endif
         }
     }
     

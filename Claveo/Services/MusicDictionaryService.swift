@@ -24,25 +24,59 @@ class MusicDictionaryService: ObservableObject {
         errorMessage = nil
         
         guard let url = Bundle.main.url(forResource: "musicDictionary", withExtension: "json") else {
-            errorMessage = "Dictionary file not found"
+            errorMessage = "Dictionary file not found in bundle"
             isLoading = false
+            #if DEBUG
+            print("❌ Dictionary file not found at: musicDictionary.json")
+            #endif
             return
         }
         
         do {
             let data = try Data(contentsOf: url)
+            #if DEBUG
+            print("✅ Dictionary file loaded, size: \(data.count) bytes")
+            #endif
+            
             let decoder = JSONDecoder()
             dictionary = try decoder.decode(MusicDictionary.self, from: data)
+            #if DEBUG
+            print("✅ Dictionary decoded successfully")
+            print("   - Terms: \(dictionary?.terms.count ?? 0)")
+            print("   - Symbols: \(dictionary?.symbols.count ?? 0)")
+            #endif
             isLoading = false
+        } catch let decodingError as DecodingError {
+            var errorDetails = "Failed to decode dictionary: "
+            switch decodingError {
+            case .dataCorrupted(let context):
+                errorDetails += "Data corrupted at \(context.codingPath.map { $0.stringValue }.joined(separator: ".")): \(context.debugDescription)"
+            case .keyNotFound(let key, let context):
+                errorDetails += "Key '\(key.stringValue)' not found at \(context.codingPath.map { $0.stringValue }.joined(separator: "."))"
+            case .typeMismatch(let type, let context):
+                errorDetails += "Type mismatch for \(type) at \(context.codingPath.map { $0.stringValue }.joined(separator: ".")): \(context.debugDescription)"
+            case .valueNotFound(let type, let context):
+                errorDetails += "Value not found for \(type) at \(context.codingPath.map { $0.stringValue }.joined(separator: "."))"
+            @unknown default:
+                errorDetails += decodingError.localizedDescription
+            }
+            errorMessage = errorDetails
+            isLoading = false
+            #if DEBUG
+            print("❌ Decoding error: \(errorDetails)")
+            #endif
         } catch {
             errorMessage = "Failed to load dictionary: \(error.localizedDescription)"
             isLoading = false
+            #if DEBUG
+            print("❌ General error: \(error.localizedDescription)")
+            #endif
         }
     }
     
     /// Search all terms (including theory concepts)
     func searchAllTerms(query: String) -> [MusicTerm] {
-        let showAdvanced = UserDefaults.standard.bool(forKey: "showAdvancedDictionaryItems")
+        let showAdvanced = SettingsManager.shared.settings.showAdvancedDictionaryItems
         
         guard let dictionary = dictionary, !query.isEmpty else {
             // When no query, return common terms first
@@ -88,29 +122,60 @@ class MusicDictionaryService: ObservableObject {
         let category = term.category.lowercased()
         let termLower = term.term.lowercased()
         
-        // Advanced/specialized categories to hide
+        // Only show terms from these common categories
+        let commonCategories = [
+            "tempo", "dynamics", "articulation", "ornamentation", "style",
+            "notation", "form", "general"
+        ]
+        
+        // Check if category is in the common list
+        let isCommonCategory = commonCategories.contains(where: { category.contains($0) })
+        
+        // For Theory category, only show basic/common theory terms
+        if category == "theory" {
+            // Common theory terms that should be shown
+            let commonTheoryTerms = [
+                "scale", "chord", "triad", "interval", "harmony", "melody",
+                "rhythm", "beat", "tempo", "key", "mode", "major", "minor",
+                "tonic", "dominant", "subdominant", "cadence", "progression",
+                "arpeggio", "octave", "semitone", "whole tone", "accidental",
+                "sharp", "flat", "natural", "transposition", "modulation",
+                "consonance", "dissonance", "resolution", "phrase", "motive",
+                "theme", "variation", "canon", "fugue", "sonata", "rondo",
+                "symphony", "concerto", "overture", "prelude", "etude"
+            ]
+            
+            // Only show if it's a common theory term
+            return commonTheoryTerms.contains(where: { termLower.contains($0) })
+        }
+        
+        // Hide advanced/specialized categories
         let advancedCategories = [
-            "history", "instruments"  // Can be too specialized
+            "history", "instruments"
         ]
         
         if advancedCategories.contains(where: { category.contains($0) }) {
             return false
         }
         
-        // Advanced theory concepts (very specialized)
-        let advancedTheoryTerms = [
+        // Advanced theory concepts (very specialized) - filter these out even if in common category
+        let advancedTerms = [
             "sagittal", "herculean", "olympian", "magrathean", "promethean",
             "athenian", "trojan", "spartan", "johnston", "helmholtz",
             "wyschnegradsky", "arel-ezgi", "turkish folk", "persian",
             "arabic", "stockhausen", "kahnotation", "daseian", "kievan",
-            "renaissance lute", "german organ", "medieval and renaissance"
+            "renaissance lute", "german organ", "medieval and renaissance",
+            "atonal", "bitonal", "polytonal", "serial", "twelve-tone",
+            "microtonal", "quarter tone", "just intonation", "equal temperament",
+            "pythagorean", "meantone", "well temperament", "schisma", "comma"
         ]
         
-        if advancedTheoryTerms.contains(where: { termLower.contains($0) }) {
+        if advancedTerms.contains(where: { termLower.contains($0) }) {
             return false
         }
         
-        return true
+        // Return true if it's a common category
+        return isCommonCategory
     }
     
     /// Legacy function for backward compatibility
@@ -176,7 +241,7 @@ class MusicDictionaryService: ObservableObject {
     }
     
     func searchSymbols(query: String) -> [MusicSymbol] {
-        let showAdvanced = UserDefaults.standard.bool(forKey: "showAdvancedDictionaryItems")
+        let showAdvanced = SettingsManager.shared.settings.showAdvancedDictionaryItems
         
         guard let dictionary = dictionary, !query.isEmpty else {
             // When no query, return common symbols first

@@ -27,39 +27,26 @@ struct WaveformView: View {
                     .foregroundColor(.secondary)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
+                let maxAmplitude = waveformData.map { abs($0) }.max() ?? 1.0
+                let playProgress = duration > 0 ? currentTime / duration : 0
+                
                 ZStack(alignment: .leading) {
-                    // Waveform
-                    Path { path in
-                        let width = geometry.size.width
-                        let height = geometry.size.height
-                        let samples = waveformData.count
-                        let sampleWidth = width / CGFloat(samples)
-                        
-                        path.move(to: CGPoint(x: 0, y: height / 2))
-                        
-                        for (index, amplitude) in waveformData.enumerated() {
-                            let x = CGFloat(index) * sampleWidth
-                            let normalizedAmplitude = CGFloat(abs(amplitude))
-                            let barHeight = normalizedAmplitude * height * 0.8
-                            let y = (height - barHeight) / 2
+                    // Waveform - Voice Memos style bars
+                    HStack(spacing: 2) {
+                        ForEach(Array(waveformData.enumerated()), id: \.offset) { index, amplitude in
+                            let normalizedAmplitude = CGFloat(abs(amplitude) / maxAmplitude)
+                            let minBarHeight: CGFloat = 2
+                            let maxBarHeight = geometry.size.height - 4
+                            let barHeight = max(minBarHeight, normalizedAmplitude * maxBarHeight)
+                            let isPlayed = CGFloat(index) / CGFloat(waveformData.count) < CGFloat(playProgress)
                             
-                            path.addLine(to: CGPoint(x: x, y: y))
-                            path.addLine(to: CGPoint(x: x, y: y + barHeight))
-                            path.addLine(to: CGPoint(x: x + sampleWidth, y: y + barHeight))
-                            path.addLine(to: CGPoint(x: x + sampleWidth, y: y))
+                            RoundedRectangle(cornerRadius: 1.5)
+                                .fill(isPlayed ? Color.themeAccent : Color.themeAccent.opacity(0.3))
+                                .frame(width: 2, height: barHeight)
                         }
-                        
-                        path.addLine(to: CGPoint(x: width, y: height / 2))
                     }
-                    .fill(Color.themeAccent.opacity(0.6))
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
                     
-                    // Playback position indicator
-                    if duration > 0 {
-                        Rectangle()
-                            .fill(Color.themeAccent.opacity(0.5))
-                            .frame(width: 2)
-                            .offset(x: CGFloat(currentTime / duration) * geometry.size.width - 1)
-                    }
                 }
                 .contentShape(Rectangle())
                 .gesture(
@@ -72,7 +59,7 @@ struct WaveformView: View {
                 )
             }
         }
-        .frame(height: 60)
+        .frame(height: 50)
         .onAppear {
             loadWaveform()
         }
@@ -82,7 +69,12 @@ struct WaveformView: View {
         Task {
             do {
                 let file = try AVAudioFile(forReading: recording.fileURL)
-                let format = AVAudioFormat(commonFormat: .pcmFormatFloat32, sampleRate: file.fileFormat.sampleRate, channels: 1, interleaved: false)!
+                guard let format = AVAudioFormat(commonFormat: .pcmFormatFloat32, sampleRate: file.fileFormat.sampleRate, channels: 1, interleaved: false) else {
+                    await MainActor.run {
+                        isLoading = false
+                    }
+                    return
+                }
                 
                 guard let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: AVAudioFrameCount(file.length)) else {
                     await MainActor.run {
@@ -102,10 +94,18 @@ struct WaveformView: View {
                 
                 // Downsample for visualization (take every Nth sample)
                 let frameCount = Int(buffer.frameLength)
+                guard frameCount > 0 else {
+                    await MainActor.run {
+                        isLoading = false
+                    }
+                    return
+                }
+                
                 let downsampleFactor = max(1, frameCount / 200) // Show ~200 bars
                 var samples: [Float] = []
                 
                 for i in stride(from: 0, to: frameCount, by: downsampleFactor) {
+                    guard i < frameCount else { break }
                     samples.append(channelData[0][i])
                 }
                 
@@ -114,7 +114,9 @@ struct WaveformView: View {
                     isLoading = false
                 }
             } catch {
+                #if DEBUG
                 print("Failed to load waveform: \(error)")
+                #endif
                 await MainActor.run {
                     isLoading = false
                 }

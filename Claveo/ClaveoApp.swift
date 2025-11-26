@@ -10,6 +10,7 @@ import SwiftUI
 @main
 struct ClaveoApp: App {
     @StateObject private var themeManager = ThemeManager.shared
+    @StateObject private var settingsManager = SettingsManager.shared
     
     init() {
         // Verify Bravura font is available (FontHelper will handle the actual loading)
@@ -20,6 +21,7 @@ struct ClaveoApp: App {
         WindowGroup {
             ContentView()
                 .environmentObject(themeManager)
+                .environmentObject(settingsManager)
         }
     }
 }

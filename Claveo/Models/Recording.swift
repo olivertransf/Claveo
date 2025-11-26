@@ -11,7 +11,7 @@ struct Recording: Identifiable, Codable {
     var id: UUID
     let fileName: String
     var createdAt: Date
-    let duration: TimeInterval
+    var duration: TimeInterval
     
     // Metadata fields
     var name: String
@@ -61,6 +61,32 @@ struct Recording: Identifiable, Codable {
         formatter.dateStyle = .medium
         formatter.timeStyle = .short
         return formatter.string(from: createdAt)
+    }
+    
+    var relativeDateString: String {
+        let calendar = Calendar.current
+        let now = Date()
+        
+        if calendar.isDateInToday(createdAt) {
+            let formatter = DateFormatter()
+            formatter.timeStyle = .short
+            return formatter.string(from: createdAt)
+        } else if calendar.isDateInYesterday(createdAt) {
+            let formatter = DateFormatter()
+            formatter.timeStyle = .short
+            return "Yesterday, \(formatter.string(from: createdAt))"
+        } else if calendar.dateInterval(of: .weekOfYear, for: now)?.contains(createdAt) ?? false {
+            // Show day name for this week
+            let formatter = DateFormatter()
+            formatter.dateFormat = "EEEE"
+            return formatter.string(from: createdAt)
+        } else {
+            // Show full date for older recordings
+            let formatter = DateFormatter()
+            formatter.dateStyle = .medium
+            formatter.timeStyle = .none
+            return formatter.string(from: createdAt)
+        }
     }
     
     var formattedDuration: String {
