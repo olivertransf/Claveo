@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Claveo - Your Complete Music Practice Companion</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            padding: 60px 20px;
+            color: white;
+        }
+
+        header h1 {
+            font-size: 3.5em;
+            margin-bottom: 10px;
+            font-weight: 700;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        header p {
+            font-size: 1.3em;
+            opacity: 0.95;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .content {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            margin: 40px auto;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+
+        .section {
+            margin-bottom: 50px;
+        }
+
+        .section h2 {
+            font-size: 2em;
+            margin-bottom: 20px;
+            color: #667eea;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section p {
+            font-size: 1.1em;
+            color: #666;
+            margin-bottom: 15px;
+        }
+
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 30px;
+            margin-top: 30px;
+        }
+
+        .feature-card {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 12px;
+            border-left: 4px solid #667eea;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+
+        .feature-card h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 1.3em;
+        }
+
+        .feature-card ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .feature-card li {
+            padding: 5px 0;
+            color: #666;
+        }
+
+        .feature-card li:before {
+            content: "✓ ";
+            color: #667eea;
+            font-weight: bold;
+            margin-right: 8px;
+        }
+
+        .download-section {
+            text-align: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 50px 20px;
+            border-radius: 20px;
+            margin: 40px 0;
+        }
+
+        .download-section h2 {
+            color: white;
+            margin-bottom: 20px;
+        }
+
+        .download-button {
+            display: inline-block;
+            background: white;
+            color: #667eea;
+            padding: 15px 40px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-size: 1.2em;
+            font-weight: 600;
+            margin-top: 20px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+        }
+
+        .download-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+        }
+
+        .contact-section {
+            background: #f8f9fa;
+            padding: 30px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .contact-section a {
+            color: #667eea;
+            text-decoration: none;
+            font-size: 1.2em;
+            font-weight: 600;
+        }
+
+        .contact-section a:hover {
+            text-decoration: underline;
+        }
+
+        footer {
+            text-align: center;
+            padding: 30px 20px;
+            color: white;
+            opacity: 0.9;
+        }
+
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 2.5em;
+            }
+
+            .content {
+                padding: 20px;
+            }
+
+            .features {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎵 Claveo</h1>
+            <p>Your Complete Music Practice Companion</p>
+        </header>
+
+        <div class="content">
+            <div class="section">
+                <h2>About Claveo</h2>
+                <p>Transform your practice sessions with Claveo—the all-in-one app designed for musicians who demand precision and organization. Whether you're a student, teacher, or professional musician, Claveo brings together everything you need to practice effectively and track your progress.</p>
+            </div>
+
+            <div class="section">
+                <h2>Features</h2>
+                <div class="features">
+                    <div class="feature-card">
+                        <h3>🎵 Practice Recording</h3>
+                        <ul>
+                            <li>Record unlimited sessions</li>
+                            <li>Adjustable playback speed</li>
+                            <li>Skip forward/backward controls</li>
+                            <li>Search and filter recordings</li>
+                            <li>iCloud sync across devices</li>
+                        </ul>
+                    </div>
+
+                    <div class="feature-card">
+                        <h3>🎼 Advanced Metronome</h3>
+                        <ul>
+                            <li>Precise tempo control (20-300 BPM)</li>
+                            <li>Tap tempo feature</li>
+                            <li>Customizable beat patterns</li>
+                            <li>Multiple time signatures</li>
+                            <li>Haptic feedback support</li>
+                        </ul>
+                    </div>
+
+                    <div class="feature-card">
+                        <h3>🎯 Precision Tuner</h3>
+                        <ul>
+                            <li>Real-time pitch detection</li>
+                            <li>Dual tuning meters</li>
+                            <li>Visual feedback indicators</li>
+                            <li>Frequency display option</li>
+                            <li>Works with any instrument</li>
+                        </ul>
+                    </div>
+
+                    <div class="feature-card">
+                        <h3>📚 Music Dictionary</h3>
+                        <ul>
+                            <li>Searchable music terms</li>
+                            <li>Musical symbols database</li>
+                            <li>SMuFL notation support</li>
+                            <li>Organized by categories</li>
+                            <li>Examples and explanations</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="download-section">
+                <h2>Download Claveo</h2>
+                <p>Available now on the App Store</p>
+                <a href="https://apps.apple.com/app/claveo" class="download-button">Download on the App Store</a>
+                <p style="margin-top: 20px; font-size: 0.9em; opacity: 0.9;">(Link will be updated when app is published)</p>
+            </div>
+
+            <div class="section">
+                <div class="contact-section">
+                    <h2>📧 Support & Contact</h2>
+                    <p>Have questions, feedback, or need help? We'd love to hear from you!</p>
+                    <p style="margin-top: 20px;">
+                        <a href="mailto:claveo.app@gmail.com">claveo.app@gmail.com</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <p>&copy; 2025 Claveo. All rights reserved.</p>
+        </footer>
+    </div>
+</body>
+</html>
+

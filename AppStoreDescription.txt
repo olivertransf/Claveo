@@ -1,0 +1,49 @@
+Claveo: Your Complete Music Practice Companion
+
+Transform your practice sessions with Claveo—the all-in-one app designed for musicians who demand precision and organization. Whether you're a student, teacher, or professional musician, Claveo brings together everything you need to practice effectively and track your progress.
+
+🎵 RECORD YOUR PRACTICE SESSIONS
+- Record unlimited practice sessions with crystal-clear audio quality
+- Organize recordings with custom names, tags, and piece associations
+- Adjust playback speed from 0.5x to 2.0x for detailed practice and slow-motion learning
+- Skip forward or backward 15 seconds with a single tap
+- Search and filter recordings by name, piece, tags, or notes
+- All recordings sync seamlessly across your devices with iCloud
+
+🎼 ADVANCED METRONOME
+- Precise tempo control from 20 to 300 BPM
+- Tap tempo feature—just tap to set your desired speed
+- Customizable beat patterns for complex time signatures
+- Support for all common time signatures (2/4, 3/4, 4/4, 6/8, and more)
+- Save favorite tempos for quick access
+- Haptic feedback option for silent practice
+- Visual beat indicators with customizable patterns
+
+🎯 PRECISION TUNER
+- Real-time pitch detection with professional accuracy
+- Dual tuning meters: standard view for quick tuning, precise view for fine adjustments
+- Visual feedback with color-coded indicators (green = in tune, orange/red = out of tune)
+- Frequency display option for advanced users
+- Works with any instrument—strings, winds, brass, and more
+
+📚 COMPREHENSIVE MUSIC DICTIONARY
+- Searchable database of music terms and definitions
+- Extensive collection of musical symbols with SMuFL notation support
+- Organized by categories: Theory, Tempo, Dynamics, Articulation, Notation, Form, and more
+- Examples and detailed explanations for each term
+- Perfect for students learning music theory and notation
+
+✨ DESIGNED FOR MUSICIANS
+- Beautiful, intuitive interface that stays out of your way
+- Dark mode support for comfortable practice in any lighting
+- Optimized for iPhone and iPad
+- No ads, no subscriptions—just powerful tools for serious musicians
+
+Perfect for:
+- Music students tracking practice progress
+- Teachers recording lessons and providing feedback
+- Professional musicians maintaining practice logs
+- Anyone learning an instrument who needs reliable practice tools
+
+Download Claveo today and take your practice to the next level.
+
