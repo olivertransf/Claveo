@@ -8,6 +8,7 @@
 import AVFoundation
 import Foundation
 import Combine
+import UIKit
 
 @MainActor
 class AudioPlayer: NSObject, ObservableObject {

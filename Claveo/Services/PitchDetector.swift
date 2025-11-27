@@ -129,23 +129,42 @@ class PitchDetector: NSObject, ObservableObject {
             }
         )
         
-        pitchEngine?.start()
-        isDetecting = true
+        // Start pitch engine on background thread to avoid blocking main thread
+        // AVCaptureSession.startRunning() should be called from background thread
+        let engine = pitchEngine
+        await Task.detached(priority: .userInitiated) { [weak self] in
+            // Call start() on background thread (this internally calls AVCaptureSession.startRunning())
+            engine?.start()
+            // Update UI state on main thread after starting
+            await MainActor.run {
+                self?.isDetecting = true
+            }
+        }
     }
     
     func stopDetection() {
-        pitchEngine?.stop()
-        pitchEngine = nil
-        isDetecting = false
-        frequency = 0.0
-        note = "--"
-        cents = 0.0
-        
-        // Deactivate audio session when stopping
-        do {
-            try AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
-        } catch {
-            print("Failed to deactivate audio session: \(error)")
+        // Stop pitch engine on background thread to avoid blocking main thread
+        let engine = pitchEngine
+        Task.detached(priority: .userInitiated) { [weak self] in
+            // Call stop() on background thread (this internally calls AVCaptureSession.stopRunning())
+            engine?.stop()
+            
+            // Update UI state on main thread after stopping
+            await MainActor.run {
+                guard let self = self else { return }
+                self.pitchEngine = nil
+                self.isDetecting = false
+                self.frequency = 0.0
+                self.note = "--"
+                self.cents = 0.0
+            }
+            
+            // Deactivate audio session when stopping
+            do {
+                try AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
+            } catch {
+                print("Failed to deactivate audio session: \(error)")
+            }
         }
     }
     

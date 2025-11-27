@@ -13,33 +13,35 @@ struct RecordingDetailView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var availablePieces: [Piece] = []
     @State private var showingPiecePicker = false
-    @State private var newTagText = ""
     @State private var measureStartText = ""
     @State private var measureEndText = ""
     
     var body: some View {
         Form {
-            Section("Name") {
-                TextField("Recording name", text: $recording.name)
-            }
-            
-            Section("Tags") {
-                if !recording.tags.isEmpty {
-                    ForEach(recording.tags, id: \.self) { tag in
-                        HStack {
-                            Text(tag)
-                            Spacer()
-                            Button(action: {
-                                recording.tags.removeAll { $0 == tag }
-                            }) {
-                                Image(systemName: "xmark.circle.fill")
-                                    .foregroundColor(.red)
+                Section {
+                    TextField("Name", text: $recording.name)
+                        .textInputAutocapitalization(.words)
+                } header: {
+                    Text("Name")
+                }
+                
+                Section {
+                    // Tags
+                    if !recording.tags.isEmpty {
+                        ForEach(recording.tags, id: \.self) { tag in
+                            HStack {
+                                Text(tag)
+                                Spacer()
+                                Button(action: {
+                                    recording.tags.removeAll { $0 == tag }
+                                }) {
+                                    Image(systemName: "xmark.circle.fill")
+                                        .foregroundColor(.red)
+                                }
                             }
                         }
                     }
-                }
-                
-                HStack {
+                    
                     Picker("Add Tag", selection: Binding(
                         get: { "" },
                         set: { newValue in
@@ -55,71 +57,82 @@ struct RecordingDetailView: View {
                             }
                         }
                     }
-                }
-            }
-            
-            Section("Piece") {
-                Picker("Piece", selection: Binding(
-                    get: { recording.piece ?? "" },
-                    set: { newValue in
-                        recording.piece = newValue.isEmpty ? nil : newValue
-                    }
-                )) {
-                    Text("None").tag("")
-                    ForEach(availablePieces, id: \.id) { piece in
-                        Text(piece.displayName).tag(piece.name)
-                    }
+                } header: {
+                    Text("Tags")
                 }
                 
-                Button("Manage Pieces") {
-                    showingPiecePicker = true
-                }
-            }
-            
-            Section("Measures") {
-                HStack {
-                    Text("Start")
-                    Spacer()
-                    TextField("mm.", text: $measureStartText)
-                        .keyboardType(.numberPad)
-                        .frame(width: 80)
-                        .multilineTextAlignment(.trailing)
-                        .onChange(of: measureStartText) { _, newValue in
-                            recording.measureStart = Int(newValue)
+                Section {
+                    Picker("Piece", selection: Binding(
+                        get: { recording.piece ?? "" },
+                        set: { newValue in
+                            recording.piece = newValue.isEmpty ? nil : newValue
                         }
+                    )) {
+                        Text("None").tag("")
+                        ForEach(availablePieces, id: \.id) { piece in
+                            Text(piece.displayName).tag(piece.name)
+                        }
+                    }
+                    
+                    Button("Manage Pieces") {
+                        showingPiecePicker = true
+                    }
+                } header: {
+                    Text("Piece")
                 }
                 
-                HStack {
-                    Text("End")
-                    Spacer()
-                    TextField("mm.", text: $measureEndText)
-                        .keyboardType(.numberPad)
-                        .frame(width: 80)
-                        .multilineTextAlignment(.trailing)
-                        .onChange(of: measureEndText) { _, newValue in
-                            recording.measureEnd = Int(newValue)
-                        }
+                Section {
+                    HStack {
+                        Text("Start")
+                        Spacer()
+                        TextField("mm.", text: $measureStartText)
+                            .keyboardType(.numberPad)
+                            .multilineTextAlignment(.trailing)
+                            .frame(width: 80)
+                            .onChange(of: measureStartText) { _, newValue in
+                                recording.measureStart = Int(newValue)
+                            }
+                    }
+                    
+                    HStack {
+                        Text("End")
+                        Spacer()
+                        TextField("mm.", text: $measureEndText)
+                            .keyboardType(.numberPad)
+                            .multilineTextAlignment(.trailing)
+                            .frame(width: 80)
+                            .onChange(of: measureEndText) { _, newValue in
+                                recording.measureEnd = Int(newValue)
+                            }
+                    }
+                } header: {
+                    Text("Measures")
                 }
-            }
-            
-            Section("Date & Time") {
-                DatePicker("Date", selection: $recording.createdAt, displayedComponents: [.date, .hourAndMinute])
-            }
-            
-            Section("Duration") {
-                HStack {
+                
+                Section {
+                    DatePicker("Date", selection: $recording.createdAt, displayedComponents: [.date, .hourAndMinute])
+                } header: {
+                    Text("Date & Time")
+                }
+                
+                Section {
+                    HStack {
+                        Text("Duration")
+                        Spacer()
+                        Text(recording.formattedDuration)
+                            .foregroundColor(.secondary)
+                            .monospacedDigit()
+                    }
+                } header: {
                     Text("Duration")
-                    Spacer()
-                    Text(recording.formattedDuration)
-                        .foregroundColor(.secondary)
-                        .monospacedDigit()
                 }
-            }
-            
-            Section("Notes") {
-                TextEditor(text: $recording.notes)
-                    .frame(minHeight: 100)
-            }
+                
+                Section {
+                    TextEditor(text: $recording.notes)
+                        .frame(minHeight: 100)
+                } header: {
+                    Text("Notes")
+                }
         }
         .navigationTitle("Recording Details")
         .navigationBarTitleDisplayMode(.inline)
@@ -135,6 +148,7 @@ struct RecordingDetailView: View {
                     onSave(recording)
                     dismiss()
                 }
+                .fontWeight(.semibold)
             }
         }
         .onAppear {
@@ -156,7 +170,6 @@ struct RecordingDetailView: View {
             let data = try iCloudManager.shared.readFile(from: fileURL)
             if let decoded = try? JSONDecoder().decode([Piece].self, from: data) {
                 availablePieces = decoded.sorted { $0.name < $1.name }
-                // Update local cache
                 UserDefaults.standard.set(data, forKey: "pieces_cache")
                 return
             }
@@ -168,7 +181,6 @@ struct RecordingDetailView: View {
         if let data = try? Data(contentsOf: fileURL),
            let decoded = try? JSONDecoder().decode([Piece].self, from: data) {
             availablePieces = decoded.sorted { $0.name < $1.name }
-            // Update local cache
             UserDefaults.standard.set(data, forKey: "pieces_cache")
             return
         }
@@ -179,7 +191,6 @@ struct RecordingDetailView: View {
             availablePieces = decoded.sorted { $0.name < $1.name }
         }
     }
-    
 }
 
 struct PieceManagementView: View {
@@ -255,4 +266,3 @@ struct PieceManagementView: View {
         }
     }
 }
-

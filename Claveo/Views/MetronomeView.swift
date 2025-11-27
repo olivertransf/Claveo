@@ -137,34 +137,43 @@ struct MetronomeView: View {
                     .cornerRadius(8)
                 }
                 
-                // Beat pattern grid
+                // Beat pattern grid - max 6 beats per row
                 VStack(spacing: 12) {
                     Text("Beat Pattern")
                         .font(.headline)
                         .foregroundColor(.secondary)
                     
-                    HStack(spacing: 12) {
-                        ForEach(0..<metronome.beatPattern.count, id: \.self) { index in
-                            Circle()
-                                .fill(
-                                    index == metronome.currentBeat && metronome.isPlaying ?
-                                    Color.red :
-                                    (metronome.beatPattern[index] ? Color.primary : Color(.systemGray5))
-                                )
-                                .frame(width: 44, height: 44)
-                                .overlay(
-                                    Text("\(index + 1)")
-                                        .font(.caption)
-                                        .foregroundColor(
+                    VStack(spacing: 12) {
+                        ForEach(0..<((metronome.beatPattern.count + 5) / 6), id: \.self) { rowIndex in
+                            HStack(spacing: 12) {
+                                Spacer()
+                                
+                                ForEach(0..<min(6, metronome.beatPattern.count - rowIndex * 6), id: \.self) { colIndex in
+                                    let index = rowIndex * 6 + colIndex
+                                    Circle()
+                                        .fill(
                                             index == metronome.currentBeat && metronome.isPlaying ?
-                                            .white :
-                                            (metronome.beatPattern[index] ? .primary : .secondary)
+                                            Color.red :
+                                            (metronome.beatPattern[index] ? Color.primary : Color(.systemGray5))
                                         )
-                                )
-                                .onTapGesture {
-                                    toggleBeat(index)
+                                        .frame(width: 44, height: 44)
+                                        .overlay(
+                                            Text("\(index + 1)")
+                                                .font(.caption)
+                                                .foregroundColor(
+                                                    index == metronome.currentBeat && metronome.isPlaying ?
+                                                    .white :
+                                                    (metronome.beatPattern[index] ? .primary : .secondary)
+                                                )
+                                        )
+                                        .onTapGesture {
+                                            toggleBeat(index)
+                                        }
+                                        .animation(.easeInOut(duration: 0.1), value: metronome.currentBeat)
                                 }
-                                .animation(.easeInOut(duration: 0.1), value: metronome.currentBeat)
+                                
+                                Spacer()
+                            }
                         }
                     }
                 }
