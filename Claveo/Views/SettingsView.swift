@@ -7,10 +7,65 @@
 
 import SwiftUI
 
+enum FrequencyPreset: String, CaseIterable, Identifiable {
+    case modernStandard = "Modern Standard (A440)"
+    case baroque = "Baroque (A415)"
+    case classical = "Classical (A430)"
+    case verdi = "Verdi (A432)"
+    case historical = "Historical (A409)"
+    case earlyMusic = "Early Music (A392)"
+    case custom = "Custom"
+    
+    var id: String { rawValue }
+    
+    var displayName: String {
+        switch self {
+        case .modernStandard: return "A440"
+        case .baroque: return "A415"
+        case .classical: return "A430"
+        case .verdi: return "A432"
+        case .historical: return "A409"
+        case .earlyMusic: return "A392"
+        case .custom: return "Custom"
+        }
+    }
+    
+    var fullName: String {
+        rawValue
+    }
+    
+    var frequency: Double? {
+        switch self {
+        case .modernStandard: return 440.0
+        case .baroque: return 415.0
+        case .classical: return 430.0
+        case .verdi: return 432.0
+        case .historical: return 409.0
+        case .earlyMusic: return 392.0
+        case .custom: return nil
+        }
+    }
+    
+    static func preset(for frequency: Double) -> FrequencyPreset {
+        for preset in FrequencyPreset.allCases where preset != .custom {
+            if abs(preset.frequency! - frequency) < 0.1 {
+                return preset
+            }
+        }
+        return .custom
+    }
+}
+
 struct SettingsView: View {
     @EnvironmentObject var themeManager: ThemeManager
     @StateObject private var settingsManager = SettingsManager.shared
     @State private var showingStorageInfo = false
+    @State private var manualFrequencyText = ""
+    @FocusState private var isFrequencyFieldFocused: Bool
+    
+    private var selectedPreset: FrequencyPreset {
+        FrequencyPreset.preset(for: settingsManager.settings.a4ReferenceFrequency)
+    }
     
     private var a4ReferenceFrequency: Binding<Double> {
         Binding(
@@ -61,14 +116,11 @@ struct SettingsView: View {
         )
     }
     
-    private var favoriteTempos: [Int] {
-        settingsManager.settings.favoriteTempos
-    }
-    
-    private func removeFavoriteTempo(_ tempo: Int) {
-        var tempos = settingsManager.settings.favoriteTempos
-        tempos.removeAll { $0 == tempo }
-        settingsManager.update(\.favoriteTempos, value: tempos)
+    private var showTabBarText: Binding<Bool> {
+        Binding(
+            get: { settingsManager.settings.showTabBarText },
+            set: { settingsManager.update(\.showTabBarText, value: $0) }
+        )
     }
     
     var body: some View {
@@ -83,34 +135,58 @@ struct SettingsView: View {
                         
                         HStack {
                             Slider(value: a4ReferenceFrequency, in: 400...480, step: 1)
-                            Text("\(Int(settingsManager.settings.a4ReferenceFrequency)) Hz")
-                                .font(.body)
-                                .monospacedDigit()
-                                .frame(width: 60, alignment: .trailing)
+                            TextField("Hz", text: $manualFrequencyText)
+                                .keyboardType(.decimalPad)
+                                .multilineTextAlignment(.trailing)
+                                .frame(width: 70)
+                                .textFieldStyle(.roundedBorder)
+                                .focused($isFrequencyFieldFocused)
+                                .onSubmit {
+                                    if let value = Double(manualFrequencyText), value >= 400 && value <= 480 {
+                                        settingsManager.update(\.a4ReferenceFrequency, value: value)
+                                    } else {
+                                        // Reset to current value if invalid
+                                        manualFrequencyText = String(format: "%.1f", settingsManager.settings.a4ReferenceFrequency)
+                                    }
+                                    isFrequencyFieldFocused = false
+                                }
+                                .onChange(of: settingsManager.settings.a4ReferenceFrequency) { _, newValue in
+                                    // Only update if user isn't actively editing the field
+                                    if !isFrequencyFieldFocused {
+                                        manualFrequencyText = String(format: "%.1f", newValue)
+                                    }
+                                }
                         }
                     }
                     .padding(.vertical, 4)
+                    .onAppear {
+                        manualFrequencyText = String(format: "%.1f", settingsManager.settings.a4ReferenceFrequency)
+                    }
                     
                     // Preset frequencies
-                    Menu("Preset Frequencies") {
-                        Button("Modern Standard (A440)") {
-                            settingsManager.update(\.a4ReferenceFrequency, value: 440.0)
+                    Menu {
+                        ForEach(FrequencyPreset.allCases) { preset in
+                            Button(action: {
+                                if let frequency = preset.frequency {
+                                    settingsManager.update(\.a4ReferenceFrequency, value: frequency)
+                                }
+                            }) {
+                                HStack {
+                                    if preset == .custom {
+                                        Text(preset.displayName)
+                                    } else {
+                                        Text(preset.fullName)
+                                    }
+                                    if selectedPreset == preset {
+                                        Spacer()
+                                        Image(systemName: "checkmark")
+                                            .foregroundColor(themeManager.accentColor)
+                                    }
+                                }
+                            }
                         }
-                        Button("Baroque (A415)") {
-                            settingsManager.update(\.a4ReferenceFrequency, value: 415.0)
-                        }
-                        Button("Classical (A430)") {
-                            settingsManager.update(\.a4ReferenceFrequency, value: 430.0)
-                        }
-                        Button("Verdi (A432)") {
-                            settingsManager.update(\.a4ReferenceFrequency, value: 432.0)
-                        }
-                        Button("Historical (A409)") {
-                            settingsManager.update(\.a4ReferenceFrequency, value: 409.0)
-                        }
-                        Button("Early Music (A392)") {
-                            settingsManager.update(\.a4ReferenceFrequency, value: 392.0)
-                        }
+                    } label: {
+                        Text("Preset Frequencies")
                     }
                     
                     Toggle("Show Frequency Display", isOn: showFrequencyDisplay)
@@ -137,33 +213,6 @@ struct SettingsView: View {
                     Toggle("Haptic Feedback", isOn: metronomeHapticEnabled)
                     
                     Toggle("Auto-stop when switching tabs", isOn: metronomeAutoStopOnTabSwitch)
-                    
-                    // Favorite Tempos
-                    if favoriteTempos.isEmpty {
-                        Text("No favorite tempos")
-                            .foregroundColor(.secondary)
-                    } else {
-                        ForEach(favoriteTempos.sorted(), id: \.self) { tempo in
-                            HStack {
-                                Text("\(tempo) BPM")
-                                Spacer()
-                                Button(action: {
-                                    removeFavoriteTempo(tempo)
-                                }) {
-                                    Image(systemName: "xmark.circle.fill")
-                                        .foregroundColor(.red)
-                                }
-                            }
-                        }
-                        .onDelete { indexSet in
-                            let sorted = favoriteTempos.sorted()
-                            for index in indexSet {
-                                if index < sorted.count {
-                                    removeFavoriteTempo(sorted[index])
-                                }
-                            }
-                        }
-                    }
                 }
                 
                 // Dictionary Settings
@@ -174,6 +223,13 @@ struct SettingsView: View {
                 
                 // Appearance Settings
                 Section("Appearance") {
+                    Picker("Color Scheme", selection: $themeManager.colorSchemeOption) {
+                        ForEach(ColorSchemeOption.allCases) { option in
+                            Text(option.rawValue)
+                                .tag(option)
+                        }
+                    }
+                    
                     Picker("Accent Color", selection: $themeManager.accentColorOption) {
                         ForEach(AccentColorOption.allCases) { option in
                             HStack {
@@ -185,6 +241,8 @@ struct SettingsView: View {
                             .tag(option)
                         }
                     }
+                    
+                    Toggle("Show Tab Bar Text", isOn: showTabBarText)
                 }
                 
                 // Storage Settings
@@ -203,7 +261,7 @@ struct SettingsView: View {
                     
                     if iCloudManager.shared.isAvailable {
                         Label("iCloud Drive Enabled", systemImage: "icloud.fill")
-                            .foregroundColor(.themeAccent)
+                            .foregroundColor(themeManager.accentColor)
                     } else {
                         Label("Using Local Storage", systemImage: "folder.fill")
                             .foregroundColor(.themeSecondaryLabel)
@@ -222,8 +280,13 @@ struct SettingsView: View {
                 }
             }
             .navigationTitle("Settings")
+            .navigationBarTitleDisplayMode(.inline)
+            .tint(themeManager.accentColor)
+            .accentColor(themeManager.accentColor)
+            .id(themeManager.accentColorOption)
             .sheet(isPresented: $showingStorageInfo) {
                 StorageInfoView()
+                    .environmentObject(themeManager)
             }
         }
     }
@@ -239,6 +302,7 @@ struct SettingsView: View {
 
 struct StorageInfoView: View {
     @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject var themeManager: ThemeManager
     
     var body: some View {
         NavigationStack {
@@ -254,7 +318,7 @@ struct StorageInfoView: View {
                 
                 if iCloudManager.shared.isAvailable {
                     Label("Files will automatically sync to iCloud Drive", systemImage: "icloud.fill")
-                        .foregroundColor(.themeAccent)
+                        .foregroundColor(themeManager.accentColor)
                 } else {
                     Label("iCloud Drive is not available. Files are stored locally.", systemImage: "exclamationmark.triangle")
                         .foregroundColor(.orange)

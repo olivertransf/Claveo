@@ -29,7 +29,9 @@ class SettingsManager: ObservableObject {
             object: nil,
             queue: .main
         ) { [weak self] _ in
-            self?.syncFromiCloud()
+            Task { @MainActor [weak self] in
+                self?.syncFromiCloud()
+            }
         }
     }
     
@@ -83,6 +85,8 @@ class SettingsManager: ObservableObject {
         
         // Theme
         settings.accentColor = defaults.string(forKey: "accentColor") ?? AccentColorOption.blue.rawValue
+        settings.colorScheme = defaults.string(forKey: "colorScheme") ?? ColorSchemeOption.system.rawValue
+        settings.showTabBarText = defaults.object(forKey: "showTabBarText") as? Bool ?? false
     }
     
     // MARK: - Save Settings
@@ -130,6 +134,8 @@ class SettingsManager: ObservableObject {
         
         // Theme
         defaults.set(settings.accentColor, forKey: "accentColor")
+        defaults.set(settings.colorScheme, forKey: "colorScheme")
+        defaults.set(settings.showTabBarText, forKey: "showTabBarText")
     }
     
     // MARK: - Sync
@@ -167,6 +173,10 @@ class SettingsManager: ObservableObject {
         AccentColorOption(rawValue: settings.accentColor) ?? .blue
     }
     
+    var colorSchemeOption: ColorSchemeOption {
+        ColorSchemeOption(rawValue: settings.colorScheme) ?? .system
+    }
+    
     func setMetronomeSound(_ sound: MetronomeSound) {
         settings.metronomeSound = sound.rawValue
         saveSettings()
@@ -174,6 +184,11 @@ class SettingsManager: ObservableObject {
     
     func setAccentColor(_ option: AccentColorOption) {
         settings.accentColor = option.rawValue
+        saveSettings()
+    }
+    
+    func setColorScheme(_ option: ColorSchemeOption) {
+        settings.colorScheme = option.rawValue
         saveSettings()
     }
 }

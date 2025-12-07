@@ -11,6 +11,7 @@ struct RecordingDetailView: View {
     @State var recording: Recording
     let onSave: (Recording) -> Void
     @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject var themeManager: ThemeManager
     @State private var availablePieces: [Piece] = []
     @State private var showingPiecePicker = false
     @State private var measureStartText = ""
@@ -134,6 +135,9 @@ struct RecordingDetailView: View {
                     Text("Notes")
                 }
         }
+        .tint(themeManager.accentColor)
+        .accentColor(themeManager.accentColor)
+        .id(themeManager.accentColorOption)
         .navigationTitle("Recording Details")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -158,6 +162,7 @@ struct RecordingDetailView: View {
         }
         .sheet(isPresented: $showingPiecePicker) {
             PieceManagementView(pieces: $availablePieces)
+                .environmentObject(themeManager)
         }
     }
     
@@ -197,7 +202,22 @@ struct PieceManagementView: View {
     @Binding var pieces: [Piece]
     @State private var newPieceName = ""
     @State private var newPieceComposer = ""
+    @State private var editingPiece: Piece?
+    @State private var editingName = ""
+    @State private var editingComposer = ""
+    @State private var searchText = ""
     @Environment(\.dismiss) private var dismiss
+    
+    private var filteredPieces: [Piece] {
+        if searchText.isEmpty {
+            return pieces.sorted { $0.name < $1.name }
+        } else {
+            return pieces.filter { piece in
+                piece.name.localizedCaseInsensitiveContains(searchText) ||
+                (piece.composer?.localizedCaseInsensitiveContains(searchText) ?? false)
+            }.sorted { $0.name < $1.name }
+        }
+    }
     
     var body: some View {
         NavigationStack {
@@ -216,26 +236,104 @@ struct PieceManagementView: View {
                     .disabled(newPieceName.isEmpty)
                 }
                 
-                Section("Pieces") {
-                    ForEach(pieces) { piece in
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(piece.name)
-                                .font(.body)
-                            if let composer = piece.composer {
-                                Text(composer)
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
+                Section {
+                    if filteredPieces.isEmpty {
+                        Text(searchText.isEmpty ? "No pieces" : "No matching pieces")
+                            .foregroundColor(.secondary)
+                            .frame(maxWidth: .infinity, alignment: .center)
+                            .listRowInsets(EdgeInsets())
+                    } else {
+                        ForEach(filteredPieces) { piece in
+                            if editingPiece?.id == piece.id {
+                                // Edit mode
+                                VStack(alignment: .leading, spacing: 8) {
+                                    TextField("Piece Name", text: $editingName)
+                                    TextField("Composer (optional)", text: $editingComposer)
+                                    
+                                    HStack {
+                                        Button("Cancel") {
+                                            editingPiece = nil
+                                            editingName = ""
+                                            editingComposer = ""
+                                        }
+                                        .foregroundColor(.secondary)
+                                        
+                                        Spacer()
+                                        
+                                        Button("Save") {
+                                            if let index = pieces.firstIndex(where: { $0.id == piece.id }) {
+                                                pieces[index] = Piece(
+                                                    id: piece.id,
+                                                    name: editingName,
+                                                    composer: editingComposer.isEmpty ? nil : editingComposer,
+                                                    createdAt: piece.createdAt
+                                                )
+                                                savePieces()
+                                            }
+                                            editingPiece = nil
+                                            editingName = ""
+                                            editingComposer = ""
+                                        }
+                                        .fontWeight(.semibold)
+                                        .disabled(editingName.isEmpty)
+                                    }
+                                }
+                            } else {
+                                // Display mode
+                                Button(action: {
+                                    editingPiece = piece
+                                    editingName = piece.name
+                                    editingComposer = piece.composer ?? ""
+                                }) {
+                                    HStack {
+                                        VStack(alignment: .leading, spacing: 4) {
+                                            Text(piece.name)
+                                                .font(.body)
+                                                .foregroundColor(.primary)
+                                            if let composer = piece.composer {
+                                                Text(composer)
+                                                    .font(.caption)
+                                                    .foregroundColor(.secondary)
+                                            }
+                                        }
+                                        Spacer()
+                                        Image(systemName: "pencil")
+                                            .font(.caption)
+                                            .foregroundColor(.secondary)
+                                    }
+                                }
                             }
                         }
+                        .onDelete { indexSet in
+                            let sorted = filteredPieces
+                            for index in indexSet {
+                                if index < sorted.count {
+                                    pieces.removeAll { $0.id == sorted[index].id }
+                                }
+                            }
+                            savePieces()
+                        }
                     }
-                    .onDelete { indexSet in
-                        pieces.remove(atOffsets: indexSet)
-                        savePieces()
+                } header: {
+                    HStack {
+                        Text("Pieces")
+                        Spacer()
+                        if !pieces.isEmpty {
+                            Text("\(pieces.count)")
+                                .foregroundColor(.secondary)
+                                .font(.caption)
+                        }
+                    }
+                } footer: {
+                    if !searchText.isEmpty {
+                        Text("Searching: \"\(searchText)\"")
+                            .font(.caption)
                     }
                 }
             }
             .navigationTitle("Manage Pieces")
             .navigationBarTitleDisplayMode(.inline)
+            .searchable(text: $searchText, prompt: "Search pieces")
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Done") {

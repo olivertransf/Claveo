@@ -136,13 +136,7 @@ class Metronome: ObservableObject {
         normalBufferConverted = normalBuffer
         
         // Prepare engine
-        do {
-            try engine.prepare()
-        } catch {
-            #if DEBUG
-            print("Failed to prepare audio engine: \(error)")
-            #endif
-        }
+        engine.prepare()
     }
     
     private func createAudioBuffer(from wavData: Data, targetFormat: AVAudioFormat) -> AVAudioPCMBuffer? {
@@ -426,8 +420,10 @@ class Metronome: ObservableObject {
         // Using only Timer (not CADisplayLink) to avoid double-triggering
         let timerInterval = min(interval / 20.0, 0.025) // Check 20x per beat or every 25ms max
         timer = Timer(timeInterval: timerInterval, repeats: true) { [weak self] _ in
-            guard let self = self, self.isPlaying else { return }
-            self.checkAndPlayBeat()
+            Task { @MainActor [weak self] in
+                guard let self = self, self.isPlaying else { return }
+                self.checkAndPlayBeat()
+            }
         }
         
         guard let timer = timer else { return }
@@ -440,7 +436,7 @@ class Metronome: ObservableObject {
         guard let player = playerNode, let engine = audioEngine else { return }
         
         let outputFormat = engine.mainMixerNode.outputFormat(forBus: 0)
-        let sampleRate = outputFormat.sampleRate
+        let _ = outputFormat.sampleRate
         
         // Schedule beats ahead using sample-accurate timing
         for i in 0..<beatsToScheduleAhead {

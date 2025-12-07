@@ -22,6 +22,7 @@ struct ClaveoApp: App {
             ContentView()
                 .environmentObject(themeManager)
                 .environmentObject(settingsManager)
+                .preferredColorScheme(themeManager.colorScheme)
         }
     }
 }

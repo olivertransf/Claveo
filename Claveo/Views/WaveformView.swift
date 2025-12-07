@@ -14,6 +14,7 @@ struct WaveformView: View {
     let duration: TimeInterval
     let onSeek: (TimeInterval) -> Void
     
+    @EnvironmentObject var themeManager: ThemeManager
     @State private var waveformData: [Float] = []
     @State private var isLoading = true
     
@@ -41,7 +42,7 @@ struct WaveformView: View {
                             let isPlayed = CGFloat(index) / CGFloat(waveformData.count) < CGFloat(playProgress)
                             
                             RoundedRectangle(cornerRadius: 1.5)
-                                .fill(isPlayed ? Color.themeAccent : Color.themeAccent.opacity(0.3))
+                                .fill(isPlayed ? themeManager.accentColor : themeManager.accentColor.opacity(0.3))
                                 .frame(width: 2, height: barHeight)
                         }
                     }

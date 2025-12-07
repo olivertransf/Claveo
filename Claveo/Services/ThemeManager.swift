@@ -36,6 +36,22 @@ enum AccentColorOption: String, CaseIterable, Identifiable {
     }
 }
 
+enum ColorSchemeOption: String, CaseIterable, Identifiable {
+    case light = "Light"
+    case dark = "Dark"
+    case system = "System"
+    
+    var id: String { rawValue }
+    
+    var colorScheme: ColorScheme? {
+        switch self {
+        case .light: return .light
+        case .dark: return .dark
+        case .system: return nil
+        }
+    }
+}
+
 class ThemeManager: ObservableObject {
     static let shared = ThemeManager()
     
@@ -48,18 +64,34 @@ class ThemeManager: ObservableObject {
         }
     }
     
+    @Published var colorSchemeOption: ColorSchemeOption = .system {
+        didSet {
+            // Sync to SettingsManager (but only if not already syncing)
+            if !isSyncingFromColorScheme {
+                SettingsManager.shared.setColorScheme(colorSchemeOption)
+            }
+        }
+    }
+    
     var accentColor: Color {
         accentColorOption.color
     }
     
+    var colorScheme: ColorScheme? {
+        colorSchemeOption.colorScheme
+    }
+    
     private var settingsObserver: AnyCancellable?
+    private var colorSchemeObserver: AnyCancellable?
     private var isSyncingFromSettings = false
+    private var isSyncingFromColorScheme = false
     
     private init() {
         // Load from SettingsManager
         accentColorOption = SettingsManager.shared.accentColorOption
+        colorSchemeOption = SettingsManager.shared.colorSchemeOption
         
-        // Observe SettingsManager changes
+        // Observe SettingsManager changes for accent color
         settingsObserver = SettingsManager.shared.$settings
             .map { $0.accentColor }
             .removeDuplicates()
@@ -70,6 +102,20 @@ class ThemeManager: ObservableObject {
                     self.isSyncingFromSettings = true
                     self.accentColorOption = colorOption
                     self.isSyncingFromSettings = false
+                }
+            }
+        
+        // Observe SettingsManager changes for color scheme
+        colorSchemeObserver = SettingsManager.shared.$settings
+            .map { $0.colorScheme }
+            .removeDuplicates()
+            .sink { [weak self] schemeRaw in
+                guard let self = self else { return }
+                if let schemeOption = ColorSchemeOption(rawValue: schemeRaw),
+                   schemeOption != self.colorSchemeOption {
+                    self.isSyncingFromColorScheme = true
+                    self.colorSchemeOption = schemeOption
+                    self.isSyncingFromColorScheme = false
                 }
             }
     }

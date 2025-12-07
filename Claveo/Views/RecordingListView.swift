@@ -7,6 +7,17 @@
 
 import SwiftUI
 
+extension View {
+    @ViewBuilder
+    func `if`<Content: View>(_ condition: Bool, transform: (Self) -> Content) -> some View {
+        if condition {
+            transform(self)
+        } else {
+            self
+        }
+    }
+}
+
 struct RecordingListView: View {
     @EnvironmentObject var themeManager: ThemeManager
     @Environment(\.colorScheme) var colorScheme
@@ -54,12 +65,38 @@ struct RecordingListView: View {
         filteredRecordings
     }
     
+    @State private var isSearchPresented = false
+    
     var body: some View {
         NavigationStack {
             mainContentView
                 .background(Color.themeGroupedBackground)
-                .navigationTitle("Recordings")
-                .navigationBarTitleDisplayMode(.large)
+                .navigationBarTitleDisplayMode(.inline)
+                .if(isSearchPresented) { view in
+                    view.searchable(
+                        text: $searchText,
+                        isPresented: $isSearchPresented,
+                        placement: .navigationBarDrawer(displayMode: .always),
+                        prompt: "Search recordings..."
+                    )
+                }
+                .toolbar {
+                    ToolbarItemGroup(placement: .navigationBarTrailing) {
+                        // Search button toggles the native search bar
+                        if !isSearchPresented {
+                            Button {
+                                withAnimation {
+                                    isSearchPresented = true
+                                }
+                            } label: {
+                                Image(systemName: "magnifyingglass")
+                                    .foregroundColor(themeManager.accentColor)
+                            }
+                            
+                            filterButton
+                        }
+                    }
+                }
                 .sheet(item: $selectedRecording) { recording in
                     detailSheet(for: recording)
                 }
@@ -87,19 +124,14 @@ struct RecordingListView: View {
     
     private var mainContentView: some View {
         ZStack {
-            // Always show search bar and list structure
-            VStack(spacing: 0) {
-                searchAndFilterBar
-                
-                // Show either empty state or recordings list
-                if shouldShowEmptyState {
-                    emptyStateView
-                } else {
-                    recordingsList
-                        .listStyle(.plain)
-                        .scrollContentBackground(.hidden)
-                        .background(Color.clear)
-                }
+            // Show either empty state or recordings list
+            if shouldShowEmptyState {
+                emptyStateView
+            } else {
+                recordingsList
+                    .listStyle(.plain)
+                    .scrollContentBackground(.hidden)
+                    .background(Color.clear)
             }
             
             // Recording button - Spacer pushes it to bottom
@@ -134,50 +166,23 @@ struct RecordingListView: View {
         return false
     }
     
-    private var searchAndFilterBar: some View {
-        HStack(spacing: 12) {
-            // Search field
-            HStack(spacing: 8) {
-                Image(systemName: "magnifyingglass")
-                    .foregroundColor(.secondary)
-                    .font(.system(size: 14))
-                
-                TextField("Search", text: $searchText)
-                    .textFieldStyle(.plain)
-            }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
-            .background(Color.themeFill)
-            .cornerRadius(10)
-            
-            // Filter button
-            filterButton
-        }
-        .padding(.horizontal, 20)
-        .padding(.vertical, 12)
-        .background(Color.themeGroupedBackground)
-    }
-    
     private var filterButton: some View {
         Button(action: {
             showingFilterSheet = true
         }) {
-            HStack(spacing: 4) {
+            ZStack(alignment: .topTrailing) {
                 Image(systemName: selectedTag != nil || selectedPiece != nil ? "line.3.horizontal.decrease.circle.fill" : "line.3.horizontal.decrease.circle")
-                    .font(.system(size: 16))
+                    .font(.system(size: 18, weight: .medium))
+                    .foregroundColor(themeManager.accentColor)
                 
                 if selectedTag != nil || selectedPiece != nil {
                     Circle()
                         .fill(Color.red)
-                        .frame(width: 6, height: 6)
+                        .frame(width: 8, height: 8)
+                        .offset(x: 4, y: -4)
                 }
             }
-            .foregroundColor(selectedTag != nil || selectedPiece != nil ? .themeAccent : .secondary)
-            .frame(width: 44, height: 44)
-            .background(Color.themeFill)
-            .cornerRadius(10)
         }
-        .buttonStyle(.plain)
     }
     
     private var recordingsList: some View {
@@ -310,7 +315,7 @@ struct RecordingListView: View {
                 
                 recordingControlsView
             }
-            .padding(.bottom, 8)
+            .padding(.bottom, 15)
         }
     }
     
@@ -469,48 +474,28 @@ struct RecordingListView: View {
                     recorder.stopRecording()
                 }) {
                     ZStack {
-                        // Outer glow
                         Circle()
-                            .fill(Color.red.opacity(0.15))
-                            .frame(width: 60, height: 60)
-                            .blur(radius: 4)
-                        
-                        // Background circle
-                        Circle()
-                            .fill(Color.red.opacity(0.2))
-                            .frame(width: 60, height: 60)
-                        
-                        // Stroke
-                        Circle()
-                            .stroke(Color.red, lineWidth: 3)
-                            .frame(width: 60, height: 60)
-                        
-                        // Stop icon
-                        RoundedRectangle(cornerRadius: 5)
                             .fill(Color.red)
-                            .frame(width: 22, height: 22)
+                            .frame(width: 56, height: 56)
+                            .shadow(color: Color.black.opacity(0.2), radius: 8, x: 0, y: 4)
+                        
+                        RoundedRectangle(cornerRadius: 5)
+                            .fill(Color.white)
+                            .frame(width: 20, height: 20)
                     }
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("Stop Recording")
-                } else {
+            } else {
                 Button(action: {
                     Task {
                         await recorder.startRecording()
                     }
                 }) {
-                    ZStack {
-                        // Outer glow for dark mode
-                        Circle()
-                            .fill(Color.red.opacity(0.2))
-                            .frame(width: 64, height: 64)
-                            .blur(radius: 6)
-                        
-                        // Main button
-                        Circle()
-                            .fill(Color.red)
-                            .frame(width: 60, height: 60)
-                    }
+                    Circle()
+                        .fill(Color.red)
+                        .frame(width: 56, height: 56)
+                        .shadow(color: Color.black.opacity(0.2), radius: 8, x: 0, y: 4)
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("Start Recording")
@@ -602,7 +587,7 @@ struct RecordingRowView: View {
                             
                             // Progress
                             Capsule()
-                                .fill(Color.accentColor)
+                                .fill(themeManager.accentColor)
                                 .frame(width: availableWidth * CGFloat((currentTime ?? 0) / max(duration, 1)), height: 3)
                         }
                         .gesture(
@@ -707,9 +692,6 @@ struct RecordingRowView: View {
 }
 
 #Preview("With Recordings") {
-    let view = RecordingListView()
-    let recorder = AudioRecorder()
-    
     // Add sample recordings
     let sampleRecordings = [
         Recording(
@@ -750,12 +732,7 @@ struct RecordingRowView: View {
 }
 
 #Preview("Active Recording") {
-    let view = RecordingListView()
-    let recorder = AudioRecorder()
-    recorder.isRecording = true
-    recorder.recordingTime = 45.3
-    
-    return PreviewRecordingListView(isRecording: true, recordingTime: 45.3)
+    PreviewRecordingListView(isRecording: true, recordingTime: 45.3)
         .environmentObject(ThemeManager.shared)
 }
 

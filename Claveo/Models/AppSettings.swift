@@ -24,12 +24,14 @@ struct AppSettings: Codable {
     
     // Theme Settings
     var accentColor: String = AccentColorOption.blue.rawValue
+    var colorScheme: String = ColorSchemeOption.system.rawValue
+    var showTabBarText: Bool = false
     
     enum CodingKeys: String, CodingKey {
         case a4ReferenceFrequency, showFrequencyDisplay
         case defaultMetronomeTempo, metronomeSound, metronomeHapticEnabled
         case metronomeAutoStopOnTabSwitch, favoriteTempos
-        case showAdvancedDictionaryItems, accentColor
+        case showAdvancedDictionaryItems, accentColor, colorScheme, showTabBarText
     }
 }
 

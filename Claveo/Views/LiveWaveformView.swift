@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct LiveWaveformView: View {
+    @EnvironmentObject var themeManager: ThemeManager
     let audioLevels: [Float]
     let maxBars: Int
     
@@ -28,7 +29,7 @@ struct LiveWaveformView: View {
                 HStack(spacing: 2) {
                     ForEach(0..<maxBars, id: \.self) { _ in
                         RoundedRectangle(cornerRadius: 1.5)
-                            .fill(Color.themeAccent.opacity(0.2))
+                            .fill(themeManager.accentColor.opacity(0.2))
                             .frame(width: 2, height: 2)
                     }
                 }
@@ -42,7 +43,7 @@ struct LiveWaveformView: View {
                         let barHeight = max(minBarHeight, normalizedLevel * maxBarHeight)
                         
                         RoundedRectangle(cornerRadius: 1.5)
-                            .fill(Color.themeAccent)
+                            .fill(themeManager.accentColor)
                             .frame(width: 2, height: barHeight)
                     }
                     
@@ -50,7 +51,7 @@ struct LiveWaveformView: View {
                     if audioLevels.count < maxBars {
                         ForEach(audioLevels.count..<maxBars, id: \.self) { _ in
                             RoundedRectangle(cornerRadius: 1.5)
-                                .fill(Color.themeAccent.opacity(0.2))
+                                .fill(themeManager.accentColor.opacity(0.2))
                                 .frame(width: 2, height: 2)
                         }
                     }

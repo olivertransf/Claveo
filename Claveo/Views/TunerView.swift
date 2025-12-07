@@ -44,6 +44,7 @@ struct TunerView: View {
                             cents: pitchDetector.cents,
                             note: pitchDetector.note
                         )
+                        .environmentObject(themeManager)
                         .frame(height: 200)
                         .padding(.horizontal, 20)
                         
@@ -52,6 +53,7 @@ struct TunerView: View {
                             cents: pitchDetector.cents,
                             note: pitchDetector.note
                         )
+                        .environmentObject(themeManager)
                         .frame(height: 120)
                         .padding(.horizontal, 20)
                     }
@@ -93,18 +95,25 @@ struct TunerView: View {
                 // Auto-stop tuner when tab disappears
                 pitchDetector.stopDetection()
             }
+            .onChange(of: settingsManager.settings.a4ReferenceFrequency) { _, _ in
+                // Recalculate note when reference frequency changes
+                if pitchDetector.frequency > 0 {
+                    pitchDetector.updateNote(from: pitchDetector.frequency)
+                }
+            }
         }
     }
 }
 
 struct TuningMeterView: View {
+    @EnvironmentObject var themeManager: ThemeManager
     let cents: Double // -20 to +20
     let note: String
     
     var body: some View {
         GeometryReader { geometry in
             let width = geometry.size.width
-            let height = geometry.size.height
+            let _ = geometry.size.height
             
             ZStack {
                 // Background scale with gradient
@@ -192,7 +201,7 @@ struct TuningMeterView: View {
                 // Note label at bottom - only show center note (target note)
                 Text(note)
                     .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(.themeAccent)
+                    .foregroundColor(themeManager.accentColor)
                     .offset(y: 50)
                 
                 // Needle/indicator - shows actual pitch position
@@ -238,13 +247,14 @@ struct TuningMeterView: View {
 
 // Precise tuning meter - shows -5 to +5 cents range for fine-tuning
 struct PreciseTuningMeterView: View {
+    @EnvironmentObject var themeManager: ThemeManager
     let cents: Double // -5 to +5 (clamped)
     let note: String
     
     var body: some View {
         GeometryReader { geometry in
             let width = geometry.size.width
-            let height = geometry.size.height
+            let _ = geometry.size.height
             
             ZStack {
                 // Background scale with gradient (more green in center for precision)
@@ -304,7 +314,7 @@ struct PreciseTuningMeterView: View {
                 // Note label at bottom
                 Text(note)
                     .font(.system(size: 12, weight: .medium))
-                    .foregroundColor(.themeAccent)
+                    .foregroundColor(themeManager.accentColor)
                     .offset(y: 40)
                 
                 // Needle/indicator - shows actual pitch position

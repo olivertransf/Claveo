@@ -34,7 +34,7 @@ struct PlaybackSpeedControl: View {
                         .foregroundColor(selectedSpeed == speed ? .white : .themeLabel)
                         .padding(.horizontal, 8)
                         .padding(.vertical, 4)
-                        .background(selectedSpeed == speed ? Color.themeAccent : Color.themeFill)
+                        .background(selectedSpeed == speed ? themeManager.accentColor : Color.themeFill)
                         .cornerRadius(8)
                 }
             }

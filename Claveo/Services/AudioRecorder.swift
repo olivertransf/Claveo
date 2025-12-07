@@ -37,7 +37,9 @@ class AudioRecorder: NSObject, ObservableObject {
             object: nil,
             queue: .main
         ) { [weak self] _ in
-            self?.syncRecordingsFromiCloud()
+            Task { @MainActor [weak self] in
+                self?.syncRecordingsFromiCloud()
+            }
         }
         
         #if DEBUG

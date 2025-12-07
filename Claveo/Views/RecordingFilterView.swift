@@ -206,6 +206,7 @@ struct FilterOptionsView: View {
     @Binding var filter: RecordingFilter
     let availablePieces: [Piece]
     @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject var themeManager: ThemeManager
     @State private var minMinutes: String = ""
     @State private var maxMinutes: String = ""
     
@@ -294,6 +295,9 @@ struct FilterOptionsView: View {
             }
             .navigationTitle("Filters")
             .navigationBarTitleDisplayMode(.inline)
+            .tint(themeManager.accentColor)
+            .accentColor(themeManager.accentColor)
+            .id(themeManager.accentColorOption)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Done") {

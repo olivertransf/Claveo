@@ -132,11 +132,11 @@ class PitchDetector: NSObject, ObservableObject {
         // Start pitch engine on background thread to avoid blocking main thread
         // AVCaptureSession.startRunning() should be called from background thread
         let engine = pitchEngine
-        await Task.detached(priority: .userInitiated) { [weak self] in
+        Task.detached(priority: .userInitiated) {
             // Call start() on background thread (this internally calls AVCaptureSession.startRunning())
             engine?.start()
             // Update UI state on main thread after starting
-            await MainActor.run {
+            await MainActor.run { [weak self] in
                 self?.isDetecting = true
             }
         }
@@ -145,12 +145,12 @@ class PitchDetector: NSObject, ObservableObject {
     func stopDetection() {
         // Stop pitch engine on background thread to avoid blocking main thread
         let engine = pitchEngine
-        Task.detached(priority: .userInitiated) { [weak self] in
+        Task.detached(priority: .userInitiated) {
             // Call stop() on background thread (this internally calls AVCaptureSession.stopRunning())
             engine?.stop()
             
             // Update UI state on main thread after stopping
-            await MainActor.run {
+            await MainActor.run { [weak self] in
                 guard let self = self else { return }
                 self.pitchEngine = nil
                 self.isDetecting = false
@@ -168,7 +168,7 @@ class PitchDetector: NSObject, ObservableObject {
         }
     }
     
-    private func updateNote(from frequency: Double) {
+    func updateNote(from frequency: Double) {
         // Find closest note
         var closestNote = "C"
         var closestOctave = 4

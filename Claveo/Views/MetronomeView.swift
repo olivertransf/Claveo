@@ -13,6 +13,7 @@ struct MetronomeView: View {
     @StateObject private var settingsManager = SettingsManager.shared
     @State private var tapTimes: [Date] = []
     @State private var showingTimeSignaturePicker = false
+    @State private var showingTemposManagement = false
     
     private var favoriteTempos: [Int] {
         settingsManager.settings.favoriteTempos
@@ -29,6 +30,12 @@ struct MetronomeView: View {
             tempos.sort()
             settingsManager.update(\.favoriteTempos, value: tempos)
         }
+    }
+    
+    private func removeFavoriteTempo(_ tempo: Int) {
+        var tempos = settingsManager.settings.favoriteTempos
+        tempos.removeAll { $0 == tempo }
+        settingsManager.update(\.favoriteTempos, value: tempos)
     }
     
     var body: some View {
@@ -96,7 +103,7 @@ struct MetronomeView: View {
                                             .foregroundColor(metronome.tempo == tempo ? .white : .themeLabel)
                                             .padding(.horizontal, 12)
                                             .padding(.vertical, 6)
-                                            .background(metronome.tempo == tempo ? Color.themeAccent : Color.themeFill)
+                                            .background(metronome.tempo == tempo ? themeManager.accentColor : Color.themeFill)
                                             .cornerRadius(16)
                                     }
                                 }
@@ -105,17 +112,33 @@ struct MetronomeView: View {
                         }
                     }
                     
-                    // Add to favorites button
-                    Button(action: {
-                        addFavoriteTempo(metronome.tempo)
-                    }) {
-                        HStack(spacing: 4) {
-                            Image(systemName: favoriteTempos.contains(metronome.tempo) ? "star.fill" : "star")
-                                .font(.caption)
-                            Text("Favorite")
-                                .font(.caption)
+                    // Add to favorites button and manage tempos
+                    HStack(spacing: 16) {
+                        Button(action: {
+                            addFavoriteTempo(metronome.tempo)
+                        }) {
+                            HStack(spacing: 4) {
+                                Image(systemName: favoriteTempos.contains(metronome.tempo) ? "star.fill" : "star")
+                                    .font(.caption)
+                                Text("Add")
+                                    .font(.caption)
+                            }
+                            .foregroundColor(favoriteTempos.contains(metronome.tempo) ? .yellow : .secondary)
                         }
-                        .foregroundColor(favoriteTempos.contains(metronome.tempo) ? .yellow : .secondary)
+                        
+                        if !favoriteTempos.isEmpty {
+                            Button(action: {
+                                showingTemposManagement = true
+                            }) {
+                                HStack(spacing: 4) {
+                                    Image(systemName: "list.bullet")
+                                        .font(.caption)
+                                    Text("Manage")
+                                        .font(.caption)
+                                }
+                                .foregroundColor(.secondary)
+                            }
+                        }
                     }
                 }
                 
@@ -206,7 +229,7 @@ struct MetronomeView: View {
                     }) {
                         ZStack {
                             Circle()
-                                .fill(metronome.isPlaying ? Color.red : Color.themeAccent)
+                                .fill(metronome.isPlaying ? Color.red : themeManager.accentColor)
                                 .frame(width: 80, height: 80)
                             
                             Image(systemName: metronome.isPlaying ? "stop.fill" : "play.fill")
@@ -226,6 +249,16 @@ struct MetronomeView: View {
                     get: { metronome.timeSignature },
                     set: { metronome.setTimeSignature($0) }
                 ))
+                .environmentObject(themeManager)
+            }
+            .sheet(isPresented: $showingTemposManagement) {
+                TemposManagementView(
+                    tempos: Binding(
+                        get: { settingsManager.settings.favoriteTempos },
+                        set: { settingsManager.update(\.favoriteTempos, value: $0) }
+                    )
+                )
+                .environmentObject(themeManager)
             }
             .onAppear {
                 // Sync settings from SettingsManager
@@ -298,6 +331,7 @@ struct MetronomeView: View {
 struct TimeSignaturePickerView: View {
     @Binding var selectedSignature: TimeSignature
     @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject var themeManager: ThemeManager
     
     var body: some View {
         NavigationStack {
@@ -313,7 +347,7 @@ struct TimeSignaturePickerView: View {
                             Spacer()
                             if selectedSignature == signature {
                                 Image(systemName: "checkmark")
-                                    .foregroundColor(.blue)
+                                    .foregroundColor(themeManager.accentColor)
                             }
                         }
                     }
@@ -321,6 +355,89 @@ struct TimeSignaturePickerView: View {
             }
             .navigationTitle("Time Signature")
             .navigationBarTitleDisplayMode(.inline)
+            .tint(themeManager.accentColor)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") {
+                        dismiss()
+                    }
+                }
+            }
+        }
+    }
+}
+
+struct TemposManagementView: View {
+    @Binding var tempos: [Int]
+    @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject var themeManager: ThemeManager
+    @State private var newTempo = ""
+    
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section("Add Tempo") {
+                    HStack {
+                        TextField("BPM", text: $newTempo)
+                            .keyboardType(.numberPad)
+                        
+                        Button("Add") {
+                            if let tempo = Int(newTempo), tempo >= 20 && tempo <= 300 {
+                                if !tempos.contains(tempo) {
+                                    tempos.append(tempo)
+                                    tempos.sort()
+                                    newTempo = ""
+                                }
+                            }
+                        }
+                        .disabled(newTempo.isEmpty || Int(newTempo) == nil || Int(newTempo)! < 20 || Int(newTempo)! > 300)
+                    }
+                }
+                
+                Section {
+                    if tempos.isEmpty {
+                        Text("No tempos")
+                            .foregroundColor(.secondary)
+                            .frame(maxWidth: .infinity, alignment: .center)
+                            .listRowInsets(EdgeInsets())
+                    } else {
+                        ForEach(tempos.sorted(), id: \.self) { tempo in
+                            HStack {
+                                Text("\(tempo) BPM")
+                                    .font(.body)
+                                Spacer()
+                                Button(action: {
+                                    tempos.removeAll { $0 == tempo }
+                                }) {
+                                    Image(systemName: "xmark.circle.fill")
+                                        .foregroundColor(.red)
+                                }
+                            }
+                        }
+                        .onDelete { indexSet in
+                            let sorted = tempos.sorted()
+                            for index in indexSet {
+                                if index < sorted.count {
+                                    tempos.removeAll { $0 == sorted[index] }
+                                }
+                            }
+                        }
+                    }
+                } header: {
+                    HStack {
+                        Text("Tempos")
+                        Spacer()
+                        if !tempos.isEmpty {
+                            Text("\(tempos.count)")
+                                .foregroundColor(.secondary)
+                                .font(.caption)
+                        }
+                    }
+                }
+            }
+            .navigationTitle("Manage Tempos")
+            .navigationBarTitleDisplayMode(.inline)
+            .tint(themeManager.accentColor)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Done") {

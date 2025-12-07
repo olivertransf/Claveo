@@ -13,6 +13,7 @@ struct MusicDictionaryView: View {
     @StateObject private var settingsManager = SettingsManager.shared
     @State private var searchText = ""
     @State private var selectedTab: DictionaryTab = .dictionary
+    @State private var isSearchPresented = false
     
     private var showAdvancedDictionaryItems: Bool {
         settingsManager.settings.showAdvancedDictionaryItems
@@ -37,55 +38,88 @@ struct MusicDictionaryView: View {
     
     var body: some View {
         NavigationStack {
-            VStack(spacing: 0) {
-                // Search bar
-                SearchBar(text: $searchText)
+            ZStack {
+                VStack(spacing: 0) {
+                    // Tab selector
+                    Picker("Dictionary Type", selection: $selectedTab) {
+                        ForEach(DictionaryTab.allCases, id: \.self) { tab in
+                            Text(tab.rawValue).tag(tab)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                    .tint(themeManager.accentColor)
                     .padding(.horizontal)
-                    .padding(.top, 8)
-                
-                // Tab selector
-                Picker("Dictionary Type", selection: $selectedTab) {
-                    ForEach(DictionaryTab.allCases, id: \.self) { tab in
-                        Text(tab.rawValue).tag(tab)
+                    .padding(.vertical, 8)
+                    .background(.ultraThinMaterial)
+
+                    
+                    // Content
+                    if dictionaryService.isLoading {
+                        Spacer()
+                        ProgressView("Loading dictionary...")
+                        Spacer()
+                    } else if let error = dictionaryService.errorMessage {
+                        Spacer()
+                        VStack(spacing: 16) {
+                            Image(systemName: "exclamationmark.triangle")
+                                .font(.system(size: 48))
+                                .foregroundColor(.orange)
+                            Text("Error Loading Dictionary")
+                                .font(.headline)
+                            Text(error)
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                                .multilineTextAlignment(.center)
+                                .padding(.horizontal)
+                            Button("Retry") {
+                                dictionaryService.loadDictionary()
+                            }
+                            .buttonStyle(.borderedProminent)
+                        }
+                        Spacer()
+                    } else {
+                        if selectedTab == .dictionary {
+                            TermsListView(terms: filteredTerms, searchText: searchText)
+                        } else {
+                            SymbolsListView(symbols: filteredSymbols, searchText: searchText)
+                        }
                     }
                 }
-                .pickerStyle(.segmented)
-                .padding(.horizontal)
-                .padding(.vertical, 8)
+                .background(.ultraThinMaterial)
                 
-                // Content
-                if dictionaryService.isLoading {
+                // Search button in bottom right
+                VStack {
                     Spacer()
-                    ProgressView("Loading dictionary...")
-                    Spacer()
-                } else if let error = dictionaryService.errorMessage {
-                    Spacer()
-                    VStack(spacing: 16) {
-                        Image(systemName: "exclamationmark.triangle")
-                            .font(.system(size: 48))
-                            .foregroundColor(.orange)
-                        Text("Error Loading Dictionary")
-                            .font(.headline)
-                        Text(error)
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                            .multilineTextAlignment(.center)
-                            .padding(.horizontal)
-                        Button("Retry") {
-                            dictionaryService.loadDictionary()
+                    HStack {
+                        Spacer()
+                        Button(action: {
+                            withAnimation {
+                                isSearchPresented = true
+                            }
+                        }) {
+                            Image(systemName: "magnifyingglass")
+                                .font(.system(size: 18, weight: .medium))
+                                .foregroundColor(.white)
+                                .frame(width: 56, height: 56)
+                                .background(themeManager.accentColor)
+                                .clipShape(Circle())
+                                .shadow(color: Color.black.opacity(0.2), radius: 8, x: 0, y: 4)
                         }
-                        .buttonStyle(.borderedProminent)
-                    }
-                    Spacer()
-                } else {
-                    if selectedTab == .dictionary {
-                        TermsListView(terms: filteredTerms, searchText: searchText)
-                    } else {
-                        SymbolsListView(symbols: filteredSymbols, searchText: searchText)
+                        .padding(.trailing, 20)
+                        .padding(.bottom, 20)
                     }
                 }
             }
             .navigationTitle("Music Dictionary")
+            .navigationBarTitleDisplayMode(.inline)
+            .if(isSearchPresented) { view in
+                view.searchable(
+                    text: $searchText,
+                    isPresented: $isSearchPresented,
+                    placement: .navigationBarDrawer(displayMode: .always),
+                    prompt: "Search dictionary..."
+                )
+            }
         }
     }
 }
@@ -99,6 +133,7 @@ struct SearchBar: View {
                 .foregroundColor(.secondary)
             
             TextField("Search...", text: $text)
+                .background(.ultraThinMaterial)
                 .textInputAutocapitalization(.never)
                 .autocorrectionDisabled()
             
@@ -110,7 +145,7 @@ struct SearchBar: View {
             }
         }
         .padding(12)
-        .background(Color(.systemGray6))
+        .background(.ultraThinMaterial)
         .cornerRadius(10)
     }
 }

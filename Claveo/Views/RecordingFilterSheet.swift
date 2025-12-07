@@ -12,6 +12,7 @@ struct RecordingFilterSheet: View {
     @Binding var selectedPiece: String?
     let availablePieces: [Piece]
     @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject var themeManager: ThemeManager
     
     var body: some View {
         NavigationStack {
@@ -46,6 +47,9 @@ struct RecordingFilterSheet: View {
             }
             .navigationTitle("Filters")
             .navigationBarTitleDisplayMode(.inline)
+            .tint(themeManager.accentColor)
+            .accentColor(themeManager.accentColor)
+            .id(themeManager.accentColorOption)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Done") {
