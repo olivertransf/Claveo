@@ -17,6 +17,12 @@ struct TunerView: View {
         settingsManager.settings.showFrequencyDisplay
     }
     
+    @State private var showingSettings = false
+    
+    private var selectedPreset: FrequencyPreset {
+        FrequencyPreset.preset(for: settingsManager.settings.a4ReferenceFrequency)
+    }
+    
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
@@ -28,14 +34,14 @@ struct TunerView: View {
                         // Note display - large and centered
                         Text(pitchDetector.note)
                             .font(.system(size: 96, weight: .ultraLight, design: .rounded))
-                            .foregroundColor(.themeLabel)
+                            .foregroundColor(.primary)
                             .monospacedDigit()
                         
                         // Frequency display (optional)
                         if showFrequencyDisplay {
                             Text(String(format: "%.1f Hz", pitchDetector.frequency))
                                 .font(.title2)
-                                .foregroundColor(.themeSecondaryLabel)
+                                .foregroundColor(.secondary)
                                 .monospacedDigit()
                         }
                         
@@ -62,11 +68,11 @@ struct TunerView: View {
                     VStack(spacing: 20) {
                         Text("Listening...")
                             .font(.title2)
-                            .foregroundColor(.themeSecondaryLabel)
+                            .foregroundColor(.secondary)
                         
                         Text("Play a note")
                             .font(.subheadline)
-                            .foregroundColor(.themeTertiaryLabel)
+                            .foregroundColor(.secondary)
                     }
                 }
                 
@@ -75,6 +81,50 @@ struct TunerView: View {
             .padding()
             .navigationTitle("Tuner")
             .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Menu {
+                        // Preset frequencies
+                        Menu {
+                            ForEach(FrequencyPreset.allCases) { preset in
+                                Button(action: {
+                                    if let frequency = preset.frequency {
+                                        settingsManager.update(\.a4ReferenceFrequency, value: frequency)
+                                    }
+                                }) {
+                                    HStack {
+                                        if preset == .custom {
+                                            Text(preset.displayName)
+                                        } else {
+                                            Text(preset.fullName)
+                                        }
+                                        if selectedPreset == preset {
+                                            Spacer()
+                                            Image(systemName: "checkmark")
+                                                .foregroundColor(themeManager.accentColor)
+                                        }
+                                    }
+                                }
+                            }
+                        } label: {
+                            Label("Preset Frequencies", systemImage: "tuningfork")
+                        }
+                        
+                        // Show frequency display toggle
+                        Button(action: {
+                            settingsManager.update(\.showFrequencyDisplay, value: !showFrequencyDisplay)
+                        }) {
+                            Label(
+                                showFrequencyDisplay ? "Hide Frequency" : "Show Frequency",
+                                systemImage: showFrequencyDisplay ? "eye.slash" : "eye"
+                            )
+                        }
+                    } label: {
+                        Image(systemName: "ellipsis.circle")
+                            .foregroundColor(themeManager.accentColor)
+                    }
+                }
+            }
             .alert("Microphone Access Required", isPresented: $showingPermissionAlert) {
                 Button("Settings") {
                     if let settingsURL = URL(string: UIApplication.openSettingsURLString) {

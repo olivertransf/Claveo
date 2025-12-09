@@ -11,11 +11,19 @@ struct ContentView: View {
     @EnvironmentObject var themeManager: ThemeManager
     @StateObject private var settingsManager = SettingsManager.shared
     
+    private var shouldShowTabBarText: Bool {
+        // Always show text on iPad, respect setting on iPhone
+        if UIDevice.current.userInterfaceIdiom == .pad {
+            return true
+        }
+        return settingsManager.settings.showTabBarText
+    }
+    
     var body: some View {
         TabView {
             RecordingListView()
                 .tabItem {
-                    if settingsManager.settings.showTabBarText {
+                    if shouldShowTabBarText {
                         Label("Recordings", systemImage: "waveform")
                     } else {
                         Image(systemName: "waveform")
@@ -24,7 +32,7 @@ struct ContentView: View {
             
             MetronomeView()
                 .tabItem {
-                    if settingsManager.settings.showTabBarText {
+                    if shouldShowTabBarText {
                         Label("Metronome", systemImage: "metronome")
                     } else {
                         Image(systemName: "metronome")
@@ -33,7 +41,7 @@ struct ContentView: View {
             
             TunerView()
                 .tabItem {
-                    if settingsManager.settings.showTabBarText {
+                    if shouldShowTabBarText {
                         Label("Tuner", systemImage: "tuningfork")
                     } else {
                         Image(systemName: "tuningfork")
@@ -42,7 +50,7 @@ struct ContentView: View {
             
             MusicDictionaryView()
                 .tabItem {
-                    if settingsManager.settings.showTabBarText {
+                    if shouldShowTabBarText {
                         Label("Dictionary", systemImage: "book")
                     } else {
                         Image(systemName: "book")
@@ -51,7 +59,7 @@ struct ContentView: View {
             
             SettingsView()
                 .tabItem {
-                    if settingsManager.settings.showTabBarText {
+                    if shouldShowTabBarText {
                         Label("Settings", systemImage: "gearshape")
                     } else {
                         Image(systemName: "gearshape")
@@ -59,7 +67,7 @@ struct ContentView: View {
                 }
         }
         .tint(themeManager.accentColor)
-        .id(settingsManager.settings.showTabBarText)
+        .id(shouldShowTabBarText)
     }
 }
 
