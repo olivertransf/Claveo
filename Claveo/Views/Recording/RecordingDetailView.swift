@@ -136,8 +136,6 @@ struct RecordingDetailView: View {
                 }
         }
         .tint(themeManager.accentColor)
-        .accentColor(themeManager.accentColor)
-        .id(themeManager.accentColorOption)
         .navigationTitle("Recording Details")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -484,7 +482,6 @@ struct PieceEditSheet: View {
                 }
             }
             .tint(themeManager.accentColor)
-            .accentColor(themeManager.accentColor)
             .navigationTitle("Edit Piece")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

@@ -25,12 +25,6 @@ struct SettingsView: View {
         )
     }
     
-    private var defaultMetronomeTempo: Binding<Int> {
-        Binding(
-            get: { settingsManager.settings.defaultMetronomeTempo },
-            set: { settingsManager.update(\.defaultMetronomeTempo, value: $0) }
-        )
-    }
     
     private var showFrequencyDisplay: Binding<Bool> {
         Binding(
@@ -145,26 +139,6 @@ struct SettingsView: View {
                 
                 // Metronome Settings
                 Section("Metronome") {
-                    HStack {
-                        Text("Default Tempo")
-                        Spacer()
-                        TextField("BPM", value: defaultMetronomeTempo, format: .number)
-                            .keyboardType(.numberPad)
-                            .multilineTextAlignment(.trailing)
-                            .frame(width: 80)
-                            .textFieldStyle(.roundedBorder)
-                            .onChange(of: settingsManager.settings.defaultMetronomeTempo) { _, newValue in
-                                // Clamp to valid range
-                                if newValue < 20 {
-                                    settingsManager.update(\.defaultMetronomeTempo, value: 20)
-                                } else if newValue > 300 {
-                                    settingsManager.update(\.defaultMetronomeTempo, value: 300)
-                                }
-                            }
-                        Text("BPM")
-                            .foregroundColor(.secondary)
-                    }
-                    
                     Picker("Sound Type", selection: metronomeSound) {
                         ForEach(MetronomeSound.allCases, id: \.self) { sound in
                             Text(sound.rawValue).tag(sound)
@@ -203,7 +177,7 @@ struct SettingsView: View {
                         }
                     }
                     
-                    Toggle("Show Tab Bar Text", isOn: showTabBarText)
+                    Toggle("Show Tab Bar Labels", isOn: showTabBarText)
                 }
                 
                 // Storage Settings
@@ -241,10 +215,8 @@ struct SettingsView: View {
                 }
             }
             .navigationTitle("Settings")
-            .navigationBarTitleDisplayMode(.inline)
+            .navigationBarTitleDisplayMode(.large)
             .tint(themeManager.accentColor)
-            .accentColor(themeManager.accentColor)
-            .id(themeManager.accentColorOption)
             .sheet(isPresented: $showingStorageInfo) {
                 StorageInfoView()
                     .environmentObject(themeManager)

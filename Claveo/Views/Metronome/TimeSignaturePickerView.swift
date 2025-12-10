@@ -35,8 +35,6 @@ struct TimeSignaturePickerView: View {
             .navigationTitle("Time Signature")
             .navigationBarTitleDisplayMode(.inline)
             .tint(themeManager.accentColor)
-            .accentColor(themeManager.accentColor)
-            .id(themeManager.accentColorOption)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Done") {

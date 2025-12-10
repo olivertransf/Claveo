@@ -69,10 +69,21 @@ class SettingsManager: ObservableObject {
         settings.showFrequencyDisplay = defaults.object(forKey: "showFrequencyDisplay") as? Bool ?? true
         
         // Metronome
-        settings.defaultMetronomeTempo = defaults.integer(forKey: "defaultMetronomeTempo") == 0 ? 120 : defaults.integer(forKey: "defaultMetronomeTempo")
+        settings.lastMetronomeTempo = defaults.integer(forKey: "lastMetronomeTempo") == 0 ? 120 : defaults.integer(forKey: "lastMetronomeTempo")
         settings.metronomeSound = defaults.string(forKey: "metronomeSound") ?? MetronomeSound.click.rawValue
         settings.metronomeHapticEnabled = defaults.object(forKey: "metronomeHapticEnabled") as? Bool ?? true
         settings.metronomeAutoStopOnTabSwitch = defaults.bool(forKey: "metronomeAutoStopOnTabSwitch")
+        
+        // Custom time signature
+        let customTop = defaults.integer(forKey: "customTimeSignatureTop")
+        let customBottom = defaults.integer(forKey: "customTimeSignatureBottom")
+        if customTop > 0 && customBottom > 0 {
+            settings.customTimeSignatureTop = customTop
+            settings.customTimeSignatureBottom = customBottom
+        } else {
+            settings.customTimeSignatureTop = nil
+            settings.customTimeSignatureBottom = nil
+        }
         
         // Favorite tempos
         if let data = defaults.data(forKey: "favoriteTempos"),
@@ -86,7 +97,13 @@ class SettingsManager: ObservableObject {
         // Theme
         settings.accentColor = defaults.string(forKey: "accentColor") ?? AccentColorOption.blue.rawValue
         settings.colorScheme = defaults.string(forKey: "colorScheme") ?? ColorSchemeOption.system.rawValue
-        settings.showTabBarText = defaults.object(forKey: "showTabBarText") as? Bool ?? false
+        // Default to showing tab bar text on iPad, hiding on iPhone
+        if let savedValue = defaults.object(forKey: "showTabBarText") as? Bool {
+            settings.showTabBarText = savedValue
+        } else {
+            // First launch: default based on device type
+            settings.showTabBarText = UIDevice.current.userInterfaceIdiom == .pad
+        }
     }
     
     // MARK: - Save Settings
@@ -119,10 +136,19 @@ class SettingsManager: ObservableObject {
         defaults.set(settings.showFrequencyDisplay, forKey: "showFrequencyDisplay")
         
         // Metronome
-        defaults.set(settings.defaultMetronomeTempo, forKey: "defaultMetronomeTempo")
+        defaults.set(settings.lastMetronomeTempo, forKey: "lastMetronomeTempo")
         defaults.set(settings.metronomeSound, forKey: "metronomeSound")
         defaults.set(settings.metronomeHapticEnabled, forKey: "metronomeHapticEnabled")
         defaults.set(settings.metronomeAutoStopOnTabSwitch, forKey: "metronomeAutoStopOnTabSwitch")
+        
+        // Custom time signature
+        if let top = settings.customTimeSignatureTop, let bottom = settings.customTimeSignatureBottom {
+            defaults.set(top, forKey: "customTimeSignatureTop")
+            defaults.set(bottom, forKey: "customTimeSignatureBottom")
+        } else {
+            defaults.removeObject(forKey: "customTimeSignatureTop")
+            defaults.removeObject(forKey: "customTimeSignatureBottom")
+        }
         
         // Favorite tempos
         if let encoded = try? JSONEncoder().encode(settings.favoriteTempos) {

@@ -10,12 +10,11 @@ import SwiftUI
 struct RecordingRowView: View {
     @EnvironmentObject var themeManager: ThemeManager
     let recording: Recording
-    let isExpanded: Bool
+    @Binding var isExpanded: Bool
     let isPlaying: Bool
     let currentTime: TimeInterval?
     let duration: TimeInterval
     let playbackRate: Float
-    let onExpand: () -> Void
     let onPlayPause: () -> Void
     let onSeek: (TimeInterval) -> Void
     let onSpeedChange: (Float) -> Void
@@ -24,154 +23,171 @@ struct RecordingRowView: View {
     let onEdit: () -> Void
     let onDelete: () -> Void
     @Environment(\.colorScheme) var colorScheme
-
+    @State private var isDragging = false
+    @State private var dragValue: TimeInterval = 0
+    
     var body: some View {
         VStack(spacing: 0) {
-            Button(action: onExpand) {
-                HStack(alignment: .center, spacing: 12) {
+            DisclosureGroup(isExpanded: $isExpanded) {
+                VStack(spacing: 0) {
+                    VStack(alignment: .leading, spacing: 16) {
+                        VStack(spacing: 8) {
+                            Slider(
+                                value: Binding(
+                                    get: { isDragging ? dragValue : (currentTime ?? 0) },
+                                    set: { newValue in
+                                        dragValue = newValue
+                                        if !isDragging {
+                                            isDragging = true
+                                        }
+                                        onSeek(newValue)
+                                    }
+                                ),
+                                in: 0...max(duration, 0.1)
+                            )
+                            .tint(themeManager.accentColor)
+                            .onChange(of: currentTime) { _, newValue in
+                                guard let newValue = newValue else { return }
+                                
+                                if isDragging {
+                                    // If currentTime updates close to dragValue, seek completed
+                                    if abs(newValue - dragValue) < 0.5 {
+                                        isDragging = false
+                                    }
+                                } else {
+                                    // Update dragValue to match currentTime when not dragging
+                                    dragValue = newValue
+                                }
+                            }
+                            
+                            HStack {
+                                Text(formatTime(isDragging ? dragValue : (currentTime ?? 0)))
+                                    .font(.system(.caption, design: .monospaced))
+                                    .foregroundColor(.secondary)
+                                
+                                Spacer()
+                                
+                                let remaining = max(0, duration - (isDragging ? dragValue : (currentTime ?? 0)))
+                                Text(isPlaying ? "-\(formatTime(remaining))" : formatTime(duration))
+                                    .font(.system(.caption, design: .monospaced))
+                                    .foregroundColor(.secondary)
+                            }
+                        }
+                        
+                        Picker("Speed", selection: Binding(
+                            get: { playbackRate },
+                            set: { newValue in
+                                onSpeedChange(newValue)
+                            }
+                        )) {
+                            Text("0.75x").tag(0.75 as Float)
+                            Text("1x").tag(1.0 as Float)
+                            Text("1.25x").tag(1.25 as Float)
+                            Text("1.5x").tag(1.5 as Float)
+                        }
+                        .pickerStyle(.segmented)
+                        .tint(themeManager.accentColor)
+                    }
+                    .padding(.vertical, 8)
+                    
+                    HStack(spacing: 0) {
+                        Button(action: onEdit) {
+                            Image(systemName: "pencil")
+                                .font(.system(size: 20))
+                        }
+                        .buttonStyle(.plain)
+                        .frame(maxWidth: .infinity, minHeight: 56)
+                        
+                        Button(action: onSkipBackward) {
+                            Image(systemName: "gobackward.15")
+                                .font(.system(size: 20))
+                        }
+                        .buttonStyle(.plain)
+                        .frame(maxWidth: .infinity, minHeight: 56)
+                        
+                        Button(action: onPlayPause) {
+                            Image(systemName: isPlaying ? "pause.fill" : "play.fill")
+                                .font(.system(size: 24))
+                        }
+                        .buttonStyle(.plain)
+                        .frame(maxWidth: .infinity, minHeight: 56)
+                        
+                        Button(action: onSkipForward) {
+                            Image(systemName: "goforward.15")
+                                .font(.system(size: 20))
+                        }
+                        .buttonStyle(.plain)
+                        .frame(maxWidth: .infinity, minHeight: 56)
+                        
+                        Button(role: .destructive, action: onDelete) {
+                            Image(systemName: "trash")
+                                .font(.system(size: 20))
+                        }
+                        .buttonStyle(.plain)
+                        .frame(maxWidth: .infinity, minHeight: 56)
+                    }
+                    .padding(.horizontal, -20)
+                }
+            } label: {
+                HStack(alignment: .center, spacing: 16) {
                     VStack(alignment: .leading, spacing: 6) {
                         Text(recording.displayName)
-                            .font(.body)
-                            .fontWeight(.medium)
-                            .foregroundColor(.primary)
-                            .lineLimit(1)
-
-                        HStack(spacing: 8) {
-                            Text(recording.relativeDateString)
+                            .font(.headline)
+                            .lineLimit(2)
+                        
+                        HStack(spacing: 12) {
+                            Label(recording.relativeDateString, systemImage: "clock")
+                                .labelStyle(.titleAndIcon)
                                 .font(.subheadline)
                                 .foregroundColor(.secondary)
-
+                            
                             if let piece = recording.piece {
-                                Text("•")
-                                    .foregroundColor(.secondary.opacity(0.5))
-                                Text(piece)
+                                Label(piece, systemImage: "music.note")
+                                    .labelStyle(.titleAndIcon)
                                     .font(.subheadline)
                                     .foregroundColor(.secondary)
                                     .lineLimit(1)
                             }
                         }
-                    }
-
-                    Spacer()
-
-                    Text(recording.formattedDuration)
-                        .font(.body)
-                        .fontWeight(.medium)
-                        .foregroundColor(.secondary)
-                        .monospacedDigit()
-                }
-                .padding(.horizontal, 20)
-                .padding(.vertical, 14)
-                .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel("\(recording.displayName), \(recording.formattedDuration)")
-            .accessibilityHint(isExpanded ? "Double tap to collapse" : "Double tap to expand")
-
-            // Playback controls (shown when expanded)
-            if isExpanded {
-                VStack(spacing: 16) {
-                    // Progress Bar
-                    GeometryReader { geometry in
-                        let availableWidth = geometry.size.width
-                        ZStack(alignment: .leading) {
-                            // Background
-                            Capsule()
-                                .fill(Color(.systemGray4))
-                                .frame(height: 3)
-
-                            // Progress
-                            Capsule()
-                                .fill(themeManager.accentColor)
-                                .frame(width: availableWidth * CGFloat((currentTime ?? 0) / max(duration, 1)), height: 3)
-                        }
-                        .gesture(
-                            DragGesture(minimumDistance: 0)
-                                .onEnded { value in
-                                    let percentage = min(max(0, value.location.x / availableWidth), 1)
-                                    let newTime = TimeInterval(percentage) * duration
-                                    onSeek(newTime)
+                        
+                        if !recording.tags.isEmpty {
+                            HStack(spacing: 6) {
+                                ForEach(recording.tags.prefix(3), id: \.self) { tag in
+                                    Text(tag)
+                                        .font(.caption)
+                                        .padding(.horizontal, 8)
+                                        .padding(.vertical, 4)
+                                        .background(Color(.systemGray5))
+                                        .foregroundColor(.secondary)
+                                        .cornerRadius(8)
                                 }
-                        )
+                                if recording.tags.count > 3 {
+                                    Text("+\(recording.tags.count - 3)")
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                }
+                            }
+                        }
                     }
-                    .frame(height: 3)
-
-                    // Time (right under progress bar)
-                    HStack {
-                        Text(formatTime(currentTime ?? 0))
-                            .font(.system(.caption2, design: .monospaced))
-                            .foregroundColor(.secondary)
-
-                        Spacer()
-
-                        Text(isPlaying ? "-\(formatTime(max(0, duration - (currentTime ?? 0))))" : formatTime(duration))
-                            .font(.system(.caption2, design: .monospaced))
-                            .foregroundColor(.secondary)
+                    
+                    Spacer()
+                    
+                    VStack(alignment: .trailing, spacing: 4) {
+                        Text(recording.formattedDuration)
+                            .font(.headline)
+                            .foregroundColor(.primary)
+                            .monospacedDigit()
+                        
+                        if isPlaying {
+                            Image(systemName: "waveform")
+                                .foregroundColor(themeManager.accentColor)
+                                .font(.caption)
+                        }
                     }
-
-                    // Controls
-                    HStack {
-                        // Edit button
-                        Button(action: onEdit) {
-                            Image(systemName: "pencil")
-                                .font(.title3)
-                                .foregroundColor(.accentColor)
-                        }
-                        .buttonStyle(.plain)
-                        .accessibilityLabel("Edit Recording")
-
-                        Spacer()
-
-                        // Skip Backward
-                        Button(action: onSkipBackward) {
-                            Image(systemName: "gobackward.15")
-                                .font(.title3)
-                        }
-                        .buttonStyle(.plain)
-                        .accessibilityLabel("Skip Backward 15 Seconds")
-
-                        Spacer()
-                            .frame(width: 50)
-
-                        // Play/Pause
-                        Button(action: onPlayPause) {
-                            Image(systemName: isPlaying ? "pause.fill" : "play.fill")
-                                .font(.title)
-                                .foregroundColor(colorScheme == .dark ? .white : .black)
-                        }
-                        .buttonStyle(.plain)
-                        .accessibilityLabel(isPlaying ? "Pause" : "Play")
-
-                        Spacer()
-                            .frame(width: 50)
-
-                        // Skip Forward
-                        Button(action: onSkipForward) {
-                            Image(systemName: "goforward.15")
-                                .font(.title3)
-                        }
-                        .buttonStyle(.plain)
-                        .accessibilityLabel("Skip Forward 15 Seconds")
-
-                        Spacer()
-
-                        // Delete button
-                        Button(action: onDelete) {
-                            Image(systemName: "trash")
-                                .font(.title3)
-                                .foregroundColor(.red)
-                        }
-                        .buttonStyle(.plain)
-                        .accessibilityLabel("Delete Recording")
-                    }
-                    .padding(.bottom, 12)
                 }
-                .padding(.horizontal, 20)
-                .padding(.top, 8)
-                .padding(.bottom, 8)
-                .background(Color.themeBackground)
             }
         }
+        .contentShape(Rectangle())
     }
 
     private func formatTime(_ time: TimeInterval) -> String {

@@ -9,24 +9,17 @@ import SwiftUI
 
 extension MetronomeView {
     var sidebarView: some View {
-        GeometryReader { geometry in
-            VStack(spacing: 32) {
-                Spacer()
-                
-                VStack(spacing: 16) {
-                    Text("Time Signature")
-                        .font(.title2)
-                        .fontWeight(.semibold)
-                        .foregroundColor(.secondary)
-                    
+        NavigationStack {
+            List {
+                Section {
                     Menu {
                         ForEach(TimeSignature.allCases, id: \.self) { signature in
-                            Button(action: {
+                            Button {
                                 metronome.setTimeSignature(signature)
-                            }) {
+                            } label: {
                                 HStack {
                                     Text(signature.rawValue)
-                                    if metronome.timeSignature == signature {
+                                    if metronome.customTimeSignature == nil && metronome.timeSignature == signature {
                                         Spacer()
                                         Image(systemName: "checkmark")
                                             .foregroundColor(themeManager.accentColor)
@@ -34,82 +27,133 @@ extension MetronomeView {
                                 }
                             }
                         }
-                    } label: {
-                        Text(metronome.timeSignature.rawValue)
-                            .font(.system(size: 48, weight: .bold, design: .rounded))
-                            .foregroundColor(themeManager.accentColor)
-                            .padding(.horizontal, 24)
-                            .padding(.vertical, 16)
-                            .frame(maxWidth: .infinity)
-                            .background(Color(.systemGray6))
-                            .cornerRadius(12)
-                    }
-                }
-                
-                VStack(spacing: 16) {
-                    Text("Tap Tempo")
-                        .font(.title2)
-                        .fontWeight(.semibold)
-                        .foregroundColor(.secondary)
-                    
-                    Button(action: tapTempo) {
-                        VStack(spacing: 8) {
-                            Image(systemName: "hand.tap.fill")
-                                .font(.system(size: 48, weight: .medium))
-                            Text("Tap")
-                                .font(.title3)
-                                .fontWeight(.medium)
-                        }
-                        .foregroundColor(themeManager.accentColor)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 24)
-                        .background(Color(.systemGray6))
-                        .cornerRadius(12)
-                    }
-                }
-                
-                VStack(spacing: 12) {
-                    Text("Beat Pattern")
-                        .font(.title3)
-                        .fontWeight(.semibold)
-                        .foregroundColor(.secondary)
-                    
-                    let spacing: CGFloat = 6
-                    let circleSize: CGFloat = 44
-                    let _ = geometry.size.width - 48
-                    
-                    HStack(spacing: spacing) {
-                        ForEach(0..<metronome.beatPattern.count, id: \.self) { index in
-                            Circle()
-                                .fill(
-                                    index == metronome.currentBeat && metronome.isPlaying ?
-                                    Color.red :
-                                    (metronome.beatPattern[index] ? themeManager.accentColor : Color(.systemGray5))
-                                )
-                                .frame(width: circleSize, height: circleSize)
-                                .overlay(
-                                    Text("\(index + 1)")
-                                        .font(.caption2)
-                                        .fontWeight(.bold)
-                                        .foregroundColor(
-                                            index == metronome.currentBeat && metronome.isPlaying ?
-                                            .white :
-                                            (metronome.beatPattern[index] ? .white : .secondary)
-                                        )
-                                )
-                                .onTapGesture {
-                                    toggleBeat(index)
+                        
+                        Divider()
+                        
+                        Button {
+                            prepareCustomTimeSignature()
+                        } label: {
+                            HStack {
+                                Text("Custom…")
+                                Spacer()
+                                if metronome.customTimeSignature != nil {
+                                    Image(systemName: "checkmark")
+                                        .foregroundColor(themeManager.accentColor)
                                 }
-                                .animation(.easeInOut(duration: 0.1), value: metronome.currentBeat)
+                            }
+                        }
+                        
+                        if metronome.customTimeSignature != nil {
+                            Button("Clear Custom", role: .destructive) {
+                                metronome.setTimeSignature(.fourFour)
+                            }
+                        }
+                    } label: {
+                        HStack {
+                            Label("Time Signature", systemImage: "music.note")
+                            Spacer()
+                            Text(metronome.displayTimeSignature)
+                                .font(.body)
+                                .fontWeight(.medium)
+                                .foregroundColor(themeManager.accentColor)
                         }
                     }
-                    .frame(maxWidth: .infinity)
+                    .tint(themeManager.accentColor)
                 }
                 
-                Spacer()
+                Section {
+                    Button(action: tapTempo) {
+                        Label("Tap Tempo", systemImage: "hand.tap")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(.large)
+                    .tint(themeManager.accentColor)
+                }
+                
+                Section {
+                    beatPatternGrid
+                        .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+                        .listRowSeparator(.hidden)
+                } header: {
+                    Text("Beat Pattern")
+                } footer: {
+                    Text("Tap a beat to accent.")
+                        .font(.footnote)
+                        .foregroundColor(.secondary)
+                }
             }
-            .padding(.horizontal, 20)
-            .padding(.vertical, 24)
+            .navigationTitle("Metronome")
+            .listStyle(.sidebar)
+        }
+    }
+    
+    private var beatPatternGrid: some View {
+        let columns = [GridItem(.adaptive(minimum: 56), spacing: 12)]
+        
+        return LazyVGrid(columns: columns, alignment: .leading, spacing: 12) {
+            ForEach(0..<metronome.beatPattern.count, id: \.self) { index in
+                Circle()
+                    .fill(
+                        index == metronome.currentBeat && metronome.isPlaying ?
+                        Color.red :
+                        (metronome.beatPattern[index] ? themeManager.accentColor : Color(.systemGray5))
+                    )
+                    .frame(width: 52, height: 52)
+                    .overlay(
+                        Text("\(index + 1)")
+                            .font(.caption2)
+                            .fontWeight(.semibold)
+                            .foregroundColor(
+                                index == metronome.currentBeat && metronome.isPlaying ?
+                                .white :
+                                (metronome.beatPattern[index] ? .white : .secondary)
+                            )
+                    )
+                    .onTapGesture {
+                        toggleBeat(index)
+                    }
+                    .animation(.easeInOut(duration: 0.1), value: metronome.currentBeat)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+    
+    var customTimeSignatureSheet: some View {
+        NavigationStack {
+            Form {
+                Section("Top Number") {
+                    Stepper(value: $customTop, in: 1...16) {
+                        Text("\(customTop)")
+                    }
+                }
+                
+                Section("Bottom Number") {
+                    Picker("Bottom", selection: $customBottom) {
+                        ForEach([1, 2, 4, 8, 16], id: \.self) { value in
+                            Text("\(value)")
+                                .tag(value)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                }
+                
+                Section {
+                    Button("Save Custom Time Signature") {
+                        saveCustomTimeSignature()
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .tint(themeManager.accentColor)
+                }
+            }
+            .navigationTitle("Custom Time Signature")
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") {
+                        showingCustomTimeSignatureSheet = false
+                    }
+                }
+            }
         }
     }
 }

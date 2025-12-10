@@ -28,16 +28,12 @@ struct TunerView: View {
             VStack(spacing: 0) {
                 Spacer()
                 
-                // Main tuner display
                 if pitchDetector.isDetecting && pitchDetector.frequency > 0 {
-                    VStack(spacing: 30) {
-                        // Note display - large and centered
+                    VStack(spacing: 24) {
                         Text(pitchDetector.note)
                             .font(.system(size: 96, weight: .ultraLight, design: .rounded))
-                            .foregroundColor(.primary)
                             .monospacedDigit()
                         
-                        // Frequency display (optional)
                         if showFrequencyDisplay {
                             Text(String(format: "%.1f Hz", pitchDetector.frequency))
                                 .font(.title2)
@@ -45,34 +41,27 @@ struct TunerView: View {
                                 .monospacedDigit()
                         }
                         
-                        // Tuning meter - the main visual indicator
                         TuningMeterView(
                             cents: pitchDetector.cents,
                             note: pitchDetector.note
                         )
                         .environmentObject(themeManager)
                         .frame(height: 200)
-                        .padding(.horizontal, 20)
+                        .padding(.horizontal)
                         
-                        // Precise tuning meter - for fine-tuning (5 cents range)
                         PreciseTuningMeterView(
                             cents: pitchDetector.cents,
                             note: pitchDetector.note
                         )
                         .environmentObject(themeManager)
                         .frame(height: 120)
-                        .padding(.horizontal, 20)
+                        .padding(.horizontal)
                     }
                 } else {
-                    // Waiting state
-                    VStack(spacing: 20) {
-                        Text("Listening...")
-                            .font(.title2)
-                            .foregroundColor(.secondary)
-                        
-                        Text("Play a note")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
+                    ContentUnavailableView {
+                        Label("Listening...", systemImage: "tuningfork")
+                    } description: {
+                        Text("Play a note to detect pitch")
                     }
                 }
                 
@@ -82,9 +71,8 @@ struct TunerView: View {
             .navigationTitle("Tuner")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
+                ToolbarItem(placement: .primaryAction) {
                     Menu {
-                        // Preset frequencies
                         Menu {
                             ForEach(FrequencyPreset.allCases) { preset in
                                 Button(action: {
@@ -93,15 +81,10 @@ struct TunerView: View {
                                     }
                                 }) {
                                     HStack {
-                                        if preset == .custom {
-                                            Text(preset.displayName)
-                                        } else {
-                                            Text(preset.fullName)
-                                        }
+                                        Text(preset == .custom ? preset.displayName : preset.fullName)
                                         if selectedPreset == preset {
                                             Spacer()
                                             Image(systemName: "checkmark")
-                                                .foregroundColor(themeManager.accentColor)
                                         }
                                     }
                                 }
@@ -110,7 +93,6 @@ struct TunerView: View {
                             Label("Preset Frequencies", systemImage: "tuningfork")
                         }
                         
-                        // Show frequency display toggle
                         Button(action: {
                             settingsManager.update(\.showFrequencyDisplay, value: !showFrequencyDisplay)
                         }) {
@@ -120,8 +102,7 @@ struct TunerView: View {
                             )
                         }
                     } label: {
-                        Image(systemName: "ellipsis.circle")
-                            .foregroundColor(themeManager.accentColor)
+                        Label("Options", systemImage: "ellipsis.circle")
                     }
                 }
             }
@@ -136,17 +117,14 @@ struct TunerView: View {
                 Text("Microphone access is required to detect pitch.")
             }
             .onAppear {
-                // Auto-start tuner when tab appears
                 Task {
                     await pitchDetector.startDetection()
                 }
             }
             .onDisappear {
-                // Auto-stop tuner when tab disappears
                 pitchDetector.stopDetection()
             }
             .onChange(of: settingsManager.settings.a4ReferenceFrequency) { _, _ in
-                // Recalculate note when reference frequency changes
                 if pitchDetector.frequency > 0 {
                     pitchDetector.updateNote(from: pitchDetector.frequency)
                 }

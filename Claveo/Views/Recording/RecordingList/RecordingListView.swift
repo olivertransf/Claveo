@@ -7,20 +7,8 @@
 
 import SwiftUI
 
-extension View {
-    @ViewBuilder
-    func `if`<Content: View>(_ condition: Bool, transform: (Self) -> Content) -> some View {
-        if condition {
-            transform(self)
-        } else {
-            self
-        }
-    }
-}
-
 struct RecordingListView: View {
     @EnvironmentObject var themeManager: ThemeManager
-    @Environment(\.colorScheme) var colorScheme
     @StateObject var recorder = AudioRecorder()
     @StateObject var player = AudioPlayer()
     @State var showingDeleteAlert = false
@@ -29,18 +17,20 @@ struct RecordingListView: View {
     @State var selectedRecording: Recording?
     @State var expandedRecordingId: UUID?
     @State var searchText: String = ""
+    @State var isSearchFocused: Bool = false
     @State var selectedTag: String? = nil
     @State var selectedPiece: String? = nil
     @State var showingFilterSheet = false
     @State var showingPiecesManagement = false
     @State var availablePieces: [Piece] = []
-    @State var lastScrollOffset: CGFloat = 0
-    @State var isRecordingButtonVisible: Bool = true
+    @State var pieceSearchText: String = ""
+    @State var newPieceName: String = ""
+    @State var newPieceComposer: String = ""
+    @State var editingPiece: Piece?
     
     var filteredRecordings: [Recording] {
         var filtered = recorder.recordings
         
-        // Search filter
         if !searchText.isEmpty {
             let searchLower = searchText.lowercased()
             filtered = filtered.filter { recording in
@@ -50,12 +40,10 @@ struct RecordingListView: View {
             }
         }
         
-        // Tag filter
         if let selectedTag = selectedTag {
             filtered = filtered.filter { $0.tags.contains(selectedTag) }
         }
         
-        // Piece filter
         if let selectedPiece = selectedPiece {
             filtered = filtered.filter { $0.piece == selectedPiece }
         }
@@ -63,19 +51,15 @@ struct RecordingListView: View {
         return filtered.sorted { $0.createdAt > $1.createdAt }
     }
     
-    var sortedRecordings: [Recording] {
-        filteredRecordings
-    }
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     
-    @State var isSearchPresented = false
-    
-    private var isIPad: Bool {
-        UIDevice.current.userInterfaceIdiom == .pad
+    private var shouldUseSplitView: Bool {
+        UIDevice.current.userInterfaceIdiom == .pad && horizontalSizeClass == .regular
     }
     
     var body: some View {
         Group {
-            if isIPad {
+            if shouldUseSplitView {
                 iPadView
             } else {
                 iPhoneView
@@ -85,26 +69,57 @@ struct RecordingListView: View {
             PieceManagementView(pieces: $availablePieces)
                 .environmentObject(themeManager)
         }
-        .onChange(of: showingPiecesManagement) { _, isPresented in
-            if !isPresented {
-                availablePieces = loadAvailablePieces()
-            }
+        .sheet(item: $editingPiece) { pieceToEdit in
+            PieceEditSheet(
+                piece: pieceToEdit,
+                onSave: { updatedPiece in
+                    if let index = availablePieces.firstIndex(where: { $0.id == updatedPiece.id }) {
+                        availablePieces[index] = updatedPiece
+                        availablePieces.sort { $0.name < $1.name }
+                        savePieces()
+                    }
+                    editingPiece = nil
+                },
+                onDelete: {
+                    availablePieces.removeAll { $0.id == pieceToEdit.id }
+                    availablePieces.sort { $0.name < $1.name }
+                    savePieces()
+                    editingPiece = nil
+                },
+                onCancel: {
+                    editingPiece = nil
+                }
+            )
+            .environmentObject(themeManager)
         }
         .sheet(item: $selectedRecording) { recording in
             detailSheet(for: recording)
         }
-        .sheet(isPresented: $showingFilterSheet) {
-            filterSheet
-        }
         .alert("Delete Recording", isPresented: $showingDeleteAlert) {
-            deleteAlertButtons
+            Button("Cancel", role: .cancel) { }
+            Button("Delete", role: .destructive) {
+                if let recording = recordingToDelete {
+                    recorder.deleteRecording(recording)
+                }
+            }
         } message: {
             Text("Are you sure you want to delete this recording?")
         }
         .alert("Microphone Access Required", isPresented: $showingPermissionAlert) {
-            permissionAlertButtons
+            Button("Settings") {
+                if let settingsURL = URL(string: UIApplication.openSettingsURLString) {
+                    UIApplication.shared.open(settingsURL)
+                }
+            }
+            Button("Cancel", role: .cancel) {
+                recorder.permissionError = nil
+            }
         } message: {
-            permissionAlertMessage
+            if let error = recorder.permissionError {
+                Text(error)
+            } else {
+                Text("Microphone access is required to record audio.")
+            }
         }
         .onChange(of: recorder.permissionError) { _, newValue in
             showingPermissionAlert = newValue != nil

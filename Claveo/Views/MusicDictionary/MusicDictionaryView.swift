@@ -81,32 +81,12 @@ struct MusicDictionaryView: View {
                         SymbolsListView(symbols: filteredSymbols, searchText: searchText)
                     }
                 }
-                
-                // Bottom search bar using native component
-                HStack(spacing: 12) {
-                    Image(systemName: "magnifyingglass")
-                        .foregroundColor(.secondary)
-                    
-                    TextField("Search dictionary...", text: $searchText)
-                        .textInputAutocapitalization(.never)
-                        .autocorrectionDisabled()
-                    
-                    if !searchText.isEmpty {
-                        Button(action: { searchText = "" }) {
-                            Image(systemName: "xmark.circle.fill")
-                                .foregroundColor(.secondary)
-                        }
-                    }
-                }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 12)
-                .background(Color(.systemGray6))
-                .cornerRadius(10)
-                .padding(.horizontal)
-                .padding(.bottom, 8)
             }
             .navigationTitle("Music Dictionary")
-            .navigationBarTitleDisplayMode(.inline)
+            .navigationBarTitleDisplayMode(.large)
+            .searchable(text: $searchText, prompt: "Search dictionary")
+            .autocorrectionDisabled()
+            .textInputAutocapitalization(.never)
         }
     }
     
@@ -160,20 +140,11 @@ struct MusicDictionaryView: View {
         
         var body: some View {
             if terms.isEmpty {
-                VStack(spacing: 16) {
-                    Image(systemName: "book.closed")
-                        .font(.system(size: 48))
-                        .foregroundColor(.secondary)
-                    Text(searchText.isEmpty ? "No terms available" : "No results found")
-                        .font(.headline)
-                        .foregroundColor(.secondary)
-                    if !searchText.isEmpty {
-                        Text("Try a different search term")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                    }
+                ContentUnavailableView {
+                    Label(searchText.isEmpty ? "No Terms" : "No Results", systemImage: "book.closed")
+                } description: {
+                    Text(searchText.isEmpty ? "No terms available" : "Try a different search term")
                 }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
                 List {
                     if searchText.isEmpty {
@@ -244,20 +215,11 @@ struct MusicDictionaryView: View {
         
         var body: some View {
             if symbols.isEmpty {
-                VStack(spacing: 16) {
-                    Image(systemName: "music.note")
-                        .font(.system(size: 48))
-                        .foregroundColor(.secondary)
-                    Text(searchText.isEmpty ? "No symbols available" : "No results found")
-                        .font(.headline)
-                        .foregroundColor(.secondary)
-                    if !searchText.isEmpty {
-                        Text("Try a different search term")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                    }
+                ContentUnavailableView {
+                    Label(searchText.isEmpty ? "No Symbols" : "No Results", systemImage: "music.note")
+                } description: {
+                    Text(searchText.isEmpty ? "No symbols available" : "Try a different search term")
                 }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
                 List {
                     if searchText.isEmpty {

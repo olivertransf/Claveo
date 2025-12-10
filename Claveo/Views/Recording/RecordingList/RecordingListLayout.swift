@@ -8,23 +8,13 @@
 import SwiftUI
 
 extension RecordingListView {
+    @ViewBuilder
     var mainContentView: some View {
-        ZStack {
-            if shouldShowEmptyState {
-                emptyStateView
-            } else {
-                recordingsList
-                    .listStyle(.plain)
-                    .scrollContentBackground(.hidden)
-                    .background(Color.clear)
-            }
-            
-            if isRecordingButtonVisible {
-                recordingButtonOverlay
-                    .transition(.move(edge: .bottom).combined(with: .opacity))
-            }
+        if shouldShowEmptyState {
+            emptyStateView
+        } else {
+            recordingsList
         }
-        .ignoresSafeArea(.keyboard, edges: .bottom)
     }
     
     var shouldShowEmptyState: Bool {
@@ -36,7 +26,7 @@ extension RecordingListView {
         }
         
         let hasActiveFilters = !searchText.isEmpty || selectedTag != nil || selectedPiece != nil
-        if hasActiveFilters && sortedRecordings.isEmpty {
+        if hasActiveFilters && filteredRecordings.isEmpty {
             return true
         }
         
@@ -45,56 +35,28 @@ extension RecordingListView {
 
     var recordingsList: some View {
         List {
-            ForEach(sortedRecordings) { recording in
+            ForEach(filteredRecordings) { recording in
                 recordingRow(for: recording)
-                    .background(
-                        GeometryReader { geometry in
-                            let frame = geometry.frame(in: .named("scroll"))
-                            Color.clear.preference(
-                                key: ScrollOffsetPreferenceKey.self,
-                                value: frame.minY
-                            )
-                        }
-                    )
             }
         }
-        .coordinateSpace(name: "scroll")
-        .onPreferenceChange(ScrollOffsetPreferenceKey.self) { value in
-            let currentOffset = value
-            let scrollDelta = currentOffset - lastScrollOffset
-            guard abs(scrollDelta) > 5 else { return }
-            
-            withAnimation(.easeInOut(duration: 0.2)) {
-                if scrollDelta < 0 {
-                    isRecordingButtonVisible = false
-                } else {
-                    isRecordingButtonVisible = true
-                }
-            }
-            
-            lastScrollOffset = currentOffset
-        }
-        .safeAreaInset(edge: .bottom) {
-            Color.clear.frame(height: 140)
-        }
-        .contentMargins(.bottom, 20, for: .scrollContent)
+        .listStyle(.automatic)
     }
     
     func recordingRow(for recording: Recording) -> some View {
-        RecordingRowView(
+        let isExpandedBinding = Binding<Bool>(
+            get: { expandedRecordingId == recording.id },
+            set: { newValue in
+                expandedRecordingId = newValue ? recording.id : nil
+            }
+        )
+        
+        return RecordingRowView(
             recording: recording,
-            isExpanded: expandedRecordingId == recording.id,
+            isExpanded: isExpandedBinding,
             isPlaying: player.isPlaying && player.currentRecording?.id == recording.id,
             currentTime: player.currentRecording?.id == recording.id ? player.currentTime : nil,
             duration: recording.duration,
             playbackRate: player.playbackRate,
-            onExpand: {
-                if expandedRecordingId == recording.id {
-                    expandedRecordingId = nil
-                } else {
-                    expandedRecordingId = recording.id
-                }
-            },
             onPlayPause: {
                 if player.currentRecording?.id == recording.id {
                     if player.isPlaying {
@@ -126,8 +88,6 @@ extension RecordingListView {
                 showingDeleteAlert = true
             }
         )
-        .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
-        .listRowSeparator(.visible)
         .contextMenu {
             Button {
                 selectedRecording = recording
@@ -180,35 +140,6 @@ extension RecordingListView {
         )
     }
     
-    @ViewBuilder
-    var deleteAlertButtons: some View {
-        Button("Cancel", role: .cancel) { }
-        Button("Delete", role: .destructive) {
-            if let recording = recordingToDelete {
-                recorder.deleteRecording(recording)
-            }
-        }
-    }
-    
-    @ViewBuilder
-    var permissionAlertButtons: some View {
-        Button("Settings") {
-            if let settingsURL = URL(string: UIApplication.openSettingsURLString) {
-                UIApplication.shared.open(settingsURL)
-            }
-        }
-        Button("Cancel", role: .cancel) {
-            recorder.permissionError = nil
-        }
-    }
-    
-    var permissionAlertMessage: Text {
-        if let error = recorder.permissionError {
-            return Text(error)
-        } else {
-            return Text("Microphone access is required to record audio.")
-        }
-    }
     
 }
 

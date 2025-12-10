@@ -18,8 +18,31 @@ class AudioPlayer: NSObject, ObservableObject {
     @Published var currentRecording: Recording?
     @Published var playbackRate: Float = 1.0 {
         didSet {
-            audioPlayer?.rate = playbackRate
-            audioPlayer?.enableRate = true
+            updatePlaybackRate()
+        }
+    }
+    
+    private func updatePlaybackRate() {
+        guard let player = audioPlayer else { return }
+        
+        let wasPlaying = isPlaying
+        let currentTime = player.currentTime
+        
+        // Pause if playing to ensure rate change is applied
+        if wasPlaying {
+            player.pause()
+        }
+        
+        // Enable rate and set the new rate
+        player.enableRate = true
+        player.rate = playbackRate
+        
+        // Restore playback position
+        player.currentTime = currentTime
+        
+        // Resume playback if it was playing
+        if wasPlaying {
+            player.play()
         }
     }
     
@@ -34,7 +57,8 @@ class AudioPlayer: NSObject, ObservableObject {
     private func setupAudioSession() {
         do {
             let session = AVAudioSession.sharedInstance()
-            try session.setCategory(.playback, mode: .default)
+            // Use .playback category which supports rate changes
+            try session.setCategory(.playback, mode: .default, options: [])
             try session.setActive(true)
         } catch {
             #if DEBUG
@@ -45,6 +69,11 @@ class AudioPlayer: NSObject, ObservableObject {
     
     func play(_ recording: Recording) {
         if currentRecording?.id == recording.id && audioPlayer != nil {
+            // Ensure rate is set when resuming
+            if let player = audioPlayer {
+                player.enableRate = true
+                player.rate = playbackRate
+            }
             audioPlayer?.play()
             isPlaying = true
             startTimer()
@@ -106,8 +135,21 @@ class AudioPlayer: NSObject, ObservableObject {
     }
     
     func seek(to time: TimeInterval) {
-        audioPlayer?.currentTime = time
+        guard let player = audioPlayer else { return }
+        let wasPlaying = isPlaying
+        
+        // Pause if playing to ensure seek works properly
+        if wasPlaying {
+            player.pause()
+        }
+        
+        player.currentTime = time
         currentTime = time
+        
+        // Resume if it was playing
+        if wasPlaying {
+            player.play()
+        }
     }
     
     func skipBackward(seconds: TimeInterval = 15) {

@@ -32,6 +32,7 @@ class Metronome: ObservableObject {
         }
     }
     @Published var timeSignature: TimeSignature = .fourFour
+    @Published var customTimeSignature: (top: Int, bottom: Int)? = nil
     @Published var beatPattern: [Bool] = [true, false, false, false] {
         didSet {
             // Ensure at least one beat is accented
@@ -64,12 +65,29 @@ class Metronome: ObservableObject {
     let hapticGenerator = UIImpactFeedbackGenerator(style: .medium)
     let hapticGeneratorLight = UIImpactFeedbackGenerator(style: .light)
     
+    var beatsPerMeasure: Int {
+        customTimeSignature?.top ?? timeSignature.beatsPerMeasure
+    }
+    
+    var displayTimeSignature: String {
+        if let custom = customTimeSignature {
+            return "\(custom.top)/\(custom.bottom)"
+        }
+        return timeSignature.rawValue
+    }
+    
     init() {
         let settings = SettingsManager.shared.settings
         
-        // Load default tempo
-        if settings.defaultMetronomeTempo > 0 {
-            tempo = settings.defaultMetronomeTempo
+        // Load last tempo (or 120 if no last tempo saved)
+        let tempoToLoad = settings.lastMetronomeTempo > 0 ? settings.lastMetronomeTempo : 120
+        if tempoToLoad >= 20 && tempoToLoad <= 300 {
+            tempo = tempoToLoad
+        }
+        
+        // Load custom time signature
+        if let top = settings.customTimeSignatureTop, let bottom = settings.customTimeSignatureBottom {
+            customTimeSignature = (top, bottom)
         }
         
         // Load saved preferences

@@ -16,7 +16,7 @@ extension Metronome {
     }
     
     func updateBeatPattern() {
-        beatPattern = Array(repeating: false, count: timeSignature.beatsPerMeasure)
+        beatPattern = Array(repeating: false, count: max(1, beatsPerMeasure))
         beatPattern[0] = true
     }
     
@@ -75,10 +75,28 @@ extension Metronome {
     
     func setTimeSignature(_ signature: TimeSignature) {
         timeSignature = signature
+        customTimeSignature = nil
         updateBeatPattern()
         if isPlaying {
             currentBeat = 0
         }
+        // Clear custom time signature when selecting a standard one
+        SettingsManager.shared.update(\.customTimeSignatureTop, value: nil)
+        SettingsManager.shared.update(\.customTimeSignatureBottom, value: nil)
+    }
+    
+    func setCustomTimeSignature(top: Int, bottom: Int) {
+        let allowedBottoms: [Int] = [1, 2, 4, 8, 16]
+        let clampedTop = max(1, min(16, top))
+        let validBottom = allowedBottoms.contains(bottom) ? bottom : 4
+        customTimeSignature = (clampedTop, validBottom)
+        updateBeatPattern()
+        if isPlaying {
+            currentBeat = 0
+        }
+        // Save custom time signature
+        SettingsManager.shared.update(\.customTimeSignatureTop, value: clampedTop)
+        SettingsManager.shared.update(\.customTimeSignatureBottom, value: validBottom)
     }
     
     func startTimer() {
@@ -104,7 +122,7 @@ extension Metronome {
             let beatTimeInSeconds = startTime + (Double(beatNumber) * interval)
             let beatHostTime = AVAudioTime.hostTime(forSeconds: beatTimeInSeconds)
             
-            let beatInMeasure = beatNumber % timeSignature.beatsPerMeasure
+            let beatInMeasure = beatNumber % beatsPerMeasure
             let isAccent = beatInMeasure < beatPattern.count && beatPattern[beatInMeasure]
             
             let buffer = isAccent ? accentBufferConverted : normalBufferConverted
@@ -132,13 +150,16 @@ extension Metronome {
             lastBeatTime = currentTime
             beatCount += 1
             
-            currentBeat = (beatCount - 1) % timeSignature.beatsPerMeasure
+            currentBeat = (beatCount - 1) % beatsPerMeasure
             
             if hapticEnabled {
                 let isAccent = currentBeat < beatPattern.count && beatPattern[currentBeat]
+                // Prepare generators right before use for better reliability
                 if isAccent {
+                    hapticGenerator.prepare()
                     hapticGenerator.impactOccurred(intensity: 1.0)
                 } else {
+                    hapticGeneratorLight.prepare()
                     hapticGeneratorLight.impactOccurred(intensity: 0.5)
                 }
             }
@@ -172,14 +193,17 @@ extension Metronome {
     }
     
     func playBeat() {
-        currentBeat = (currentBeat + 1) % timeSignature.beatsPerMeasure
+        currentBeat = (currentBeat + 1) % beatsPerMeasure
         
         let isAccent = currentBeat < beatPattern.count && beatPattern[currentBeat]
         
         if hapticEnabled {
+            // Prepare generators right before use for better reliability
             if isAccent {
+                hapticGenerator.prepare()
                 hapticGenerator.impactOccurred(intensity: 1.0)
             } else {
+                hapticGeneratorLight.prepare()
                 hapticGeneratorLight.impactOccurred(intensity: 0.5)
             }
         }

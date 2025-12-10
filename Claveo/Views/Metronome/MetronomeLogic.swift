@@ -45,6 +45,17 @@ extension MetronomeView {
             }
         }
     }
+    
+    func prepareCustomTimeSignature() {
+        customTop = metronome.customTimeSignature?.top ?? metronome.beatsPerMeasure
+        customBottom = metronome.customTimeSignature?.bottom ?? 4
+        showingCustomTimeSignatureSheet = true
+    }
+    
+    func saveCustomTimeSignature() {
+        metronome.setCustomTimeSignature(top: customTop, bottom: customBottom)
+        showingCustomTimeSignatureSheet = false
+    }
 }
 
 

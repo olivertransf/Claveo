@@ -14,6 +14,9 @@ struct MetronomeView: View {
     @State var tapTimes: [Date] = []
     @State var showingTemposManagement = false
     @State var showingBeatPattern = false
+    @State var showingCustomTimeSignatureSheet = false
+    @State var customTop: Int = 4
+    @State var customBottom: Int = 4
     
     var favoriteTempos: [Int] {
         settingsManager.settings.favoriteTempos
@@ -38,26 +41,37 @@ struct MetronomeView: View {
         settingsManager.update(\.favoriteTempos, value: tempos)
     }
     
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    
+    private var shouldUseSplitView: Bool {
+        UIDevice.current.userInterfaceIdiom == .pad && horizontalSizeClass == .regular
+    }
+    
     var isIPad: Bool {
-        UIDevice.current.userInterfaceIdiom == .pad
+        horizontalSizeClass == .regular
     }
     
     var body: some View {
-        if isIPad {
-            // iPad split view layout using native NavigationSplitView
-            NavigationSplitView(columnVisibility: .constant(.doubleColumn)) {
-                // Sidebar
-                sidebarView
-                    .navigationSplitViewColumnWidth(min: 300, ideal: 350)
-            } detail: {
-                // Main content
-                mainContentView
+        Group {
+            if shouldUseSplitView {
+                // iPad split view layout using native NavigationSplitView
+                NavigationSplitView(columnVisibility: .constant(.doubleColumn)) {
+                    // Sidebar
+                    sidebarView
+                        .navigationSplitViewColumnWidth(min: 300, ideal: 350)
+                } detail: {
+                    // Main content
+                    mainContentView
+                }
+            } else {
+                // iPhone layout (or iPad in narrow window)
+                NavigationStack {
+                    mainContentView
+                }
             }
-        } else {
-            // iPhone layout
-            NavigationStack {
-                mainContentView
-            }
+        }
+        .sheet(isPresented: $showingCustomTimeSignatureSheet) {
+            customTimeSignatureSheet
         }
     }
 }

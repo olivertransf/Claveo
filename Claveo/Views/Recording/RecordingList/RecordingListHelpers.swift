@@ -50,6 +50,32 @@ extension RecordingListView {
         let seconds = Int(time) % 60
         return String(format: "%d:%02d", minutes, seconds)
     }
+    
+    var filteredSidebarPieces: [Piece] {
+        if pieceSearchText.isEmpty {
+            return availablePieces.sorted { $0.name < $1.name }
+        }
+        return availablePieces.filter { piece in
+            piece.name.localizedCaseInsensitiveContains(pieceSearchText) ||
+            (piece.composer?.localizedCaseInsensitiveContains(pieceSearchText) ?? false)
+        }.sorted { $0.name < $1.name }
+    }
+    
+    func savePieces() {
+        availablePieces.sort { $0.name < $1.name }
+        guard let encoded = try? JSONEncoder().encode(availablePieces) else { return }
+        
+        let documentsPath = iCloudManager.shared.getDocumentsURL()
+        let fileURL = documentsPath.appendingPathComponent("pieces.json")
+        
+        do {
+            try iCloudManager.shared.writeFile(data: encoded, to: fileURL)
+        } catch {
+            try? encoded.write(to: fileURL)
+        }
+        
+        UserDefaults.standard.set(encoded, forKey: "pieces_cache")
+    }
 }
 
 struct ScrollOffsetPreferenceKey: PreferenceKey {

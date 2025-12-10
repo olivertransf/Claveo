@@ -13,11 +13,13 @@ struct AppSettings: Codable {
     var showFrequencyDisplay: Bool = true
     
     // Metronome Settings
-    var defaultMetronomeTempo: Int = 120
+    var lastMetronomeTempo: Int = 120
     var metronomeSound: String = MetronomeSound.click.rawValue
     var metronomeHapticEnabled: Bool = true
     var metronomeAutoStopOnTabSwitch: Bool = false
     var favoriteTempos: [Int] = []
+    var customTimeSignatureTop: Int? = nil
+    var customTimeSignatureBottom: Int? = nil
     
     // Dictionary Settings
     var showAdvancedDictionaryItems: Bool = true
@@ -29,8 +31,9 @@ struct AppSettings: Codable {
     
     enum CodingKeys: String, CodingKey {
         case a4ReferenceFrequency, showFrequencyDisplay
-        case defaultMetronomeTempo, metronomeSound, metronomeHapticEnabled
+        case lastMetronomeTempo, metronomeSound, metronomeHapticEnabled
         case metronomeAutoStopOnTabSwitch, favoriteTempos
+        case customTimeSignatureTop, customTimeSignatureBottom
         case showAdvancedDictionaryItems, accentColor, colorScheme, showTabBarText
     }
 }
