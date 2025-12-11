@@ -31,7 +31,7 @@ struct TunerView: View {
                 if pitchDetector.isDetecting && pitchDetector.frequency > 0 {
                     VStack(spacing: 24) {
                         Text(pitchDetector.note)
-                            .font(.system(size: 96, weight: .ultraLight, design: .rounded))
+                            .font(.system(size: 96, weight: .light, design: .rounded))
                             .monospacedDigit()
                         
                         if showFrequencyDisplay {

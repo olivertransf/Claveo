@@ -1,0 +1,49 @@
+Claveo - Your Complete Music Practice Companion
+
+Transform your practice sessions with Claveo—the all-in-one app designed for musicians who demand precision and organization. Whether you're a student, teacher, or professional musician, Claveo brings together everything you need to practice effectively and track your progress.
+
+🎵 PRACTICE RECORDING
+• Record unlimited practice sessions with crystal-clear audio
+• Organize recordings with custom names, tags, and piece associations
+• Adjust playback speed from 0.75x to 1.5x for detailed practice
+• Skip forward or backward 15 seconds with a single tap
+• Search and filter recordings by name, piece, tags, or notes
+• Seamless iCloud sync across all your devices
+
+🎼 ADVANCED METRONOME
+• Precise tempo control from 20 to 300 BPM
+• Tap tempo feature—just tap to set your desired speed
+• Customizable beat patterns for complex time signatures
+• Support for all common time signatures (2/4, 3/4, 4/4, 6/8, and custom)
+• Save favorite tempos for quick access
+• Haptic feedback option for silent practice
+• Visual beat indicators with customizable accent patterns
+
+🎯 PRECISION TUNER
+• Real-time pitch detection with professional accuracy
+• Dual tuning meters: standard view for quick tuning, precise view for fine adjustments
+• Visual feedback with color-coded indicators (green = in tune)
+• Frequency display option for advanced users
+• Works with any instrument—strings, winds, brass, and more
+• Customizable A4 reference frequency (400-480 Hz)
+
+📚 MUSIC DICTIONARY
+• Searchable database of 650+ music terms and definitions
+• Curated definitions from Open Music Theory
+• Musical symbols with verified SMuFL notation support
+• Organized by categories: Theory, Tempo, Dynamics, Articulation, Notation, Form, and more
+• Perfect for students learning music theory and notation
+
+PERFECT FOR:
+• Music students tracking practice progress
+• Teachers recording lessons and providing feedback
+• Professional musicians maintaining practice logs
+• Anyone learning an instrument who needs reliable practice tools
+
+PRIVACY & DATA
+Your privacy is important to us. Claveo does not collect, transmit, or have access to any of your personal data. All recordings and metadata are stored locally on your device and optionally synced to your personal iCloud account. We have no access to your data—it remains completely private and under your control.
+
+No ads. No subscriptions. Just powerful tools designed for serious musicians.
+
+Download Claveo today and take your practice to the next level.
+

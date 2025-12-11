@@ -53,7 +53,7 @@ struct RecordingListView: View {
     
     var body: some View {
         unifiedView
-        .sheet(isPresented: $showingPiecesManagement) {
+            .sheet(isPresented: $showingPiecesManagement) {
             PieceManagementView(pieces: $availablePieces)
                 .environmentObject(themeManager)
         }
