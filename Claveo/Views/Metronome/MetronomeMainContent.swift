@@ -14,7 +14,13 @@ extension MetronomeView {
                 // Tempo display
                 VStack(spacing: 12) {
                     Text("\(metronome.tempo)")
-                        .font(.system(size: isIPad ? 144 : 96, weight: .ultraLight, design: .rounded))
+                        .font(
+                            .system(
+                                size: isIPad ? 144 : 96,
+                                weight: .light,
+                                design: .rounded
+                            )
+                        )
                         .foregroundColor(.primary)
                         .monospacedDigit()
                     
@@ -111,109 +117,107 @@ extension MetronomeView {
                         .padding(.horizontal, isIPad ? 20 : 20)
                     }
                     
-                    if !isIPad {
-                        // Control buttons section
-                        VStack(spacing: 16) {
-                            HStack(spacing: 10) {
-                                Button(action: tapTempo) {
-                                    Label("Tap Tempo", systemImage: "hand.tap")
-                                        .frame(maxWidth: .infinity)
-                                }
-                                .buttonStyle(.borderedProminent)
-                                .tint(themeManager.accentColor)
-                                
-                                Menu {
-                                    ForEach(TimeSignature.allCases, id: \.self) { signature in
-                                        Button(action: {
-                                            metronome.setTimeSignature(signature)
-                                        }) {
-                                            HStack {
-                                                Text(signature.rawValue)
-                                                if metronome.customTimeSignature == nil && metronome.timeSignature == signature {
-                                                    Spacer()
-                                                    Image(systemName: "checkmark")
-                                                        .foregroundColor(themeManager.accentColor)
-                                                }
-                                            }
-                                        }
-                                    }
-                                    
-                                    Divider()
-                                    
-                                    Button {
-                                        prepareCustomTimeSignature()
-                                    } label: {
+                    // Control buttons section (shown on all devices)
+                    VStack(spacing: 16) {
+                        HStack(spacing: 10) {
+                            Button(action: tapTempo) {
+                                Label("Tap Tempo", systemImage: "hand.tap")
+                                    .frame(maxWidth: .infinity)
+                            }
+                            .buttonStyle(.borderedProminent)
+                            .tint(themeManager.accentColor)
+                            
+                            Menu {
+                                ForEach(TimeSignature.allCases, id: \.self) { signature in
+                                    Button(action: {
+                                        metronome.setTimeSignature(signature)
+                                    }) {
                                         HStack {
-                                            Text("Custom…")
-                                            Spacer()
-                                            if metronome.customTimeSignature != nil {
+                                            Text(signature.rawValue)
+                                            if metronome.customTimeSignature == nil && metronome.timeSignature == signature {
+                                                Spacer()
                                                 Image(systemName: "checkmark")
                                                     .foregroundColor(themeManager.accentColor)
                                             }
                                         }
                                     }
-                                    
-                                    if metronome.customTimeSignature != nil {
-                                        Button("Clear Custom", role: .destructive) {
-                                            metronome.setTimeSignature(.fourFour)
+                                }
+                                
+                                Divider()
+                                
+                                Button {
+                                    prepareCustomTimeSignature()
+                                } label: {
+                                    HStack {
+                                        Text("Custom…")
+                                        Spacer()
+                                        if metronome.customTimeSignature != nil {
+                                            Image(systemName: "checkmark")
+                                                .foregroundColor(themeManager.accentColor)
                                         }
                                     }
-                                } label: {
-                                    Label(metronome.displayTimeSignature, systemImage: "music.note")
-                                        .frame(maxWidth: .infinity)
                                 }
-                                .buttonStyle(.bordered)
+                                
+                                if metronome.customTimeSignature != nil {
+                                    Button("Clear Custom", role: .destructive) {
+                                        metronome.setTimeSignature(.fourFour)
+                                    }
+                                }
+                            } label: {
+                                Label(metronome.displayTimeSignature, systemImage: "music.note")
+                                    .frame(maxWidth: .infinity)
+                            }
+                            .buttonStyle(.bordered)
+                        }
+                        .padding(.horizontal, 20)
+                        
+                        // Beat pattern section
+                        VStack(alignment: .leading, spacing: 8) {
+                            HStack {
+                                Image(systemName: "circle.grid.3x3")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                                Text("Beat Pattern")
+                                    .font(.subheadline)
+                                    .fontWeight(.semibold)
+                                    .foregroundColor(.secondary)
+                                Spacer()
                             }
                             .padding(.horizontal, 20)
                             
-                            // Beat pattern section (inline like iPad)
-                            VStack(alignment: .leading, spacing: 8) {
-                                HStack {
-                                    Image(systemName: "circle.grid.3x3")
-                                        .font(.caption)
-                                        .foregroundColor(.secondary)
-                                    Text("Beat Pattern")
-                                        .font(.subheadline)
-                                        .fontWeight(.semibold)
-                                        .foregroundColor(.secondary)
-                                    Spacer()
-                                }
-                                .padding(.horizontal, 20)
-                                
-                                // Grid layout that wraps to multiple rows
-                                let columns = [GridItem(.adaptive(minimum: 52), spacing: 12)]
-                                LazyVGrid(columns: columns, alignment: .leading, spacing: 12) {
-                                    ForEach(0..<metronome.beatPattern.count, id: \.self) { index in
-                                        Button {
-                                            toggleBeat(index)
-                                        } label: {
-                                            Circle()
-                                                .fill(
-                                                    index == metronome.currentBeat && metronome.isPlaying ?
-                                                    Color.red :
-                                                        (metronome.beatPattern[index] ? themeManager.accentColor : Color(.systemGray5))
-                                                )
-                                                .frame(width: 52, height: 52)
-                                                .overlay(
-                                                    Text("\(index + 1)")
-                                                        .font(.caption2)
-                                                        .fontWeight(.semibold)
-                                                        .foregroundColor(
-                                                            index == metronome.currentBeat && metronome.isPlaying ?
-                                                                .white :
-                                                                (metronome.beatPattern[index] ? .white : .secondary)
-                                                        )
-                                                )
-                                                .shadow(color: (index == metronome.currentBeat && metronome.isPlaying ? Color.red : (metronome.beatPattern[index] ? themeManager.accentColor : Color.clear)).opacity(0.3), radius: 4, x: 0, y: 2)
-                                        }
-                                        .buttonStyle(.plain)
-                                        .id("\(index)-\(metronome.beatPattern.count)")
-                                        .animation(.easeInOut(duration: 0.1), value: metronome.currentBeat)
+                            // Grid layout that wraps to multiple rows
+                            let columns = [GridItem(.adaptive(minimum: 52), spacing: 12)]
+                            LazyVGrid(columns: columns, alignment: .leading, spacing: 12) {
+                                ForEach(0..<metronome.beatPattern.count, id: \.self) { index in
+                                    Button {
+                                        toggleBeat(index)
+                                    } label: {
+                                        Circle()
+                                            .fill(
+                                                index == metronome.currentBeat && metronome.isPlaying ?
+                                                Color.red :
+                                                    (metronome.beatPattern[index] ? themeManager.accentColor : Color(.systemGray5))
+                                            )
+                                            .frame(width: 52, height: 52)
+                                            .overlay(
+                                                Text("\(index + 1)")
+                                                    .font(.caption2)
+                                                    .fontWeight(.semibold)
+                                                    .foregroundColor(
+                                                        index == metronome.currentBeat && metronome.isPlaying ?
+                                                            .white :
+                                                            (metronome.beatPattern[index] ? .white : .secondary)
+                                                    )
+                                            )
+                                            .shadow(color: (index == metronome.currentBeat && metronome.isPlaying ? Color.red : (metronome.beatPattern[index] ? themeManager.accentColor : Color.clear)).opacity(0.3), radius: 4, x: 0, y: 2)
                                     }
+                                    .buttonStyle(.plain)
+                                    .id("\(index)-\(metronome.beatPattern.count)")
+                                    .animation(.easeInOut(duration: 0.1), value: metronome.currentBeat)
                                 }
-                                .padding(.horizontal, 20)
-                                .animation(.easeInOut(duration: 0.2), value: metronome.beatPattern.count)
                             }
+                            .padding(.horizontal, 20)
+                            .animation(.easeInOut(duration: 0.2), value: metronome.beatPattern.count)
                         }
                     }
                     
@@ -290,8 +294,6 @@ extension MetronomeView {
                 }
                 .padding(.bottom, 40)
             }
-            .navigationTitle("Metronome")
-            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Menu {

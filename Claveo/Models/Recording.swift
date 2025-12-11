@@ -89,6 +89,29 @@ struct Recording: Identifiable, Codable {
         }
     }
     
+    var shortDateString: String {
+        let calendar = Calendar.current
+        let now = Date()
+        
+        if calendar.isDateInToday(createdAt) {
+            let formatter = DateFormatter()
+            formatter.timeStyle = .short
+            return formatter.string(from: createdAt)
+        } else if calendar.isDateInYesterday(createdAt) {
+            return "Yesterday"
+        } else if calendar.dateInterval(of: .weekOfYear, for: now)?.contains(createdAt) ?? false {
+            // Show abbreviated day name for this week
+            let formatter = DateFormatter()
+            formatter.dateFormat = "EEE"
+            return formatter.string(from: createdAt)
+        } else {
+            // Show short date for older recordings
+            let formatter = DateFormatter()
+            formatter.dateFormat = "M/d"
+            return formatter.string(from: createdAt)
+        }
+    }
+    
     var formattedDuration: String {
         let minutes = Int(duration) / 60
         let seconds = Int(duration) % 60

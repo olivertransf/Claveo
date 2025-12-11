@@ -39,7 +39,7 @@ class PitchDetector: NSObject, ObservableObject {
     func startDetection() async {
         guard !isDetecting else { return }
         
-        // Skip audio initialization in preview mode (causes crashes)
+        // Skip audio initialization in preview mode or simulator (causes crashes)
         #if DEBUG
         if ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PLAYGROUNDS"] == "1" {
             // Running in preview/playground - simulate detection for UI testing
@@ -50,6 +50,29 @@ class PitchDetector: NSObject, ObservableObject {
             cents = 0.0
             return
         }
+        
+        // Simulator detection - simulate pitch detection for testing
+        #if targetEnvironment(simulator)
+        isDetecting = true
+        // Simulate a note for testing in simulator
+        frequency = 440.0
+        note = "A4"
+        cents = 0.0
+        
+        // Simulate some variation for testing
+        Task {
+            var testFrequency = 440.0
+            while isDetecting {
+                // Simulate slight frequency variation
+                testFrequency += Double.random(in: -2...2)
+                testFrequency = max(200, min(800, testFrequency))
+                frequency = testFrequency
+                updateNote(from: testFrequency)
+                try? await Task.sleep(nanoseconds: 100_000_000) // Update every 100ms
+            }
+        }
+        return
+        #endif
         #endif
         
         // Request microphone permission first

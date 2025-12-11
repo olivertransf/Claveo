@@ -21,9 +21,6 @@ struct AppSettings: Codable {
     var customTimeSignatureTop: Int? = nil
     var customTimeSignatureBottom: Int? = nil
     
-    // Dictionary Settings
-    var showAdvancedDictionaryItems: Bool = true
-    
     // Theme Settings
     var accentColor: String = AccentColorOption.blue.rawValue
     var colorScheme: String = ColorSchemeOption.system.rawValue
@@ -34,7 +31,7 @@ struct AppSettings: Codable {
         case lastMetronomeTempo, metronomeSound, metronomeHapticEnabled
         case metronomeAutoStopOnTabSwitch, favoriteTempos
         case customTimeSignatureTop, customTimeSignatureBottom
-        case showAdvancedDictionaryItems, accentColor, colorScheme, showTabBarText
+        case accentColor, colorScheme, showTabBarText
     }
 }
 

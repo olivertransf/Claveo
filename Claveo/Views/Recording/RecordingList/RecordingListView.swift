@@ -51,20 +51,8 @@ struct RecordingListView: View {
         return filtered.sorted { $0.createdAt > $1.createdAt }
     }
     
-    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
-    
-    private var shouldUseSplitView: Bool {
-        UIDevice.current.userInterfaceIdiom == .pad && horizontalSizeClass == .regular
-    }
-    
     var body: some View {
-        Group {
-            if shouldUseSplitView {
-                iPadView
-            } else {
-                iPhoneView
-            }
-        }
+        unifiedView
         .sheet(isPresented: $showingPiecesManagement) {
             PieceManagementView(pieces: $availablePieces)
                 .environmentObject(themeManager)

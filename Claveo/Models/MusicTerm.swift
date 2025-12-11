@@ -13,9 +13,11 @@ struct MusicTerm: Identifiable, Codable, Hashable {
     let definition: String
     let category: String
     let example: String?
+    let symbol: String? // Optional musical symbol (SMuFL character)
+    let smuflCode: String? // Optional SMuFL code
     
     enum CodingKeys: String, CodingKey {
-        case term, definition, category, example
+        case term, definition, category, example, symbol, smuflCode
     }
 }
 
@@ -49,6 +51,5 @@ struct MusicSymbol: Identifiable, Codable, Hashable {
 
 struct MusicDictionary: Codable {
     let terms: [MusicTerm]
-    let symbols: [MusicSymbol]
 }
 

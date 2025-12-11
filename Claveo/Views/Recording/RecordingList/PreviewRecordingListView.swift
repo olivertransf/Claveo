@@ -121,8 +121,6 @@ struct PreviewRecordingListView: View {
                     .listStyle(.automatic)
                 }
             }
-            .navigationTitle("Recordings")
-            .navigationBarTitleDisplayMode(.large)
             .onAppear {
                 if let recordings = previewRecordings {
                     recorder.recordings = recordings

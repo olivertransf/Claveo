@@ -68,8 +68,6 @@ struct TunerView: View {
                 Spacer()
             }
             .padding()
-            .navigationTitle("Tuner")
-            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
                     Menu {
@@ -117,7 +115,7 @@ struct TunerView: View {
                 Text("Microphone access is required to detect pitch.")
             }
             .onAppear {
-                Task {
+                Task { @MainActor in
                     await pitchDetector.startDetection()
                 }
             }

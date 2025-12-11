@@ -33,13 +33,6 @@ struct SettingsView: View {
         )
     }
     
-    private var showAdvancedDictionaryItems: Binding<Bool> {
-        Binding(
-            get: { settingsManager.settings.showAdvancedDictionaryItems },
-            set: { settingsManager.update(\.showAdvancedDictionaryItems, value: $0) }
-        )
-    }
-    
     private var metronomeSound: Binding<MetronomeSound> {
         Binding(
             get: { settingsManager.metronomeSoundEnum },
@@ -150,12 +143,6 @@ struct SettingsView: View {
                     Toggle("Auto-stop when switching tabs", isOn: metronomeAutoStopOnTabSwitch)
                 }
                 
-                // Dictionary Settings
-                Section("Dictionary") {
-                    Toggle("Show Advanced Symbols & Terms", isOn: showAdvancedDictionaryItems)
-                        .help("Hide specialized and lesser-known musical symbols and terms")
-                }
-                
                 // Appearance Settings
                 Section("Appearance") {
                     Picker("Color Scheme", selection: $themeManager.colorSchemeOption) {
@@ -214,8 +201,8 @@ struct SettingsView: View {
                     
                 }
             }
-            .navigationTitle("Settings")
-            .navigationBarTitleDisplayMode(.large)
+            // .navigationTitle("Settings")
+            // .navigationBarTitleDisplayMode(.large)
             .tint(themeManager.accentColor)
             .sheet(isPresented: $showingStorageInfo) {
                 StorageInfoView()

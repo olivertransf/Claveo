@@ -30,7 +30,7 @@ struct RecordingRowView: View {
         VStack(spacing: 0) {
             DisclosureGroup(isExpanded: $isExpanded) {
                 VStack(spacing: 0) {
-                    VStack(alignment: .leading, spacing: 16) {
+                    VStack(alignment: .leading, spacing: 12) {
                         VStack(spacing: 8) {
                             Slider(
                                 value: Binding(
@@ -129,41 +129,54 @@ struct RecordingRowView: View {
                     .padding(.horizontal, -20)
                 }
             } label: {
-                HStack(alignment: .center, spacing: 16) {
-                    VStack(alignment: .leading, spacing: 6) {
+                HStack(alignment: .center, spacing: 12) {
+                    VStack(alignment: .leading, spacing: 4) {
                         Text(recording.displayName)
                             .font(.headline)
                             .lineLimit(2)
                         
-                        HStack(spacing: 12) {
-                            Label(recording.relativeDateString, systemImage: "clock")
-                                .labelStyle(.titleAndIcon)
-                                .font(.subheadline)
-                                .foregroundColor(.secondary)
+                        // Date and piece on one row
+                        HStack(spacing: 8) {
+                            // Date
+                            HStack(spacing: 4) {
+                                Image(systemName: "clock")
+                                    .font(.caption2)
+                                Text(recording.shortDateString)
+                                    .font(.caption)
+                            }
+                            .foregroundColor(.secondary)
                             
+                            // Piece
                             if let piece = recording.piece {
-                                Label(piece, systemImage: "music.note")
-                                    .labelStyle(.titleAndIcon)
-                                    .font(.subheadline)
+                                Text("•")
+                                    .font(.caption)
                                     .foregroundColor(.secondary)
-                                    .lineLimit(1)
+                                HStack(spacing: 4) {
+                                    Image(systemName: "music.note")
+                                        .font(.caption2)
+                                    Text(piece)
+                                        .font(.caption)
+                                        .lineLimit(1)
+                                }
+                                .foregroundColor(.secondary)
                             }
                         }
                         
+                        // Tags on separate row
                         if !recording.tags.isEmpty {
                             HStack(spacing: 6) {
                                 ForEach(recording.tags.prefix(3), id: \.self) { tag in
                                     Text(tag)
-                                        .font(.caption)
-                                        .padding(.horizontal, 8)
-                                        .padding(.vertical, 4)
+                                        .font(.caption2)
+                                        .padding(.horizontal, 6)
+                                        .padding(.vertical, 2)
                                         .background(Color(.systemGray5))
                                         .foregroundColor(.secondary)
-                                        .cornerRadius(8)
+                                        .cornerRadius(6)
                                 }
                                 if recording.tags.count > 3 {
                                     Text("+\(recording.tags.count - 3)")
-                                        .font(.caption)
+                                        .font(.caption2)
                                         .foregroundColor(.secondary)
                                 }
                             }

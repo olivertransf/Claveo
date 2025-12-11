@@ -48,6 +48,8 @@ struct RecordingFilterSheet: View {
             .navigationTitle("Filters")
             .navigationBarTitleDisplayMode(.inline)
             .tint(themeManager.accentColor)
+            .accentColor(themeManager.accentColor)
+            .id(themeManager.accentColorOption)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Done") {

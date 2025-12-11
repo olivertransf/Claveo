@@ -12,78 +12,46 @@ struct MusicDictionaryView: View {
     @StateObject private var dictionaryService = MusicDictionaryService.shared
     @StateObject private var settingsManager = SettingsManager.shared
     @State private var searchText = ""
-    @State private var selectedTab: DictionaryTab = .dictionary
     @State private var isSearchPresented = false
     
-    private var showAdvancedDictionaryItems: Bool {
-        settingsManager.settings.showAdvancedDictionaryItems
-    }
-    
-    enum DictionaryTab: String, CaseIterable, Hashable {
-        case dictionary = "Dictionary"
-        case symbols = "Symbols"
-    }
-    
     var filteredTerms: [MusicTerm] {
-        // Force refresh when toggle changes by accessing showAdvancedDictionaryItems
-        _ = showAdvancedDictionaryItems
         return dictionaryService.searchAllTerms(query: searchText)
-    }
-    
-    var filteredSymbols: [MusicSymbol] {
-        // Force refresh when toggle changes by accessing showAdvancedDictionaryItems
-        _ = showAdvancedDictionaryItems
-        return dictionaryService.searchSymbols(query: searchText)
     }
     
     var body: some View {
         NavigationStack {
-            VStack(spacing: 0) {
-                // Tab selector
-                Picker("Dictionary Type", selection: $selectedTab) {
-                    ForEach(DictionaryTab.allCases, id: \.self) { tab in
-                        Text(tab.rawValue).tag(tab)
-                    }
-                }
-                .pickerStyle(.segmented)
-                .tint(themeManager.accentColor)
-                .padding(.horizontal)
-                .padding(.vertical, 8)
-                
-                // Content
+            Group {
                 if dictionaryService.isLoading {
-                    Spacer()
-                    ProgressView("Loading dictionary...")
-                    Spacer()
+                    VStack {
+                        Spacer()
+                        ProgressView("Loading dictionary...")
+                        Spacer()
+                    }
                 } else if let error = dictionaryService.errorMessage {
-                    Spacer()
-                    VStack(spacing: 16) {
-                        Image(systemName: "exclamationmark.triangle")
-                            .font(.system(size: 48))
-                            .foregroundColor(.orange)
-                        Text("Error Loading Dictionary")
-                            .font(.headline)
-                        Text(error)
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                            .multilineTextAlignment(.center)
-                            .padding(.horizontal)
-                        Button("Retry") {
-                            dictionaryService.loadDictionary()
+                    VStack {
+                        Spacer()
+                        VStack(spacing: 16) {
+                            Image(systemName: "exclamationmark.triangle")
+                                .font(.system(size: 48))
+                                .foregroundColor(.orange)
+                            Text("Error Loading Dictionary")
+                                .font(.headline)
+                            Text(error)
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                                .multilineTextAlignment(.center)
+                                .padding(.horizontal)
+                            Button("Retry") {
+                                dictionaryService.loadDictionary()
+                            }
+                            .buttonStyle(.borderedProminent)
                         }
-                        .buttonStyle(.borderedProminent)
+                        Spacer()
                     }
-                    Spacer()
                 } else {
-                    if selectedTab == .dictionary {
-                        TermsListView(terms: filteredTerms, searchText: searchText)
-                    } else {
-                        SymbolsListView(symbols: filteredSymbols, searchText: searchText)
-                    }
+                    TermsListView(terms: filteredTerms, searchText: searchText)
                 }
             }
-            .navigationTitle("Music Dictionary")
-            .navigationBarTitleDisplayMode(.large)
             .searchable(text: $searchText, prompt: "Search dictionary")
             .autocorrectionDisabled()
             .textInputAutocapitalization(.never)
@@ -152,14 +120,23 @@ struct MusicDictionaryView: View {
                         ForEach(sortedCategories, id: \.self) { category in
                             Section(category) {
                                 ForEach(groupedTerms[category] ?? []) { term in
-                                    TermRowView(term: term)
-                                }
-                            }
-                        }
-                    } else {
+                                    NavigationLink {
+                                        TermDetailView(term: term)
+                                    } label: {
+                                        TermRowView(term: term)
+                }
+            }
+            .navigationBarTitleDisplayMode(.inline)
+        }
+    }
+} else {
                         // Flat list when searching
                         ForEach(terms) { term in
-                            TermRowView(term: term)
+                            NavigationLink {
+                                TermDetailView(term: term)
+                            } label: {
+                                TermRowView(term: term)
+                            }
                         }
                     }
                 }
@@ -171,12 +148,34 @@ struct MusicDictionaryView: View {
     struct TermRowView: View {
         let term: MusicTerm
         
+        
         var body: some View {
-            VStack(alignment: .leading, spacing: 8) {
-                HStack {
-                    Text(term.term)
-                        .font(.headline)
+            VStack(alignment: .leading, spacing: 6) {
+                HStack(alignment: .top, spacing: 12) {
+                    // Symbol display if available
+                    if let symbol = term.symbol, !symbol.isEmpty {
+                        Text(symbol)
+                            .font(FontHelper.shared.bravuraSwiftUIFont(size: 20))
+                            .fontDesign(.none)
+                            .frame(width: 40, height: 40)
+                            .offset(y: 2) // Offset down slightly
+                            .background(Color.themeTertiaryBackground)
+                            .cornerRadius(8)
+                    }
+                    
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(term.term)
+                            .font(.headline)
+                            .foregroundColor(.primary)
+                        
+                        Text(term.definition)
+                            .font(.body)
+                            .foregroundColor(.secondary)
+                            .lineLimit(2)
+                    }
+                    
                     Spacer()
+                    
                     Text(term.category)
                         .font(.caption)
                         .foregroundColor(.secondary)
@@ -185,131 +184,83 @@ struct MusicDictionaryView: View {
                         .background(Color.themeFill)
                         .cornerRadius(8)
                 }
-                
-                Text(term.definition)
-                    .font(.body)
-                    .foregroundColor(.primary)
-                
-                if let example = term.example, !example.isEmpty {
-                    Text("\"\(example)\"")
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-                        .italic()
-                }
             }
             .padding(.vertical, 4)
         }
     }
     
-    struct SymbolsListView: View {
-        let symbols: [MusicSymbol]
-        let searchText: String
-        
-        var groupedSymbols: [String: [MusicSymbol]] {
-            Dictionary(grouping: symbols) { $0.category }
-        }
-        
-        var sortedCategories: [String] {
-            groupedSymbols.keys.sorted()
-        }
+    struct TermDetailView: View {
+        let term: MusicTerm
         
         var body: some View {
-            if symbols.isEmpty {
-                ContentUnavailableView {
-                    Label(searchText.isEmpty ? "No Symbols" : "No Results", systemImage: "music.note")
-                } description: {
-                    Text(searchText.isEmpty ? "No symbols available" : "Try a different search term")
-                }
-            } else {
-                List {
-                    if searchText.isEmpty {
-                        // Grouped by category when not searching
-                        ForEach(sortedCategories, id: \.self) { category in
-                            Section(category) {
-                                ForEach(groupedSymbols[category] ?? []) { symbol in
-                                    SymbolRowView(symbol: symbol)
-                                }
+            ScrollView {
+                VStack(alignment: .leading, spacing: 20) {
+                    // Header with symbol
+                    VStack(alignment: .leading, spacing: 12) {
+                        HStack(alignment: .top, spacing: 16) {
+                            // Large symbol display if available
+                            if let symbol = term.symbol, !symbol.isEmpty {
+                                Text(symbol)
+                                    .font(FontHelper.shared.bravuraSwiftUIFont(size: 56))
+                                    .fontDesign(.none)
+                                    .frame(width: 80, height: 80)
+                                    .offset(y: 4) // Offset down to center better
+                                    .background(Color.themeTertiaryBackground)
+                                    .cornerRadius(12)
+                            }
+                            
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text(term.term)
+                                    .font(.largeTitle)
+                                    .fontWeight(.bold)
+                                
+                                Text(term.category)
+                                    .font(.subheadline)
+                                    .foregroundColor(.secondary)
+                                    .padding(.horizontal, 12)
+                                    .padding(.vertical, 6)
+                                    .background(Color.themeFill)
+                                    .cornerRadius(8)
                             }
                         }
-                    } else {
-                        // Flat list when searching
-                        ForEach(symbols) { symbol in
-                            SymbolRowView(symbol: symbol)
+                    }
+                    
+                    Divider()
+                    
+                    // Definition
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("Definition")
+                            .font(.headline)
+                            .foregroundColor(.secondary)
+                        
+                        Text(term.definition)
+                            .font(.body)
+                            .foregroundColor(.primary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    
+                    // Example
+                    if let example = term.example, !example.isEmpty {
+                        Divider()
+                        
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Example")
+                                .font(.headline)
+                                .foregroundColor(.secondary)
+                            
+                            Text("\"\(example)\"")
+                                .font(.body)
+                                .foregroundColor(.primary)
+                                .italic()
                         }
                     }
                 }
-                .listStyle(.insetGrouped)
+                .padding()
             }
+            .navigationBarTitleDisplayMode(.inline)
         }
     }
     
-    struct SymbolRowView: View {
-        let symbol: MusicSymbol
-        
-        // Custom font for musical symbols - Bravura ONLY (SMuFL reference font)
-        private var musicFont: Font {
-            return FontHelper.shared.bravuraSwiftUIFont(size: 32)
-        }
-        
-        // Get the display symbol - ALWAYS use SMuFL codes (NO Unicode)
-        // Symbols are already stored with SMuFL characters in the JSON
-        private var displaySymbol: String {
-            // Symbols are already stored as SMuFL characters (Private Use Area U+E000-U+F8FF)
-            // Just use the stored symbol directly - it's already a SMuFL character
-            if !symbol.symbol.isEmpty {
-                return symbol.symbol
-            }
-            
-            // If symbol is empty, try to generate from SMuFL code
-            let smuflCode = symbol.smuflCode ?? symbol.unicode
-            if smuflCode.hasPrefix("U+E") || smuflCode.hasPrefix("U+F") {
-                if let char = SMuFLMapper.shared.character(from: smuflCode) {
-                    return String(char)
-                }
-            }
-            
-            // No valid SMuFL code - return placeholder
-            return "?"
-        }
-        
-        var body: some View {
-            HStack(alignment: .top, spacing: 16) {
-                // Symbol display - ensure Bravura font is used
-                Text(displaySymbol)
-                    .font(musicFont)
-                    .fontDesign(.none) // Prevent system font fallback
-                    .frame(width: 50, height: 50)
-                    .background(Color.themeTertiaryBackground)
-                    .cornerRadius(8)
-                
-                // Symbol info
-                VStack(alignment: .leading, spacing: 6) {
-                    HStack {
-                        Text(symbol.name)
-                            .font(.headline)
-                        Spacer()
-                        Text(symbol.category)
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 4)
-                            .background(Color.themeFill)
-                            .cornerRadius(8)
-                    }
-                    
-                    Text(symbol.description)
-                        .font(.body)
-                        .foregroundColor(.primary)
-                    
-                    Text("SMuFL: \(symbol.smuflCode ?? symbol.unicode)")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                        .monospacedDigit()
-                }
-            }
-            .padding(.vertical, 4)
-        }
-    }
 }
 
 #Preview {

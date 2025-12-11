@@ -43,35 +43,54 @@ struct MetronomeView: View {
     
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     
-    private var shouldUseSplitView: Bool {
-        UIDevice.current.userInterfaceIdiom == .pad && horizontalSizeClass == .regular
-    }
-    
     var isIPad: Bool {
         horizontalSizeClass == .regular
     }
     
     var body: some View {
-        Group {
-            if shouldUseSplitView {
-                // iPad split view layout using native NavigationSplitView
-                NavigationSplitView(columnVisibility: .constant(.doubleColumn)) {
-                    // Sidebar
-                    sidebarView
-                        .navigationSplitViewColumnWidth(min: 300, ideal: 350)
-                } detail: {
-                    // Main content
-                    mainContentView
-                }
-            } else {
-                // iPhone layout (or iPad in narrow window)
-                NavigationStack {
-                    mainContentView
-                }
-            }
+        NavigationStack {
+            mainContentView
         }
         .sheet(isPresented: $showingCustomTimeSignatureSheet) {
             customTimeSignatureSheet
+        }
+    }
+    
+    var customTimeSignatureSheet: some View {
+        NavigationStack {
+            Form {
+                Section("Top Number") {
+                    Stepper(value: $customTop, in: 1...16) {
+                        Text("\(customTop)")
+                    }
+                }
+                
+                Section("Bottom Number") {
+                    Picker("Bottom", selection: $customBottom) {
+                        ForEach([1, 2, 4, 8, 16], id: \.self) { value in
+                            Text("\(value)")
+                                .tag(value)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                }
+                
+                Section {
+                    Button("Save Custom Time Signature") {
+                        saveCustomTimeSignature()
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .tint(themeManager.accentColor)
+                }
+            }
+            .navigationTitle("Custom Time Signature")
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") {
+                        showingCustomTimeSignatureSheet = false
+                    }
+                }
+            }
         }
     }
 }

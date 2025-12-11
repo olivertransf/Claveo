@@ -91,9 +91,6 @@ class SettingsManager: ObservableObject {
             settings.favoriteTempos = decoded
         }
         
-        // Dictionary
-        settings.showAdvancedDictionaryItems = defaults.object(forKey: "showAdvancedDictionaryItems") as? Bool ?? true
-        
         // Theme
         settings.accentColor = defaults.string(forKey: "accentColor") ?? AccentColorOption.blue.rawValue
         settings.colorScheme = defaults.string(forKey: "colorScheme") ?? ColorSchemeOption.system.rawValue
@@ -154,9 +151,6 @@ class SettingsManager: ObservableObject {
         if let encoded = try? JSONEncoder().encode(settings.favoriteTempos) {
             defaults.set(encoded, forKey: "favoriteTempos")
         }
-        
-        // Dictionary
-        defaults.set(settings.showAdvancedDictionaryItems, forKey: "showAdvancedDictionaryItems")
         
         // Theme
         defaults.set(settings.accentColor, forKey: "accentColor")
