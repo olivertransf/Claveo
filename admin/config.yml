@@ -12,5 +12,6 @@ collections:
       - label: "Home Page"
         name: "index"
         file: "index.html"
+        format: "html"
         fields:
           - {label: "HTML Content", name: "body", widget: "code", default_language: "html"}
