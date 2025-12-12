@@ -13,7 +13,5 @@ collections:
         name: "index"
         file: "index.html"
         format: "html"
-        editor:
-          preview: false
         fields:
           - {label: "HTML Content", name: "body", widget: "code", default_language: "html"}
