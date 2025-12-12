@@ -1,0 +1,28 @@
+backend:
+  name: github
+  repo: olivertran/Claveo # Replace with your GitHub username/repo if different
+  branch: main # Change to your default branch if different
+  base_url: https://api.github.com
+  auth_type: pkce
+  app_id: # Will be set when you create GitHub OAuth app
+  
+media_folder: "" # Media files stored in repo root
+public_folder: "" # Public path for media
+
+collections:
+  - name: "pages"
+    label: "Pages"
+    files:
+      - label: "Homepage"
+        name: "index"
+        file: "index.html"
+        format: "html"
+        fields:
+          - { label: "HTML Content", name: "body", widget: "code", default_language: "html", allow_add_to_collection: false }
+
+      - label: "Privacy Policy"
+        name: "privacy"
+        file: "privacy-policy.html"
+        format: "html"
+        fields:
+          - { label: "HTML Content", name: "body", widget: "code", default_language: "html", allow_add_to_collection: false }

@@ -2,8 +2,17 @@
   publish = "."
   command = "echo 'No build needed'"
 
+# Redirect all requests to index.html except admin and static files
 [[redirects]]
   from = "/*"
   to = "/index.html"
+  status = 200
+  force = false
+  conditions = {Role = ["admin"]}
+
+# Don't redirect admin routes
+[[redirects]]
+  from = "/admin/*"
+  to = "/admin/index.html"
   status = 200
 
