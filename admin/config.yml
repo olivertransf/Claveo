@@ -1,27 +1,17 @@
 backend:
-  name: github
-  repo: olivertransf/Claveo  # Fixed repo name
+  name: git-gateway
   branch: main
-  # GitHub backend - users authenticate with GitHub
-  # Requires GitHub OAuth app setup (see instructions below)
 
-media_folder: "" # Media files stored in repo root
-public_folder: "" # Public path for media
+media_folder: "images/uploads"
+public_folder: "/images/uploads"
 
 collections:
   - name: "pages"
     label: "Pages"
     files:
-      - label: "Homepage"
+      - label: "Home Page"
         name: "index"
         file: "index.html"
-        format: "html"
         fields:
-          - { label: "HTML Content", name: "body", widget: "code", default_language: "html", allow_add_to_collection: false }
-
-      - label: "Privacy Policy"
-        name: "privacy"
-        file: "privacy-policy.html"
-        format: "html"
-        fields:
-          - { label: "HTML Content", name: "body", widget: "code", default_language: "html", allow_add_to_collection: false }
+          - {label: "Page Title", name: "title", widget: "string"}
+          - {label: "Full HTML Content", name: "body", widget: "code", default_language: "html", allow_language_selection: false}
