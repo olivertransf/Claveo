@@ -12,6 +12,7 @@ collections:
       - label: "Home Page"
         name: "index"
         file: "index.html"
+        editor:
+          preview: false
         fields:
-          - {label: "Page Title", name: "title", widget: "string"}
-          - {label: "Full HTML Content", name: "body", widget: "code", default_language: "html", allow_language_selection: false}
+          - {label: "HTML Content", name: "body", widget: "code", default_language: "html", output_code_only: true}
