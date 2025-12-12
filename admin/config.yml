@@ -12,8 +12,11 @@ collections:
       - label: "Home Page"
         name: "index"
         file: "index.html"
+        editor:
+          preview: false
         fields:
-          - {label: "HTML Content", name: "body", widget: "code", default_language: "html"}
-        output:
-          path: "index.html"
-          template: "pages/index"
+          - label: "HTML File Content"
+            name: "body"
+            widget: "code"
+            default_language: "html"
+            allow_language_selection: false
