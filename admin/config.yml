@@ -1,11 +1,10 @@
 backend:
   name: github
-  repo: olivertran/Claveo # Replace with your GitHub username/repo if different
-  branch: main # Change to your default branch if different
-  base_url: https://api.github.com
-  auth_type: pkce
-  app_id: # Will be set when you create GitHub OAuth app
-  
+  repo: olivertransf/Claveo  # Fixed repo name
+  branch: main
+  # GitHub backend - users authenticate with GitHub
+  # Requires GitHub OAuth app setup (see instructions below)
+
 media_folder: "" # Media files stored in repo root
 public_folder: "" # Public path for media
 
