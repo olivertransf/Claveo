@@ -16,7 +16,7 @@ Claveo is a music practice app featuring:
 - **Build Tool**: Vite
 - **Deployment**: Netlify
 
--**App**: Swift + SwiftUI
+- **App**: Swift + SwiftUI
 
 ## Development
 
