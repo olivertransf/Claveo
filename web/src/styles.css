@@ -193,8 +193,7 @@
   }
 
   .hero-section {
-    margin-bottom: var(--section-spacing);
-    padding: 0;
+    margin-bottom: calc(var(--section-spacing) + 60px);
     text-align: center;
   }
 
@@ -231,7 +230,8 @@
   .section.privacy-data-section {
     text-align: center;
     padding: 0;
-    margin-bottom: 60px;
+    max-width: 800px;
+    margin: 0 auto 60px auto;
   }
 
   .section ul {
