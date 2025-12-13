@@ -1,44 +1,39 @@
-Copyright (c) 2025 Oliver Tran. All Rights Reserved.
+Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 International
+
+Copyright (c) 2025 Oliver Tran
+
+This work is licensed under the Creative Commons Attribution-NonCommercial-
+NoDerivatives 4.0 International License. To view a copy of this license, visit
+http://creativecommons.org/licenses/by-nc-nd/4.0/ or send a letter to Creative
+Commons, PO Box 1866, Mountain View, CA 94042, USA.
 
 ═══════════════════════════════════════════════════════════════════════════════
-                    PROPRIETARY SOFTWARE - VIEW ONLY
+                              LICENSE TERMS
 ═══════════════════════════════════════════════════════════════════════════════
 
-NOTICE: This software and associated documentation files (the "Software") are the 
-proprietary property of Oliver Tran. The Software is protected by copyright laws 
-and international copyright treaties, as well as other intellectual property laws 
-and treaties.
+Under the following terms:
 
-This source code is made available for VIEWING AND EDUCATIONAL PURPOSES ONLY.
+✅ ATTRIBUTION — You must give appropriate credit, provide a link to the license,
+   and indicate if changes were made. You may do so in any reasonable manner, but
+   not in any way that suggests the licensor endorses you or your use.
 
-═══════════════════════════════════════════════════════════════════════════════
-                              STRICTLY PROHIBITED
-═══════════════════════════════════════════════════════════════════════════════
+❌ NONCOMMERCIAL — You may not use the material for commercial purposes.
 
-You may NOT:
-- Use, copy, modify, merge, publish, distribute, sublicense, or sell copies 
-  of the Software
-- Create derivative works based on the Software
-- Remove or alter any copyright notices or proprietary markings
-- Use any portion of this code in your own projects
-
-ALL USE REQUIRES EXPLICIT WRITTEN PERMISSION FROM THE COPYRIGHT OWNER.
+❌ NODERIVATIVES — If you remix, transform, or build upon the material, you may
+   not distribute the modified material.
 
 ═══════════════════════════════════════════════════════════════════════════════
-                                ALLOWED USES
+                              WHAT THIS MEANS
 ═══════════════════════════════════════════════════════════════════════════════
 
-You MAY:
-- View the source code for educational and reference purposes
-- Fork this repository for personal viewing and study (viewing only, no use)
+✅ You CAN:
+   - View and study the code
+   - Share the code (with credit)
+   - Use it for personal/non-commercial projects
 
-For licensing inquiries or permission requests, please contact:
-claveo.app@gmail.com
+❌ You CANNOT:
+   - Use it commercially
+   - Modify or create derivative works
+   - Remove copyright notices
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, 
-INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A 
-PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT 
-HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION 
-OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE 
-SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-
+For commercial use or modification permissions, contact: claveo.app@gmail.com
