@@ -119,6 +119,8 @@
     <p>&copy; 2025 Oliver Tran. All rights reserved.</p>
     <p class="margin-top">
       <a href="/privacy-policy.html" on:click|preventDefault={() => navigate('/privacy-policy.html')} class="link-secondary">Privacy Policy</a>
+      <span class="footer-separator"> • </span>
+      <a href="https://github.com/olivertransf/Claveo/blob/main/LICENSE" target="_blank" rel="noopener noreferrer" class="link-secondary">License</a>
     </p>
   </footer>
 </div>
