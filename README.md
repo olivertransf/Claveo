@@ -1,4 +1,4 @@
-# Claveo Website
+# Claveo
 
 The official website for [Claveo](https://apps.apple.com/us/app/claveo-music-companion/id6755795790), a complete music practice companion app for iPhone and iPad.
 
