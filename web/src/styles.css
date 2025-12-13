@@ -537,6 +537,11 @@
     line-height: 1.7;
   }
 
+  .footer-separator {
+    color: var(--text-tertiary);
+    margin: 0 8px;
+  }
+
   /* Privacy Policy Specific */
   .privacy-container {
     max-width: 800px;

@@ -9,7 +9,7 @@
     <h1>Privacy Policy</h1>
   </header>
 
-  <p class="last-updated">Last updated: January 2025</p>
+  <p class="last-updated">Last updated: December 2025</p>
 
   <div class="section privacy-section">
     <h2>Introduction</h2>
@@ -62,6 +62,15 @@
   <div class="section privacy-section">
     <h2>Analytics and Tracking</h2>
     <p>Claveo does not use any analytics services, tracking tools, or third-party data collection. We do not track your usage, collect crash reports, or gather any telemetry data.</p>
+  </div>
+
+  <div class="section privacy-section">
+    <h2>Third-Party Libraries</h2>
+    <p>Claveo uses the following open-source library for pitch detection functionality:</p>
+    <ul>
+      <li><strong>Tuna</strong> - A pitch detection library (MIT License) by alladinian. This library processes audio locally on your device for tuner functionality and does not transmit any data externally.</li>
+    </ul>
+    <p>All third-party libraries used in Claveo operate entirely on your device and do not collect, transmit, or have access to any of your personal data.</p>
   </div>
 
   <div class="section privacy-section">
