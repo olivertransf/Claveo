@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+
+# Sitemap location
+Sitemap: https://claveo.app/sitemap.xml
+
+# Disallow admin or private areas if you add them later
+# Disallow: /admin/
+# Disallow: /private/
+
