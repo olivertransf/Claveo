@@ -32,23 +32,21 @@
         </div>
         <div class="feature-content">
           <h3>Practice Recording</h3>
-          <p>Record unlimited sessions with crystal-clear audio. Organize with custom names, tags, and piece associations. All recordings sync seamlessly across your devices.</p>
-          <p>Review your progress with detailed playback controls, including variable speed playback and quick navigation. Tag recordings by type—practice, concert, or audition—and associate them with specific pieces to track your musical journey over time.</p>
-          <p>Export your recordings or share them with teachers and collaborators. The built-in waveform visualization helps you identify areas for improvement, while the intuitive interface makes it easy to manage even large collections of recordings.</p>
+          <p>Record unlimited practice sessions with crystal-clear audio. Organize recordings with custom names, tags, and piece associations. All recordings sync seamlessly across your devices.</p>
+          <p>Review your progress with detailed playback controls and waveform visualization. Export and share recordings with teachers and collaborators.</p>
         </div>
       </div>
 
       <div class="feature-item feature-right">
         <div class="feature-content">
-          <h3>Advanced Metronome</h3>
-          <p>Precise tempo control from 20 to 300 BPM. Tap tempo, customizable beat patterns, and support for all time signatures. Haptic feedback for silent practice.</p>
-          <p>Save your favorite tempos and time signatures as presets for quick access. Visual and audio cues help you stay in time, while the intuitive interface makes it easy to adjust settings on the fly during practice sessions.</p>
-          <p>Create complex rhythmic patterns with accent beats and subdivisions. The metronome remembers your preferences and adapts to your practice routine, whether you're working on slow technical exercises or fast performance pieces.</p>
+          <h3>Practice Tracking</h3>
+          <p>Track your daily practice sessions and build consistent habits. Log practice time, rate sessions, and add notes about your progress. Visualize streaks and weekly statistics at a glance.</p>
+          <p>Monitor your consistency with a weekly calendar view and track key metrics like your current streak, total practice time, and average session rating.</p>
         </div>
         <div class="feature-device">
           <div class="device-frame feature-iphone-frame">
             <img src="/screenshots/iPhone 15 Pro - Blue Titanium - Portrait.png" alt="iPhone frame" class="device-outline" />
-            <img src={darkMode ? "/screenshots/metronome-iphone-dark.png" : "/screenshots/metronome-iphone-light.png"} alt="Advanced Metronome" class="device-screenshot" />
+            <img src={darkMode ? "/screenshots/practice-phone-dark.png" : "/screenshots/practice-phone-light.png"} alt="Practice Tracking" class="device-screenshot" />
           </div>
         </div>
       </div>
@@ -57,29 +55,41 @@
         <div class="feature-device">
           <div class="device-frame feature-iphone-frame">
             <img src="/screenshots/iPhone 15 Pro - Blue Titanium - Portrait.png" alt="iPhone frame" class="device-outline" />
-            <img src={darkMode ? "/screenshots/tuner-iphone-dark.png" : "/screenshots/tuner-iphone-light.png"} alt="Precision Tuner" class="device-screenshot" />
+            <img src={darkMode ? "/screenshots/metronome-iphone-dark.png" : "/screenshots/metronome-iphone-light.png"} alt="Advanced Metronome" class="device-screenshot" />
           </div>
         </div>
         <div class="feature-content">
-          <h3>Precision Tuner</h3>
-          <p>Real-time pitch detection with professional accuracy. Dual tuning meters with visual feedback. Works with any instrument and customizable A4 reference frequency.</p>
-          <p>Get instant visual feedback with color-coded indicators showing when you're in tune, sharp, or flat. The tuner adapts to your instrument's range automatically, making it perfect for strings, woodwinds, brass, and more.</p>
-          <p>Fine-tune your instrument with precision down to the cent. The tuner works in noisy environments and provides both chromatic and instrument-specific tuning modes. Whether you're tuning a guitar, violin, or piano, Claveo helps you achieve perfect pitch.</p>
+          <h3>Advanced Metronome</h3>
+          <p>Precise tempo control with tap tempo, customizable beat patterns, and support for all time signatures. Haptic feedback for silent practice.</p>
+          <p>Save favorite tempos and time signatures as presets. Create complex rhythmic patterns with accent beats and subdivisions.</p>
         </div>
       </div>
 
       <div class="feature-item feature-right">
         <div class="feature-content">
-          <h3>Music Dictionary</h3>
-          <p>Searchable database of 650+ music terms and definitions. Curated from Open Music Theory with musical symbols and detailed explanations.</p>
-          <p>Look up any musical term instantly with fast, intuitive search. Each entry includes proper musical notation symbols, pronunciation guides, and comprehensive explanations to deepen your understanding of music theory.</p>
-          <p>Browse by category or search by keyword to find exactly what you need. From basic terms like "tempo" and "dynamics" to advanced concepts like "modulation" and "counterpoint," the dictionary grows with your musical knowledge and serves as a reliable reference for students and professionals alike.</p>
+          <h3>Precision Tuner</h3>
+          <p>Real-time pitch detection with professional accuracy. Dual tuning meters with visual feedback. Works with any instrument and customizable A4 reference frequency.</p>
+          <p>Get instant visual feedback with color-coded indicators. Fine-tune your instrument with precision down to the cent, with support for both chromatic and instrument-specific tuning modes.</p>
         </div>
+        <div class="feature-device">
+          <div class="device-frame feature-iphone-frame">
+            <img src="/screenshots/iPhone 15 Pro - Blue Titanium - Portrait.png" alt="iPhone frame" class="device-outline" />
+            <img src={darkMode ? "/screenshots/tuner-iphone-dark.png" : "/screenshots/tuner-iphone-light.png"} alt="Precision Tuner" class="device-screenshot" />
+          </div>
+        </div>
+      </div>
+
+      <div class="feature-item feature-left">
         <div class="feature-device">
           <div class="device-frame feature-iphone-frame">
             <img src="/screenshots/iPhone 15 Pro - Blue Titanium - Portrait.png" alt="iPhone frame" class="device-outline" />
             <img src={darkMode ? "/screenshots/dictionary-iphone-dark.png" : "/screenshots/dictionary-iphone-light.png"} alt="Music Dictionary" class="device-screenshot" />
           </div>
+        </div>
+        <div class="feature-content">
+          <h3>Music Dictionary</h3>
+          <p>Searchable database of music terms and definitions. Curated from Open Music Theory with musical symbols and detailed explanations.</p>
+          <p>Look up any musical term instantly with fast, intuitive search. Each entry includes proper musical notation symbols, pronunciation guides, and comprehensive explanations.</p>
         </div>
       </div>
     </div>
