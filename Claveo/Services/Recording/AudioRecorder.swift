@@ -77,6 +77,13 @@ class AudioRecorder: NSObject, ObservableObject {
             saveRecordings()
         }
     }
+
+    func refreshRecordings() async {
+        // Refresh recordings from iCloud (for pull-to-refresh)
+        await MainActor.run {
+            syncRecordingsFromiCloud()
+        }
+    }
     
     private func setupAudioSession() {
         // Don't activate session here - do it when recording starts

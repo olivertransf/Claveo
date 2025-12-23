@@ -12,98 +12,79 @@ struct TunerView: View {
     @StateObject private var pitchDetector = PitchDetector()
     @StateObject private var settingsManager = SettingsManager.shared
     @State private var showingPermissionAlert = false
-    
-    private var showFrequencyDisplay: Bool {
-        settingsManager.settings.showFrequencyDisplay
+    @State private var manualFrequencyText = ""
+    @FocusState private var isFrequencyFieldFocused: Bool
+
+    private var showFrequencyDisplay: Binding<Bool> {
+        Binding(
+            get: { settingsManager.settings.showFrequencyDisplay },
+            set: { settingsManager.update(\.showFrequencyDisplay, value: $0) }
+        )
     }
-    
-    @State private var showingSettings = false
-    
+
+    @State private var showingSettingsSheet = false
+
     private var selectedPreset: FrequencyPreset {
         FrequencyPreset.preset(for: settingsManager.settings.a4ReferenceFrequency)
+    }
+
+    private var a4ReferenceFrequency: Binding<Double> {
+        Binding(
+            get: { settingsManager.settings.a4ReferenceFrequency },
+            set: { settingsManager.update(\.a4ReferenceFrequency, value: $0) }
+        )
     }
     
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
                 Spacer()
-                
-                if pitchDetector.isDetecting && pitchDetector.frequency > 0 {
-                    VStack(spacing: 24) {
-                        Text(pitchDetector.note)
-                            .font(.system(size: 96, weight: .light, design: .rounded))
+
+                VStack(spacing: 24) {
+                    Text(pitchDetector.note)
+                        .font(.system(size: 96, weight: .light, design: .rounded))
+                        .monospacedDigit()
+
+                    if showFrequencyDisplay.wrappedValue {
+                        Text(String(format: "%.1f Hz", pitchDetector.frequency))
+                            .font(.title2)
+                            .foregroundColor(.secondary)
                             .monospacedDigit()
-                        
-                        if showFrequencyDisplay {
-                            Text(String(format: "%.1f Hz", pitchDetector.frequency))
-                                .font(.title2)
-                                .foregroundColor(.secondary)
-                                .monospacedDigit()
-                        }
-                        
-                        TuningMeterView(
-                            cents: pitchDetector.cents,
-                            note: pitchDetector.note
-                        )
-                        .environmentObject(themeManager)
-                        .frame(height: 200)
-                        .padding(.horizontal)
-                        
-                        PreciseTuningMeterView(
-                            cents: pitchDetector.cents,
-                            note: pitchDetector.note
-                        )
-                        .environmentObject(themeManager)
-                        .frame(height: 120)
-                        .padding(.horizontal)
                     }
-                } else {
-                    ContentUnavailableView {
-                        Label("Listening...", systemImage: "tuningfork")
-                    } description: {
-                        Text("Play a note to detect pitch")
-                    }
+
+                    TuningMeterView(
+                        cents: pitchDetector.cents,
+                        note: pitchDetector.note,
+                        frequency: pitchDetector.frequency
+                    )
+                    .environmentObject(themeManager)
+                    .frame(height: 200)
+                    .padding(.horizontal)
+
+                    PreciseTuningMeterView(
+                        frequency: pitchDetector.frequency,
+                        targetFrequency: pitchDetector.targetFrequency,
+                        note: pitchDetector.note
+                    )
+                    .environmentObject(themeManager)
+                    .frame(height: 120)
+                    .padding(.horizontal)
                 }
-                
+                .opacity(pitchDetector.isDetecting && pitchDetector.frequency > 0 ? 1.0 : 0.3)
+
                 Spacer()
             }
-            .padding()
             .toolbar {
-                ToolbarItem(placement: .primaryAction) {
-                    Menu {
-                        Menu {
-                            ForEach(FrequencyPreset.allCases) { preset in
-                                Button(action: {
-                                    if let frequency = preset.frequency {
-                                        settingsManager.update(\.a4ReferenceFrequency, value: frequency)
-                                    }
-                                }) {
-                                    HStack {
-                                        Text(preset == .custom ? preset.displayName : preset.fullName)
-                                        if selectedPreset == preset {
-                                            Spacer()
-                                            Image(systemName: "checkmark")
-                                        }
-                                    }
-                                }
-                            }
-                        } label: {
-                            Label("Preset Frequencies", systemImage: "tuningfork")
-                        }
-                        
-                        Button(action: {
-                            settingsManager.update(\.showFrequencyDisplay, value: !showFrequencyDisplay)
-                        }) {
-                            Label(
-                                showFrequencyDisplay ? "Hide Frequency" : "Show Frequency",
-                                systemImage: showFrequencyDisplay ? "eye.slash" : "eye"
-                            )
-                        }
-                    } label: {
-                        Label("Options", systemImage: "ellipsis.circle")
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button(action: {
+                        showingSettingsSheet = true
+                    }) {
+                        Image(systemName: "gear")
+                            .foregroundColor(themeManager.accentColor)
                     }
                 }
             }
+            .padding()
             .alert("Microphone Access Required", isPresented: $showingPermissionAlert) {
                 Button("Settings") {
                     if let settingsURL = URL(string: UIApplication.openSettingsURLString) {
@@ -115,6 +96,9 @@ struct TunerView: View {
                 Text("Microphone access is required to detect pitch.")
             }
             .onAppear {
+                // Initialize frequency text field
+                manualFrequencyText = String(format: "%.1f", settingsManager.settings.a4ReferenceFrequency)
+
                 Task { @MainActor in
                     await pitchDetector.startDetection()
                 }
@@ -124,7 +108,80 @@ struct TunerView: View {
             }
             .onChange(of: settingsManager.settings.a4ReferenceFrequency) { _, _ in
                 if pitchDetector.frequency > 0 {
-                    pitchDetector.updateNote(from: pitchDetector.frequency)
+                    pitchDetector.recalculateNote()
+                }
+            }
+        }
+        .sheet(isPresented: $showingSettingsSheet) {
+            tunerSettingsSheet
+        }
+    }
+
+    var tunerSettingsSheet: some View {
+        NavigationStack {
+            Form {
+                Section("Reference Pitch") {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("A4 Reference Frequency")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+
+                        HStack {
+                            Slider(value: a4ReferenceFrequency, in: 400...480, step: 1)
+                            TextField("Hz", text: $manualFrequencyText)
+                                .keyboardType(.decimalPad)
+                                .multilineTextAlignment(.trailing)
+                                .frame(width: 70)
+                                .textFieldStyle(.roundedBorder)
+                                .focused($isFrequencyFieldFocused)
+                                .onSubmit {
+                                    if let value = Double(manualFrequencyText), value >= 400 && value <= 480 {
+                                        settingsManager.update(\.a4ReferenceFrequency, value: value)
+                                    } else {
+                                        // Reset to current value if invalid
+                                        manualFrequencyText = String(format: "%.1f", settingsManager.settings.a4ReferenceFrequency)
+                                    }
+                                    isFrequencyFieldFocused = false
+                                }
+                                .onChange(of: settingsManager.settings.a4ReferenceFrequency) { _, newValue in
+                                    // Only update if user isn't actively editing the field
+                                    if !isFrequencyFieldFocused {
+                                        manualFrequencyText = String(format: "%.1f", newValue)
+                                    }
+                                }
+                        }
+                    }
+
+                    // Preset frequencies
+                    Picker("Preset Frequencies", selection: Binding(
+                        get: { selectedPreset },
+                        set: { preset in
+                            if let frequency = preset.frequency {
+                                settingsManager.update(\.a4ReferenceFrequency, value: frequency)
+                            }
+                        }
+                    )) {
+                        ForEach(FrequencyPreset.allCases, id: \.self) { preset in
+                            if preset == .custom {
+                                Text(preset.displayName).tag(preset)
+                            } else {
+                                Text(preset.fullName).tag(preset)
+                            }
+                        }
+                    }
+                }
+
+                Section("Display") {
+                    Toggle("Show Frequency Display", isOn: showFrequencyDisplay)
+                }
+            }
+            .navigationTitle("Tuner Settings")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") {
+                        showingSettingsSheet = false
+                    }
                 }
             }
         }
@@ -133,8 +190,56 @@ struct TunerView: View {
 
 struct TuningMeterView: View {
     @EnvironmentObject var themeManager: ThemeManager
-    let cents: Double // -20 to +20
+    let cents: Double // Semitone-relative position
     let note: String
+    let frequency: Double
+    
+    private let noteNames = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
+    
+    // Calculate notes one semitone below and above
+    private var noteBelow: String {
+        guard note != "--" else { return "--" }
+        let (noteName, octave) = parseNote(note)
+        guard let noteIndex = noteNames.firstIndex(of: noteName) else { return "--" }
+        
+        var newIndex = noteIndex - 1
+        var newOctave = octave
+        
+        if newIndex < 0 {
+            newIndex = 11
+            newOctave -= 1
+        }
+        
+        return "\(noteNames[newIndex])\(newOctave)"
+    }
+    
+    private var noteAbove: String {
+        guard note != "--" else { return "--" }
+        let (noteName, octave) = parseNote(note)
+        guard let noteIndex = noteNames.firstIndex(of: noteName) else { return "--" }
+        
+        var newIndex = noteIndex + 1
+        var newOctave = octave
+        
+        if newIndex >= 12 {
+            newIndex = 0
+            newOctave += 1
+        }
+        
+        return "\(noteNames[newIndex])\(newOctave)"
+    }
+    
+    private func parseNote(_ noteWithOctave: String) -> (String, Int) {
+        // Find the first digit to separate note name from octave
+        if let firstDigitIndex = noteWithOctave.firstIndex(where: { $0.isNumber }) {
+            let noteName = String(noteWithOctave[..<firstDigitIndex])
+            let octaveString = String(noteWithOctave[firstDigitIndex...])
+            if let octave = Int(octaveString) {
+                return (noteName, octave)
+            }
+        }
+        return ("--", 0)
+    }
     
     var body: some View {
         GeometryReader { geometry in
@@ -166,69 +271,42 @@ struct TuningMeterView: View {
                     .frame(height: 60)
                     .offset(x: 0, y: 0)
                 
-                // Center line - represents the target note (closest note in equal temperament)
-//                VStack(spacing: 4) {
-//                    // Note label above center line
-//                    Text(note)
-//                        .font(.system(size: 16, weight: .bold))
-//                        .foregroundColor(.themeAccent)
-//                        .padding(.horizontal, 8)
-//                        .padding(.vertical, 4)
-//                        .background(Color.themeBackground)
-//                        .cornerRadius(6)
-//                    
-//                    // Center line (perfectly in tune for target note)
-//                    Rectangle()
-//                        .fill(Color.themeAccent.opacity(0.8))
-//                        .frame(width: 2, height: 60)
-//                }
-//                .offset(x: centerX - 1, y: -20)
-                
-                // Scale marks - centered around 0 (in tune), range -20 to +20 cents
-                // Only show marks at: -20, -10, 0, +10 (no +20 mark on right edge)
+                // Scale marks - range -100 to +100 cents (one semitone below to one above)
+                // Show marks at: -100, -50, 0, +50, +100 cents
                 ForEach([-2, -1, 0, 1, 2], id: \.self) { mark in
                     // Position: leftEdge + (mark + 2) / 4 * scaleWidth
-                    // This maps -2 to leftEdge, 0 to center, +1 to 3/4 way to right
+                    // This maps -2 to leftEdge, 0 to center, +2 to rightEdge
                     let position = leftEdge + (CGFloat(mark + 2) / 4.0) * scaleWidth
                     
-                    // Major marks (every 10 cents) - skip center (0) as it has its own line
+                    // Major marks (every 50 cents) - skip center (0) as it has its own line
                     if mark != 0 {
                         Rectangle()
                             .fill(Color.themeLabel.opacity(0.2))
                             .frame(width: 1, height: 50)
                             .offset(x: position - centerX - 0.5)
                     }
-                    
-                    // Labels for major marks
-                    if mark == -2 {
-                        Text("-20")
-                            .font(.system(size: 10, weight: .medium))
-                            .foregroundColor(.themeSecondaryLabel)
-                            .offset(x: position - centerX, y: 38)
-                    } else if mark == -1 {
-                        Text("-10")
-                            .font(.system(size: 10, weight: .medium))
-                            .foregroundColor(.themeSecondaryLabel)
-                            .offset(x: position - centerX, y: 38)
-                    } else if mark == 1 {
-                        Text("+10")
-                            .font(.system(size: 10, weight: .medium))
-                            .foregroundColor(.themeSecondaryLabel)
-                            .offset(x: position - centerX, y: 38)
-                    } else if mark == 2 {
-                        Text("+20")
-                            .font(.system(size: 10, weight: .medium))
-                            .foregroundColor(.themeSecondaryLabel)
-                            .offset(x: position - centerX, y: 38)
-                    }
-                    // Note: Center (0) is labeled by the note name above the center line
                 }
                 
-                // Note label at bottom - only show center note (target note)
-                Text(note)
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(themeManager.accentColor)
-                    .offset(y: 50)
+                // Note labels at bottom - show note below, current note, note above
+                if note != "--" {
+                    // Note below (left edge)
+                    Text(noteBelow)
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(.themeSecondaryLabel)
+                        .offset(x: leftEdge - centerX, y: 50)
+                    
+                    // Current note (center)
+                    Text(note)
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundColor(themeManager.accentColor)
+                        .offset(y: 50)
+                    
+                    // Note above (right edge)
+                    Text(noteAbove)
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(.themeSecondaryLabel)
+                        .offset(x: rightEdge - centerX, y: 50)
+                }
                 
                 // Needle/indicator - shows actual pitch position
                 VStack(spacing: 0) {
@@ -244,16 +322,16 @@ struct TuningMeterView: View {
                         .frame(width: 3, height: 60)
                 }
                 .offset(x: needlePosition(in: width, centerX: centerX, leftEdge: leftEdge, rightEdge: rightEdge, scaleWidth: scaleWidth) - centerX)
-                .animation(.spring(response: 0.2, dampingFraction: 0.7), value: cents)
+                .animation(.spring(response: 0.4, dampingFraction: 0.8), value: cents)
             }
         }
     }
     
     private var needleColor: Color {
         let absCents = abs(cents)
-        if absCents < 5 {
+        if absCents < 10 {
             return .green
-        } else if absCents < 20 {
+        } else if absCents < 30 {
             return .orange
         } else {
             return .red
@@ -261,21 +339,33 @@ struct TuningMeterView: View {
     }
     
     private func needlePosition(in width: Double, centerX: CGFloat, leftEdge: CGFloat, rightEdge: CGFloat, scaleWidth: CGFloat) -> Double {
-        // Map cents (-20 to +20) to position
-        // Center (0 cents) should be at centerX
-        // -20 cents maps to leftEdge, +20 cents maps to rightEdge
-        let position = centerX + (cents / 20.0) * (scaleWidth / 2)
+        // Map cents (-50 to +50 relative to current note) to position
+        // The display shows one semitone below to one above:
+        // - leftEdge = note below (cents = -50 relative to current note)
+        // - centerX = current note (cents = 0)
+        // - rightEdge = note above (cents = +50 relative to current note)
+        
+        // Cents value is already relative to current note, clamped to -50 to +50
+        // Map directly: -50 → leftEdge, 0 → centerX, +50 → rightEdge
+        let clampedCents = max(-50, min(50, cents))
+        let position = centerX + (clampedCents / 50.0) * (scaleWidth / 2)
         
         // Clamp to stay within bounds
         return max(leftEdge, min(rightEdge, position))
     }
 }
 
-// Precise tuning meter - shows -5 to +5 cents range for fine-tuning
+// Precise tuning meter - shows -15 to +15 Hz range for fine-tuning
 struct PreciseTuningMeterView: View {
     @EnvironmentObject var themeManager: ThemeManager
-    let cents: Double // -5 to +5 (clamped)
+    let frequency: Double
+    let targetFrequency: Double
     let note: String
+    
+    private var hzOffset: Double {
+        guard frequency > 0 && targetFrequency > 0 else { return 0 }
+        return frequency - targetFrequency
+    }
     
     var body: some View {
         GeometryReader { geometry in
@@ -312,19 +402,19 @@ struct PreciseTuningMeterView: View {
 //                    .frame(width: 2, height: 50)
 //                    .offset(x: centerX - 1)
                 
-                // Scale marks - centered around 0, range -5 to +5 cents
-                ForEach([-5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5], id: \.self) { mark in
-                    // Position: center + (mark / 5) * half of scale width
-                    let position = centerX + (CGFloat(mark) / 5.0) * (scaleWidth / 2)
+                // Scale marks - centered around 0, range -15 to +15 Hz
+                ForEach([-15, -12, -9, -6, -3, 0, 3, 6, 9, 12, 15], id: \.self) { mark in
+                    // Position: center + (mark / 15) * half of scale width
+                    let position = centerX + (CGFloat(mark) / 15.0) * (scaleWidth / 2)
                     
-                    // Major marks (every 1 cent)
+                    // Major marks (every 3 Hz)
                     Rectangle()
                         .fill(Color.themeLabel.opacity(mark == 0 ? 0.6 : 0.3))
-                        .frame(width: mark == 0 ? 1.5 : 0.5, height: mark % 5 == 0 ? 40 : 25)
+                        .frame(width: mark == 0 ? 1.5 : 0.5, height: mark % 3 == 0 ? 40 : 25)
                         .offset(x: position - centerX - (mark == 0 ? 0.75 : 0.25))
                     
-                    // Labels for major marks (every 1 cent)
-                    if mark % 5 == 0 && mark != 0 {
+                    // Labels for major marks (every 3 Hz)
+                    if mark % 3 == 0 && mark != 0 {
                         Text("\(mark > 0 ? "+" : "")\(mark)")
                             .font(.system(size: 10, weight: .medium))
                             .foregroundColor(.themeSecondaryLabel)
@@ -357,16 +447,16 @@ struct PreciseTuningMeterView: View {
                         .frame(width: 2, height: 45)
                 }
                 .offset(x: preciseNeedlePosition(in: width, centerX: centerX, leftEdge: leftEdge, rightEdge: rightEdge, scaleWidth: scaleWidth) - centerX)
-                .animation(.spring(response: 0.2, dampingFraction: 0.7), value: cents)
+                .animation(.spring(response: 0.4, dampingFraction: 0.8), value: hzOffset)
             }
         }
     }
     
     private var preciseNeedleColor: Color {
-        let absCents = abs(cents)
-        if absCents < 1 {
+        let absHz = abs(hzOffset)
+        if absHz < 2 {
             return .green
-        } else if absCents < 3 {
+        } else if absHz < 8 {
             return .orange
         } else {
             return .red
@@ -374,13 +464,13 @@ struct PreciseTuningMeterView: View {
     }
     
     private func preciseNeedlePosition(in width: Double, centerX: CGFloat, leftEdge: CGFloat, rightEdge: CGFloat, scaleWidth: CGFloat) -> Double {
-        // Clamp cents to -5 to +5 for precise view
-        let clampedCents = max(-5, min(5, cents))
+        // Clamp Hz offset to -15 to +15 for precise view
+        let clampedHz = max(-15, min(15, hzOffset))
         
-        // Map cents (-5 to +5) to position
-        // Center (0 cents) should be at centerX
-        // -5 cents maps to leftEdge, +5 cents maps to rightEdge
-        let position = centerX + (clampedCents / 5.0) * (scaleWidth / 2)
+        // Map Hz (-15 to +15) to position
+        // Center (0 Hz) should be at centerX
+        // -15 Hz maps to leftEdge, +15 Hz maps to rightEdge
+        let position = centerX + (clampedHz / 15.0) * (scaleWidth / 2)
         
         // Clamp to stay within bounds
         return max(leftEdge, min(rightEdge, position))

@@ -11,6 +11,7 @@ struct RecordingListView: View {
     @EnvironmentObject var themeManager: ThemeManager
     @StateObject var recorder = AudioRecorder()
     @StateObject var player = AudioPlayer()
+    @StateObject var settingsManager = SettingsManager.shared
     @State var showingDeleteAlert = false
     @State var recordingToDelete: Recording?
     @State var showingPermissionAlert = false
@@ -27,6 +28,8 @@ struct RecordingListView: View {
     @State var newPieceName: String = ""
     @State var newPieceComposer: String = ""
     @State var editingPiece: Piece?
+    @State var showingSettingsSheet = false
+    @State var showingStorageInfo = false
     
     var filteredRecordings: [Recording] {
         var filtered = recorder.recordings

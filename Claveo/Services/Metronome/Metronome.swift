@@ -17,6 +17,11 @@ enum MetronomeSound: String, CaseIterable {
     case bell = "Bell"
     case beep = "Beep"
     case tick = "Tick"
+    case cowbell = "Cowbell"
+    case triangle = "Triangle"
+    case marimba = "Marimba"
+    case drum = "Drum"
+    case chimes = "Chimes"
 }
 
 @MainActor
@@ -33,14 +38,7 @@ class Metronome: ObservableObject {
     }
     @Published var timeSignature: TimeSignature = .fourFour
     @Published var customTimeSignature: (top: Int, bottom: Int)? = nil
-    @Published var beatPattern: [Bool] = [true, false, false, false] {
-        didSet {
-            // Ensure at least one beat is accented
-            if !beatPattern.contains(true) {
-                beatPattern[0] = true
-            }
-        }
-    }
+    @Published var beatPattern: [Bool] = [true, false, false, false]
     @Published var currentBeat: Int = 0
     @Published var soundType: MetronomeSound = .click {
         didSet {
