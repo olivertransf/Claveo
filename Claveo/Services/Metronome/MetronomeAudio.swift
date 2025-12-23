@@ -37,9 +37,12 @@ extension Metronome {
         let outputFormat = mainMixer.outputFormat(forBus: 0)
         engine.connect(player, to: mainMixer, format: outputFormat)
         
-        let (accentSound, normalSound) = createSounds(for: soundType)
-        accentBuffer = createAudioBuffer(from: accentSound, targetFormat: outputFormat)
-        normalBuffer = createAudioBuffer(from: normalSound, targetFormat: outputFormat)
+        let volume = SettingsManager.shared.settings.metronomeVolume
+        let emphasizedSound = createSound(for: SettingsManager.shared.metronomeEmphasizedSoundEnum, volume: volume)
+        let nonEmphasizedSound = createSound(for: SettingsManager.shared.metronomeNonEmphasizedSoundEnum, volume: volume)
+
+        accentBuffer = createAudioBuffer(from: emphasizedSound, targetFormat: outputFormat)
+        normalBuffer = createAudioBuffer(from: nonEmphasizedSound, targetFormat: outputFormat)
         
         accentBufferConverted = accentBuffer
         normalBufferConverted = normalBuffer
@@ -89,33 +92,36 @@ extension Metronome {
         }
     }
     
-    func createSounds(for type: MetronomeSound) -> (Data, Data) {
+    func createSound(for type: MetronomeSound, volume: Double = 0.5) -> Data {
         switch type {
         case .click:
-            let accent = createPreciseClickSound(frequency: 1000.0, volume: 0.5)
-            let normal = createPreciseClickSound(frequency: 1200.0, volume: 0.3)
-            return (accent, normal)
-            
+            return createPreciseClickSound(frequency: 1000.0, volume: volume)
         case .woodBlock:
-            let accent = createPreciseClickSound(frequency: 400.0, volume: 0.6)
-            let normal = createPreciseClickSound(frequency: 600.0, volume: 0.35)
-            return (accent, normal)
-            
+            return createPreciseClickSound(frequency: 400.0, volume: volume)
         case .bell:
-            let accent = createShortBellSound(frequency: 600.0, volume: 0.5)
-            let normal = createShortBellSound(frequency: 800.0, volume: 0.3)
-            return (accent, normal)
-            
+            return createShortBellSound(frequency: 600.0, volume: volume)
         case .beep:
-            let accent = createPreciseClickSound(frequency: 880.0, volume: 0.5)
-            let normal = createPreciseClickSound(frequency: 1100.0, volume: 0.3)
-            return (accent, normal)
-            
+            return createPreciseClickSound(frequency: 880.0, volume: volume)
         case .tick:
-            let accent = createPreciseClickSound(frequency: 2000.0, volume: 0.4)
-            let normal = createPreciseClickSound(frequency: 2400.0, volume: 0.25)
-            return (accent, normal)
+            return createPreciseClickSound(frequency: 2000.0, volume: volume)
+        case .cowbell:
+            return createCowbellSound(volume: volume)
+        case .triangle:
+            return createTriangleSound(volume: volume)
+        case .marimba:
+            return createMarimbaSound(volume: volume)
+        case .drum:
+            return createDrumSound(volume: volume)
+        case .chimes:
+            return createChimesSound(volume: volume)
         }
+    }
+
+    // Legacy method for backward compatibility
+    func createSounds(for type: MetronomeSound) -> (Data, Data) {
+        let sound = createSound(for: type)
+        let softerSound = createSound(for: type) // Same sound for now, volume is handled differently
+        return (sound, softerSound)
     }
     
     func createPreciseClickSound(frequency: Double = 1000.0, volume: Double = 0.5) -> Data {
@@ -172,7 +178,156 @@ extension Metronome {
         
         return convertPCMBufferToWAV(buffer)
     }
-    
+
+    func createCowbellSound(volume: Double = 0.5) -> Data {
+        let sampleRate = 44100.0
+        let duration = 0.08
+
+        guard let format = AVAudioFormat(commonFormat: .pcmFormatFloat32, sampleRate: sampleRate, channels: 1, interleaved: false),
+              let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: AVAudioFrameCount(sampleRate * duration)) else {
+            return Data()
+        }
+        let frameCount = AVAudioFrameCount(sampleRate * duration)
+        buffer.frameLength = frameCount
+
+        guard let channelData = buffer.floatChannelData else {
+            return Data()
+        }
+
+        for i in 0..<Int(frameCount) {
+            let t = Double(i) / sampleRate
+            // Cowbell-like sound: fundamental at 800Hz with strong harmonics
+            let fundamental = sin(2.0 * Double.pi * 800.0 * t)
+            let harmonic2 = 0.6 * sin(2.0 * Double.pi * 1600.0 * t)
+            let harmonic3 = 0.4 * sin(2.0 * Double.pi * 2400.0 * t)
+            let envelope = exp(-t * 20.0)
+            let sample = (fundamental + harmonic2 + harmonic3) * envelope * volume
+            channelData[0][i] = Float(max(-1.0, min(1.0, sample)))
+        }
+
+        return convertPCMBufferToWAV(buffer)
+    }
+
+    func createTriangleSound(volume: Double = 0.5) -> Data {
+        let sampleRate = 44100.0
+        let duration = 0.1
+
+        guard let format = AVAudioFormat(commonFormat: .pcmFormatFloat32, sampleRate: sampleRate, channels: 1, interleaved: false),
+              let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: AVAudioFrameCount(sampleRate * duration)) else {
+            return Data()
+        }
+        let frameCount = AVAudioFrameCount(sampleRate * duration)
+        buffer.frameLength = frameCount
+
+        guard let channelData = buffer.floatChannelData else {
+            return Data()
+        }
+
+        for i in 0..<Int(frameCount) {
+            let t = Double(i) / sampleRate
+            // Triangle-like sound: bright, metallic
+            let fundamental = sin(2.0 * Double.pi * 1200.0 * t)
+            let harmonic2 = 0.5 * sin(2.0 * Double.pi * 2400.0 * t)
+            let harmonic3 = 0.3 * sin(2.0 * Double.pi * 3600.0 * t)
+            let harmonic4 = 0.2 * sin(2.0 * Double.pi * 4800.0 * t)
+            let envelope = exp(-t * 15.0)
+            let sample = (fundamental + harmonic2 + harmonic3 + harmonic4) * envelope * volume
+            channelData[0][i] = Float(max(-1.0, min(1.0, sample)))
+        }
+
+        return convertPCMBufferToWAV(buffer)
+    }
+
+    func createMarimbaSound(volume: Double = 0.5) -> Data {
+        let sampleRate = 44100.0
+        let duration = 0.15
+
+        guard let format = AVAudioFormat(commonFormat: .pcmFormatFloat32, sampleRate: sampleRate, channels: 1, interleaved: false),
+              let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: AVAudioFrameCount(sampleRate * duration)) else {
+            return Data()
+        }
+        let frameCount = AVAudioFrameCount(sampleRate * duration)
+        buffer.frameLength = frameCount
+
+        guard let channelData = buffer.floatChannelData else {
+            return Data()
+        }
+
+        for i in 0..<Int(frameCount) {
+            let t = Double(i) / sampleRate
+            // Marimba-like sound: warm, woody tone
+            let fundamental = sin(2.0 * Double.pi * 300.0 * t)
+            let harmonic2 = 0.8 * sin(2.0 * Double.pi * 600.0 * t)
+            let harmonic3 = 0.6 * sin(2.0 * Double.pi * 900.0 * t)
+            let harmonic4 = 0.4 * sin(2.0 * Double.pi * 1200.0 * t)
+            let envelope = exp(-t * 8.0) * (1.0 - exp(-t * 50.0)) // Attack envelope
+            let sample = (fundamental + harmonic2 + harmonic3 + harmonic4) * envelope * volume
+            channelData[0][i] = Float(max(-1.0, min(1.0, sample)))
+        }
+
+        return convertPCMBufferToWAV(buffer)
+    }
+
+    func createDrumSound(volume: Double = 0.5) -> Data {
+        let sampleRate = 44100.0
+        let duration = 0.12
+
+        guard let format = AVAudioFormat(commonFormat: .pcmFormatFloat32, sampleRate: sampleRate, channels: 1, interleaved: false),
+              let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: AVAudioFrameCount(sampleRate * duration)) else {
+            return Data()
+        }
+        let frameCount = AVAudioFrameCount(sampleRate * duration)
+        buffer.frameLength = frameCount
+
+        guard let channelData = buffer.floatChannelData else {
+            return Data()
+        }
+
+        for i in 0..<Int(frameCount) {
+            let t = Double(i) / sampleRate
+            // Drum-like sound: low frequency with noise component
+            let fundamental = sin(2.0 * Double.pi * 100.0 * t)
+            let harmonic2 = 0.5 * sin(2.0 * Double.pi * 200.0 * t)
+            let noise = (Double.random(in: -1...1)) * 0.2
+            let envelope = exp(-t * 12.0)
+            let sample = (fundamental + harmonic2 + noise) * envelope * volume
+            channelData[0][i] = Float(max(-1.0, min(1.0, sample)))
+        }
+
+        return convertPCMBufferToWAV(buffer)
+    }
+
+    func createChimesSound(volume: Double = 0.5) -> Data {
+        let sampleRate = 44100.0
+        let duration = 0.2
+
+        guard let format = AVAudioFormat(commonFormat: .pcmFormatFloat32, sampleRate: sampleRate, channels: 1, interleaved: false),
+              let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: AVAudioFrameCount(sampleRate * duration)) else {
+            return Data()
+        }
+        let frameCount = AVAudioFrameCount(sampleRate * duration)
+        buffer.frameLength = frameCount
+
+        guard let channelData = buffer.floatChannelData else {
+            return Data()
+        }
+
+        for i in 0..<Int(frameCount) {
+            let t = Double(i) / sampleRate
+            // Chimes-like sound: bell-like with strong harmonics
+            let fundamental = sin(2.0 * Double.pi * 500.0 * t)
+            let harmonic2 = 0.7 * sin(2.0 * Double.pi * 1000.0 * t)
+            let harmonic3 = 0.5 * sin(2.0 * Double.pi * 1500.0 * t)
+            let harmonic4 = 0.3 * sin(2.0 * Double.pi * 2000.0 * t)
+            let harmonic5 = 0.2 * sin(2.0 * Double.pi * 2500.0 * t)
+            let envelope = exp(-t * 6.0)
+            let sample = (fundamental + harmonic2 + harmonic3 + harmonic4 + harmonic5) * envelope * volume
+            channelData[0][i] = Float(max(-1.0, min(1.0, sample)))
+        }
+
+        return convertPCMBufferToWAV(buffer)
+    }
+
     func convertPCMBufferToWAV(_ buffer: AVAudioPCMBuffer) -> Data {
         let format = buffer.format
         let sampleRate = format.sampleRate

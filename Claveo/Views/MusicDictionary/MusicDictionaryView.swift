@@ -87,25 +87,7 @@ struct MusicDictionaryView: View {
     struct TermsListView: View {
         let terms: [MusicTerm]
         let searchText: String
-        
-        var groupedTerms: [String: [MusicTerm]] {
-            Dictionary(grouping: terms) { $0.category }
-        }
-        
-        var sortedCategories: [String] {
-            // Prioritize common categories first
-            let priorityCategories = [
-                "Theory", "Tempo", "Dynamics", "Articulation", 
-                "Notation", "Form", "General"
-            ]
-            
-            let categories = groupedTerms.keys.sorted()
-            let prioritized = categories.filter { priorityCategories.contains($0) }
-            let others = categories.filter { !priorityCategories.contains($0) }
-            
-            return prioritized + others.sorted()
-        }
-        
+
         var body: some View {
             if terms.isEmpty {
                 ContentUnavailableView {
@@ -115,28 +97,12 @@ struct MusicDictionaryView: View {
                 }
             } else {
                 List {
-                    if searchText.isEmpty {
-                        // Grouped by category when not searching
-                        ForEach(sortedCategories, id: \.self) { category in
-                            Section(category) {
-                                ForEach(groupedTerms[category] ?? []) { term in
-                                    NavigationLink {
-                                        TermDetailView(term: term)
-                                    } label: {
-                                        TermRowView(term: term)
-                }
-            }
-            .navigationBarTitleDisplayMode(.inline)
-        }
-    }
-} else {
-                        // Flat list when searching
-                        ForEach(terms) { term in
-                            NavigationLink {
-                                TermDetailView(term: term)
-                            } label: {
-                                TermRowView(term: term)
-                            }
+                    // Always show flat alphabetical list
+                    ForEach(terms.sorted(by: { $0.term < $1.term })) { term in
+                        NavigationLink {
+                            TermDetailView(term: term)
+                        } label: {
+                            TermRowView(term: term)
                         }
                     }
                 }
@@ -152,30 +118,19 @@ struct MusicDictionaryView: View {
         var body: some View {
             VStack(alignment: .leading, spacing: 6) {
                 HStack(alignment: .top, spacing: 12) {
-                    // Symbol display if available
-                    if let symbol = term.symbol, !symbol.isEmpty {
-                        Text(symbol)
-                            .font(FontHelper.shared.bravuraSwiftUIFont(size: 20))
-                            .fontDesign(.none)
-                            .frame(width: 40, height: 40)
-                            .offset(y: 2) // Offset down slightly
-                            .background(Color.themeTertiaryBackground)
-                            .cornerRadius(8)
-                    }
-                    
                     VStack(alignment: .leading, spacing: 4) {
                         Text(term.term)
                             .font(.headline)
                             .foregroundColor(.primary)
-                        
+
                         Text(term.definition)
                             .font(.body)
                             .foregroundColor(.secondary)
                             .lineLimit(2)
                     }
-                    
+
                     Spacer()
-                    
+
                     Text(term.category)
                         .font(.caption)
                         .foregroundColor(.secondary)

@@ -292,34 +292,20 @@ extension MetronomeView {
                         .padding(.vertical, 8)
                     }
                 }
-                .padding(.bottom, 40)
+
             }
             .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Menu {
-                        Button(action: {
-                            if favoriteTempos.contains(metronome.tempo) {
-                                removeFavoriteTempo(metronome.tempo)
-                            } else {
-                                addFavoriteTempo(metronome.tempo)
-                            }
-                        }) {
-                            Label(
-                                favoriteTempos.contains(metronome.tempo) ? "Remove from Favorites" : "Add to Favorites",
-                                systemImage: favoriteTempos.contains(metronome.tempo) ? "star.fill" : "star"
-                            )
-                        }
-                        
-                        if !favoriteTempos.isEmpty {
-                            Button(action: {
-                                showingTemposManagement = true
-                            }) {
-                                Label("Manage Tempos", systemImage: "list.bullet")
-                            }
-                        }
+                ToolbarItemGroup(placement: .navigationBarTrailing) {
+                    Button {
+                        showingVolumeSheet = true
                     } label: {
-                        Image(systemName: "ellipsis.circle")
-                            .foregroundColor(themeManager.accentColor)
+                        Image(systemName: "speaker.wave.2.fill")
+                    }
+                    
+                    Button {
+                        showingSettingsSheet = true
+                    } label: {
+                        Image(systemName: "gearshape")
                     }
                 }
             }
@@ -365,6 +351,19 @@ extension MetronomeView {
             }
         }
     }
+}
+
+// System Volume Slider using MPVolumeView
+import MediaPlayer
+
+struct SystemVolumeSlider: UIViewRepresentable {
+    func makeUIView(context: Context) -> MPVolumeView {
+        let volumeView = MPVolumeView(frame: .zero)
+        volumeView.showsVolumeSlider = true
+        return volumeView
+    }
     
-    
+    func updateUIView(_ uiView: MPVolumeView, context: Context) {
+        // No updates needed
+    }
 }

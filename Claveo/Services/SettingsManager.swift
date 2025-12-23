@@ -91,6 +91,13 @@ class SettingsManager: ObservableObject {
             settings.favoriteTempos = decoded
         }
         
+        // Practice
+        settings.defaultPracticeTime = defaults.integer(forKey: "defaultPracticeTime") == 0 ? 30 : defaults.integer(forKey: "defaultPracticeTime")
+        if let data = defaults.data(forKey: "practiceDurationOptions"),
+           let decoded = try? JSONDecoder().decode([Int].self, from: data) {
+            settings.practiceDurationOptions = decoded
+        }
+        
         // Theme
         settings.accentColor = defaults.string(forKey: "accentColor") ?? AccentColorOption.blue.rawValue
         settings.colorScheme = defaults.string(forKey: "colorScheme") ?? ColorSchemeOption.system.rawValue
@@ -152,6 +159,12 @@ class SettingsManager: ObservableObject {
             defaults.set(encoded, forKey: "favoriteTempos")
         }
         
+        // Practice
+        defaults.set(settings.defaultPracticeTime, forKey: "defaultPracticeTime")
+        if let encoded = try? JSONEncoder().encode(settings.practiceDurationOptions) {
+            defaults.set(encoded, forKey: "practiceDurationOptions")
+        }
+        
         // Theme
         defaults.set(settings.accentColor, forKey: "accentColor")
         defaults.set(settings.colorScheme, forKey: "colorScheme")
@@ -188,6 +201,14 @@ class SettingsManager: ObservableObject {
     var metronomeSoundEnum: MetronomeSound {
         MetronomeSound(rawValue: settings.metronomeSound) ?? .click
     }
+
+    var metronomeEmphasizedSoundEnum: MetronomeSound {
+        MetronomeSound(rawValue: settings.metronomeEmphasizedSound) ?? .click
+    }
+
+    var metronomeNonEmphasizedSoundEnum: MetronomeSound {
+        MetronomeSound(rawValue: settings.metronomeNonEmphasizedSound) ?? .tick
+    }
     
     var accentColorOption: AccentColorOption {
         AccentColorOption(rawValue: settings.accentColor) ?? .blue
@@ -199,6 +220,16 @@ class SettingsManager: ObservableObject {
     
     func setMetronomeSound(_ sound: MetronomeSound) {
         settings.metronomeSound = sound.rawValue
+        saveSettings()
+    }
+
+    func setMetronomeEmphasizedSound(_ sound: MetronomeSound) {
+        settings.metronomeEmphasizedSound = sound.rawValue
+        saveSettings()
+    }
+
+    func setMetronomeNonEmphasizedSound(_ sound: MetronomeSound) {
+        settings.metronomeNonEmphasizedSound = sound.rawValue
         saveSettings()
     }
     
