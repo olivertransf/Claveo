@@ -4,6 +4,7 @@
 //
 //  Helper methods separated from the main view.
 //
+//  Copyright (c) 2025 Oliver Tran
 
 import Foundation
 import SwiftUI

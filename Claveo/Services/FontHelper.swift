@@ -4,6 +4,7 @@
 //
 //  Created by Oliver Tran on 11/20/25.
 //
+//  Copyright (c) 2025 Oliver Tran
 
 import UIKit
 import SwiftUI

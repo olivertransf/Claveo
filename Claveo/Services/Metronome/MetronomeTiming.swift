@@ -4,6 +4,7 @@
 //
 //  Timing and scheduling logic extracted from Metronome.
 //
+//  Copyright (c) 2025 Oliver Tran
 
 import AVFoundation
 import QuartzCore

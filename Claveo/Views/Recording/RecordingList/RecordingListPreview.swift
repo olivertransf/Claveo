@@ -4,6 +4,7 @@
 //
 //  Preview-only helpers extracted from RecordingListView.
 //
+//  Copyright (c) 2025 Oliver Tran
 
 import SwiftUI
 

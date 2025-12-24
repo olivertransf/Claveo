@@ -4,6 +4,7 @@
 //
 //  Shared frequency presets extracted from SettingsView.
 //
+//  Copyright (c) 2025 Oliver Tran
 
 import Foundation
 

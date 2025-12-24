@@ -4,6 +4,7 @@
 //
 //  Created by Oliver Tran on 12/22/25.
 //
+//  Copyright (c) 2025 Oliver Tran
 
 import Foundation
 

@@ -1,3 +1,4 @@
+// Copyright (c) 2025 Oliver Tran
 import { defineConfig } from 'vite';
 import { svelte } from '@sveltejs/vite-plugin-svelte';
 
