@@ -17,7 +17,7 @@ import Tuna
 class PitchDetector: NSObject, ObservableObject {
     @Published var frequency: Double = 0.0
     @Published var note: String = "--"
-    @Published var cents: Double = 0.0 // -50 to +50 cents from target note
+    @Published var cents: Double = 0.0 // Actual cents deviation from target note (unclamped)
     @Published var targetFrequency: Double = 0.0 // Target frequency of the detected note
     @Published var isDetecting = false
     
@@ -399,12 +399,11 @@ class PitchDetector: NSObject, ObservableObject {
         // Calculate cents deviation from the target note
         // Cents = 1200 * log2(actual_frequency / target_frequency)
         let cents = 1200.0 * log2(frequency / closestFrequency)
-        let clampedCents = max(-50, min(50, cents)) // Clamp to reasonable range
         
         // Format note with octave
         let note = "\(closestNote)\(octave)"
         
-        return (note, clampedCents, closestFrequency)
+        return (note, cents, closestFrequency)
     }
     
     // Recalculate note from current frequency (useful when reference frequency changes)
