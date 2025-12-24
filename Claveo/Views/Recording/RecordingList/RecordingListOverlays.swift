@@ -4,6 +4,7 @@
 //
 //  Floating controls and empty states split from the main layout.
 //
+//  Copyright (c) 2025 Oliver Tran
 
 import SwiftUI
 

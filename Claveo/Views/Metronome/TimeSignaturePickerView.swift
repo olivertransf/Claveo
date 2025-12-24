@@ -4,6 +4,7 @@
 //
 //  Extracted from MetronomeView for easier maintenance.
 //
+//  Copyright (c) 2025 Oliver Tran
 
 import SwiftUI
 

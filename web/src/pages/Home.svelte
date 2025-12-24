@@ -1,3 +1,4 @@
+<!-- Copyright (c) 2025 Oliver Tran -->
 <script>
   export let navigate;
   export let darkMode = false;

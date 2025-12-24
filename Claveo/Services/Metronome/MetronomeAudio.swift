@@ -4,6 +4,7 @@
 //
 //  Audio engine setup and sound generation extracted from Metronome.
 //
+//  Copyright (c) 2025 Oliver Tran
 
 import AVFoundation
 import Foundation

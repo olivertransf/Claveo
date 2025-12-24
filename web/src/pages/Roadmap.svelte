@@ -1,3 +1,4 @@
+<!-- Copyright (c) 2025 Oliver Tran -->
 <script>
   import { onMount } from 'svelte';
   export let navigate;

@@ -4,6 +4,7 @@
 //
 //  Layout and subviews extracted to keep RecordingListView small.
 //
+//  Copyright (c) 2025 Oliver Tran
 
 import SwiftUI
 

@@ -4,6 +4,7 @@
 //
 //  Extracted from RecordingListView to keep that file smaller.
 //
+//  Copyright (c) 2025 Oliver Tran
 
 import SwiftUI
 
