@@ -62,8 +62,7 @@ struct TunerView: View {
                     .padding(.horizontal)
 
                     PreciseTuningMeterView(
-                        frequency: pitchDetector.frequency,
-                        targetFrequency: pitchDetector.targetFrequency,
+                        cents: pitchDetector.cents,
                         note: pitchDetector.note
                     )
                     .environmentObject(themeManager)
@@ -345,8 +344,7 @@ struct TuningMeterView: View {
         // - centerX = current note (cents = 0)
         // - rightEdge = note above (cents = +50 relative to current note)
         
-        // Cents value is already relative to current note, clamped to -50 to +50
-        // Map directly: -50 → leftEdge, 0 → centerX, +50 → rightEdge
+        // Clamp cents to -50 to +50 for main meter display
         let clampedCents = max(-50, min(50, cents))
         let position = centerX + (clampedCents / 50.0) * (scaleWidth / 2)
         
@@ -355,17 +353,11 @@ struct TuningMeterView: View {
     }
 }
 
-// Precise tuning meter - shows -15 to +15 Hz range for fine-tuning
+// Precise tuning meter - shows -15 to +15 cents range for fine-tuning
 struct PreciseTuningMeterView: View {
     @EnvironmentObject var themeManager: ThemeManager
-    let frequency: Double
-    let targetFrequency: Double
+    let cents: Double // Cents deviation from target note
     let note: String
-    
-    private var hzOffset: Double {
-        guard frequency > 0 && targetFrequency > 0 else { return 0 }
-        return frequency - targetFrequency
-    }
     
     var body: some View {
         GeometryReader { geometry in
@@ -396,24 +388,18 @@ struct PreciseTuningMeterView: View {
                     )
                     .frame(height: 50)
                 
-//                // Center line (perfectly in tune)
-//                Rectangle()
-//                    .fill(Color.themeAccent.opacity(0.8))
-//                    .frame(width: 2, height: 50)
-//                    .offset(x: centerX - 1)
-                
-                // Scale marks - centered around 0, range -15 to +15 Hz
+                // Scale marks - centered around 0, range -15 to +15 cents
                 ForEach([-15, -12, -9, -6, -3, 0, 3, 6, 9, 12, 15], id: \.self) { mark in
                     // Position: center + (mark / 15) * half of scale width
                     let position = centerX + (CGFloat(mark) / 15.0) * (scaleWidth / 2)
                     
-                    // Major marks (every 3 Hz)
+                    // Major marks (every 3 cents)
                     Rectangle()
                         .fill(Color.themeLabel.opacity(mark == 0 ? 0.6 : 0.3))
                         .frame(width: mark == 0 ? 1.5 : 0.5, height: mark % 3 == 0 ? 40 : 25)
                         .offset(x: position - centerX - (mark == 0 ? 0.75 : 0.25))
                     
-                    // Labels for major marks (every 3 Hz)
+                    // Labels for major marks (every 3 cents)
                     if mark % 3 == 0 && mark != 0 {
                         Text("\(mark > 0 ? "+" : "")\(mark)")
                             .font(.system(size: 10, weight: .medium))
@@ -447,16 +433,16 @@ struct PreciseTuningMeterView: View {
                         .frame(width: 2, height: 45)
                 }
                 .offset(x: preciseNeedlePosition(in: width, centerX: centerX, leftEdge: leftEdge, rightEdge: rightEdge, scaleWidth: scaleWidth) - centerX)
-                .animation(.spring(response: 0.4, dampingFraction: 0.8), value: hzOffset)
+                .animation(.spring(response: 0.4, dampingFraction: 0.8), value: cents)
             }
         }
     }
     
     private var preciseNeedleColor: Color {
-        let absHz = abs(hzOffset)
-        if absHz < 2 {
+        let absCents = abs(cents)
+        if absCents < 2 {
             return .green
-        } else if absHz < 8 {
+        } else if absCents < 8 {
             return .orange
         } else {
             return .red
@@ -464,13 +450,13 @@ struct PreciseTuningMeterView: View {
     }
     
     private func preciseNeedlePosition(in width: Double, centerX: CGFloat, leftEdge: CGFloat, rightEdge: CGFloat, scaleWidth: CGFloat) -> Double {
-        // Clamp Hz offset to -15 to +15 for precise view
-        let clampedHz = max(-15, min(15, hzOffset))
+        // Clamp cents to -15 to +15 for precise view
+        let clampedCents = max(-15, min(15, cents))
         
-        // Map Hz (-15 to +15) to position
-        // Center (0 Hz) should be at centerX
-        // -15 Hz maps to leftEdge, +15 Hz maps to rightEdge
-        let position = centerX + (clampedHz / 15.0) * (scaleWidth / 2)
+        // Map cents (-15 to +15) to position
+        // Center (0 cents) should be at centerX
+        // -15 cents maps to leftEdge, +15 cents maps to rightEdge
+        let position = centerX + (clampedCents / 15.0) * (scaleWidth / 2)
         
         // Clamp to stay within bounds
         return max(leftEdge, min(rightEdge, position))
