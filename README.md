@@ -79,5 +79,5 @@ For questions, feedback, or licensing inquiries: **claveo.app@gmail.com**
 ## Links
 
 - [App Store](https://apps.apple.com/us/app/claveo-music-companion/id6755795790)
-- [Official Website](https://claveo.app)
+- [Official Website](https://claveo.netlify.app/)
 
