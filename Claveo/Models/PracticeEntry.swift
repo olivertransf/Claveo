@@ -15,6 +15,8 @@ struct PracticeEntry: Identifiable, Codable {
     var notes: String? // optional journal entry
     var linkedRecordingIds: [UUID] = [] // IDs of linked recordings
     var rating: Int? // 1-5 stars, optional
+    var lastModified: Date = Date()
+    var isDeleted: Bool = false
 
     // Computed properties
     var formattedDate: String {
@@ -43,11 +45,13 @@ struct PracticeEntry: Identifiable, Codable {
     }
 
     // Initialize with current date
-    init(date: Date = Date(), duration: Int, notes: String? = nil, linkedRecordingIds: [UUID] = [], rating: Int? = nil) {
+    init(date: Date = Date(), duration: Int, notes: String? = nil, linkedRecordingIds: [UUID] = [], rating: Int? = nil, lastModified: Date = Date(), isDeleted: Bool = false) {
         self.date = date
         self.duration = duration
         self.notes = notes
         self.linkedRecordingIds = linkedRecordingIds
         self.rating = rating
+        self.lastModified = lastModified
+        self.isDeleted = isDeleted
     }
 }

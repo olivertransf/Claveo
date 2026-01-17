@@ -1,6 +1,15 @@
 {
-  "originHash" : "d9dd2aa7cfc86869b0822370701cd52c888ec04ddb5992d65e3f154be45604a9",
+  "originHash" : "625a6a384488a7904451cc35683c5e7d1d52b042f022df7d228c6808571da664",
   "pins" : [
+    {
+      "identity" : "inject",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/krzysztofzablocki/Inject.git",
+      "state" : {
+        "revision" : "728c56639ecb3df441d51d5bc6747329afabcfc9",
+        "version" : "1.5.2"
+      }
+    },
     {
       "identity" : "tuna",
       "kind" : "remoteSourceControl",
