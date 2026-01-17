@@ -16,14 +16,19 @@ class PracticeService: ObservableObject {
 
     @Published var practiceEntries: [PracticeEntry] = [] {
         didSet {
-            // Debounce saves to prevent too frequent iCloud writes
-            saveTask?.cancel()
-            saveTask = Task { @MainActor in
-                try? await Task.sleep(nanoseconds: 500_000_000) // 0.5 second delay
-                if !Task.isCancelled {
-                    saveEntries()
-                }
-            }
+            // Only autosave if the change wasn't triggered by internal sync logic
+            // We'll manage saving explicitly in add/update/delete/sync methods
+            // to avoid infinite loops or unnecessary writes when just filtering.
+        }
+    }
+    
+    // The source of truth including deleted items
+    private var allEntries: [PracticeEntry] = [] {
+        didSet {
+            // Update the UI-facing list whenever the source changes
+            practiceEntries = allEntries
+                .filter { !$0.isDeleted }
+                .sorted { $0.date > $1.date }
         }
     }
 
@@ -64,18 +69,30 @@ class PracticeService: ObservableObject {
     // MARK: - CRUD Operations
 
     func addEntry(_ entry: PracticeEntry) {
-        practiceEntries.append(entry)
-        practiceEntries.sort { $0.date > $1.date } // Most recent first
+        var newEntry = entry
+        newEntry.lastModified = Date()
+        allEntries.append(newEntry)
+        scheduleSave()
     }
 
     func updateEntry(_ entry: PracticeEntry) {
-        if let index = practiceEntries.firstIndex(where: { $0.id == entry.id }) {
-            practiceEntries[index] = entry
+        if let index = allEntries.firstIndex(where: { $0.id == entry.id }) {
+            var updatedEntry = entry
+            updatedEntry.lastModified = Date()
+            allEntries[index] = updatedEntry
+            scheduleSave()
         }
     }
 
     func deleteEntry(_ entry: PracticeEntry) {
-        practiceEntries.removeAll { $0.id == entry.id }
+        if let index = allEntries.firstIndex(where: { $0.id == entry.id }) {
+            // Soft delete
+            var deletedEntry = allEntries[index]
+            deletedEntry.isDeleted = true
+            deletedEntry.lastModified = Date()
+            allEntries[index] = deletedEntry
+            scheduleSave()
+        }
     }
 
     // MARK: - Statistics
@@ -174,6 +191,16 @@ class PracticeService: ObservableObject {
     }
 
     // MARK: - Persistence
+    
+    private func scheduleSave() {
+        saveTask?.cancel()
+        saveTask = Task { @MainActor in
+            try? await Task.sleep(nanoseconds: 500_000_000) // 0.5 second delay
+            if !Task.isCancelled {
+                saveEntries()
+            }
+        }
+    }
 
     private func saveEntries() {
         guard !isSyncing else { return } // Prevent save during sync
@@ -184,7 +211,8 @@ class PracticeService: ObservableObject {
     }
 
     private func saveToiCloud() {
-        guard let encoded = try? JSONEncoder().encode(practiceEntries) else {
+        // Encode allEntries (including deleted ones)
+        guard let encoded = try? JSONEncoder().encode(allEntries) else {
             #if DEBUG
             print("❌ Failed to encode practice entries")
             #endif
@@ -217,7 +245,7 @@ class PracticeService: ObservableObject {
 
     private func saveToUserDefaults() {
         do {
-            let data = try JSONEncoder().encode(practiceEntries)
+            let data = try JSONEncoder().encode(allEntries)
             UserDefaults.standard.set(data, forKey: entriesKey)
         } catch {
             print("Error saving practice entries to UserDefaults: \(error)")
@@ -227,8 +255,7 @@ class PracticeService: ObservableObject {
     private func loadEntries() {
         // Try to load from iCloud first
         if let iCloudEntries = loadFromiCloud() {
-            practiceEntries = iCloudEntries
-            practiceEntries.sort { $0.date > $1.date } // Most recent first
+            allEntries = iCloudEntries
             // Update local cache
             saveToUserDefaults()
         } else {
@@ -263,8 +290,7 @@ class PracticeService: ObservableObject {
         guard let data = UserDefaults.standard.data(forKey: entriesKey) else { return }
 
         do {
-            practiceEntries = try JSONDecoder().decode([PracticeEntry].self, from: data)
-            practiceEntries.sort { $0.date > $1.date } // Most recent first
+            allEntries = try JSONDecoder().decode([PracticeEntry].self, from: data)
         } catch {
             print("Error loading practice entries from UserDefaults: \(error)")
         }
@@ -283,40 +309,60 @@ class PracticeService: ObservableObject {
         
         // When coming back online, sync from iCloud
         if let iCloudEntries = loadFromiCloud() {
-            // Merge with local entries, using most recent modification
-            let localEntries = practiceEntries
-            var mergedEntries: [PracticeEntry] = []
+            // Match Logic: Last Modified Wins
+            // Merge cloud entries into local allEntries
+            
             var entryMap: [UUID: PracticeEntry] = [:]
             
-            // Create map of local entries
-            for entry in localEntries {
+            // Start with local entries
+            for entry in allEntries {
                 entryMap[entry.id] = entry
             }
             
-            // Merge iCloud entries (they take precedence if they exist)
-            for iCloudEntry in iCloudEntries {
-                // Entry exists in both - prefer iCloud version
-                // Remove from map to track which local entries are new
-                entryMap.removeValue(forKey: iCloudEntry.id)
-                mergedEntries.append(iCloudEntry)
+            // Merge iCloud entries
+            var changeCount = 0
+            
+            for cloudEntry in iCloudEntries {
+                if let localEntry = entryMap[cloudEntry.id] {
+                    // Conflict resolution: prefer the one with later modification date
+                    if cloudEntry.lastModified > localEntry.lastModified {
+                        entryMap[cloudEntry.id] = cloudEntry
+                        changeCount += 1
+                    }
+                    // Else: keep local version
+                } else {
+                    // New entry from cloud
+                    entryMap[cloudEntry.id] = cloudEntry
+                    changeCount += 1
+                }
             }
             
-            // Add remaining local entries that aren't in iCloud
-            for (_, localEntry) in entryMap {
-                mergedEntries.append(localEntry)
+            // No need to "Add remaining local entries" because we started with them in the map
+            // and only updated or added to it.
+            
+            if changeCount > 0 {
+                let mergedEntries = Array(entryMap.values)
+                allEntries = mergedEntries
+                
+                #if DEBUG
+                print("✅ Sync complete: Updated \(changeCount) entries from cloud. Total: \(allEntries.count) (including deleted)")
+                #endif
+                
+                // Save merged result back to both locations to propagate merges
+                saveToUserDefaults()
+                saveToiCloud()
+            } else {
+                #if DEBUG
+                print("✅ Sync complete: No changes from cloud needed.")
+                #endif
+                
+                // If we have local changes that aren't in cloud (cloud count < local count or just different),
+                // we should push them up.
+                // Simple heuristic: if counts differ or we just feel like it, save to cloud to be safe.
+                // Since efficient save checks are hard without diffing, we'll just save if we have any entries.
+                saveToiCloud()
             }
             
-            let oldCount = practiceEntries.count
-            practiceEntries = mergedEntries
-            practiceEntries.sort { $0.date > $1.date }
-            
-            #if DEBUG
-            print("✅ Sync complete: \(oldCount) → \(practiceEntries.count) entries")
-            #endif
-            
-            // Save merged result back to both locations
-            saveToUserDefaults()
-            saveToiCloud()
         } else {
             // If iCloud file doesn't exist, ensure local changes are synced to iCloud
             // This handles the case where user made changes offline

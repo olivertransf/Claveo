@@ -6,7 +6,7 @@
   let items = [
     {
       title: 'Optical Music Recognition (OMR)',
-      status: 'In Beta - Aimed for January 2026',
+      status: 'In Beta - Aimed for Spring 2026',
       description: 'Scan and digitize sheet music directly from photos. Convert printed scores into editable digital formats for practice and analysis.'
     },
     {
