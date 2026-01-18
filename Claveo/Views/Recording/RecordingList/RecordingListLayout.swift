@@ -7,6 +7,7 @@
 //  Copyright (c) 2025 Oliver Tran
 
 import SwiftUI
+import UIKit
 
 extension RecordingListView {
     @ViewBuilder
@@ -96,6 +97,15 @@ extension RecordingListView {
                 Label("Edit", systemImage: "pencil")
             }
             
+            if FileManager.default.fileExists(atPath: recording.fileURL.path) {
+                ShareLink(
+                    item: RecordingFileTransferable(recording: recording),
+                    preview: SharePreview(recording.displayName, icon: Image(systemName: "waveform"))
+                ) {
+                    Label("Export", systemImage: "square.and.arrow.up")
+                }
+            }
+            
             Button(role: .destructive) {
                 recordingToDelete = recording
                 showingDeleteAlert = true
@@ -109,6 +119,15 @@ extension RecordingListView {
                 showingDeleteAlert = true
             } label: {
                 Label("Delete", systemImage: "trash")
+            }
+            
+            if FileManager.default.fileExists(atPath: recording.fileURL.path) {
+                Button {
+                    recordingToShare = recording
+                } label: {
+                    Label("Export", systemImage: "square.and.arrow.up")
+                }
+                .tint(.green)
             }
             
             Button {
@@ -140,8 +159,21 @@ extension RecordingListView {
             availablePieces: loadAvailablePieces()
         )
     }
+}
+
+struct ShareSheet: UIViewControllerRepresentable {
+    let activityItems: [Any]
+    let applicationActivities: [UIActivity]? = nil
     
+    func makeUIViewController(context: Context) -> UIActivityViewController {
+        let controller = UIActivityViewController(
+            activityItems: activityItems,
+            applicationActivities: applicationActivities
+        )
+        return controller
+    }
     
+    func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
 }
 
 

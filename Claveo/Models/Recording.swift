@@ -7,6 +7,8 @@
 //  Copyright (c) 2025 Oliver Tran
 
 import Foundation
+import UniformTypeIdentifiers
+import SwiftUI
 
 struct Recording: Identifiable, Codable {
     var id: UUID
@@ -129,6 +131,60 @@ struct Recording: Identifiable, Codable {
     
     var fileURL: URL {
         return iCloudManager.shared.getDocumentsURL().appendingPathComponent(fileName)
+    }
+    
+    func shareableFileURL() throws -> URL {
+        let originalURL = fileURL
+        let fileExtension = originalURL.pathExtension
+        
+        let sanitizedName = displayName
+            .replacingOccurrences(of: "/", with: "-")
+            .replacingOccurrences(of: "\\", with: "-")
+            .replacingOccurrences(of: ":", with: "-")
+            .replacingOccurrences(of: "*", with: "-")
+            .replacingOccurrences(of: "?", with: "-")
+            .replacingOccurrences(of: "\"", with: "-")
+            .replacingOccurrences(of: "<", with: "-")
+            .replacingOccurrences(of: ">", with: "-")
+            .replacingOccurrences(of: "|", with: "-")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        let shareableFileName = sanitizedName.isEmpty ? "Recording" : sanitizedName
+        let tempFileName = "\(shareableFileName).\(fileExtension)"
+        
+        let tempDirectory = FileManager.default.temporaryDirectory
+        let tempURL = tempDirectory.appendingPathComponent(tempFileName)
+        
+        if FileManager.default.fileExists(atPath: tempURL.path) {
+            try FileManager.default.removeItem(at: tempURL)
+        }
+        
+        try FileManager.default.copyItem(at: originalURL, to: tempURL)
+        
+        return tempURL
+    }
+}
+
+struct RecordingFileTransferable: Transferable {
+    let recording: Recording
+    
+    static var transferRepresentation: some TransferRepresentation {
+        FileRepresentation(contentType: UTType.audio) { transferable in
+            let shareableURL = try transferable.recording.shareableFileURL()
+            return SentTransferredFile(shareableURL)
+        } importing: { received in
+            let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent(received.file.lastPathComponent)
+            if FileManager.default.fileExists(atPath: tempURL.path) {
+                try FileManager.default.removeItem(at: tempURL)
+            }
+            try FileManager.default.copyItem(at: received.file, to: tempURL)
+            let placeholderRecording = Recording(
+                fileName: tempURL.lastPathComponent,
+                createdAt: Date(),
+                duration: 0
+            )
+            return RecordingFileTransferable(recording: placeholderRecording)
+        }
     }
 }
 
