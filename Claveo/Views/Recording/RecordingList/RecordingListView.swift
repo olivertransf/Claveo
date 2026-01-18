@@ -31,6 +31,7 @@ struct RecordingListView: View {
     @State var editingPiece: Piece?
     @State var showingSettingsSheet = false
     @State var showingStorageInfo = false
+    @State var recordingToShare: Recording?
     
     var filteredRecordings: [Recording] {
         var filtered = recorder.recordings
@@ -121,6 +122,16 @@ struct RecordingListView: View {
         }
         .onAppear {
             availablePieces = loadAvailablePieces()
+        }
+        .sheet(item: $recordingToShare) { recording in
+            if FileManager.default.fileExists(atPath: recording.fileURL.path) {
+                if let shareableURL = try? recording.shareableFileURL() {
+                    ShareSheet(activityItems: [shareableURL])
+                        .onDisappear {
+                            try? FileManager.default.removeItem(at: shareableURL)
+                        }
+                }
+            }
         }
     }
 }

@@ -135,6 +135,27 @@ struct RecordingDetailView: View {
                 } header: {
                     Text("Notes")
                 }
+                
+                Section {
+                    if FileManager.default.fileExists(atPath: recording.fileURL.path) {
+                        ShareLink(
+                            item: RecordingFileTransferable(recording: recording),
+                            preview: SharePreview(recording.displayName, icon: Image(systemName: "waveform"))
+                        ) {
+                            Label("Export Recording", systemImage: "square.and.arrow.up")
+                        }
+                    } else {
+                        HStack {
+                            Label("Export Recording", systemImage: "square.and.arrow.up")
+                            Spacer()
+                            Text("File not found")
+                                .foregroundColor(.secondary)
+                                .font(.caption)
+                        }
+                    }
+                } header: {
+                    Text("Export")
+                }
         }
         .tint(themeManager.accentColor)
         .navigationTitle("Recording Details")
