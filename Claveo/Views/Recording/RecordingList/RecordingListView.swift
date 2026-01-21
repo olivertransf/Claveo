@@ -17,6 +17,7 @@ struct RecordingListView: View {
     @State var recordingToDelete: Recording?
     @State var showingPermissionAlert = false
     @State var selectedRecording: Recording?
+    @State var recordingToTrim: Recording?
     @State var expandedRecordingId: UUID?
     @State var searchText: String = ""
     @State var isSearchFocused: Bool = false
@@ -87,6 +88,12 @@ struct RecordingListView: View {
         }
         .sheet(item: $selectedRecording) { recording in
             detailSheet(for: recording)
+        }
+        .sheet(item: $recordingToTrim) { recording in
+            RecordingTrimView(recording: recording) { updatedRecording in
+                recorder.updateRecording(updatedRecording)
+            }
+            .environmentObject(themeManager)
         }
         .alert("Delete Recording", isPresented: $showingDeleteAlert) {
             Button("Cancel", role: .cancel) { }

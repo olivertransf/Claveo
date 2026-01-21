@@ -18,6 +18,20 @@ extension RecordingListView {
                     }
                 
                 if recorder.isRecording {
+                    LinearGradient(
+                        colors: [
+                            Color.black.opacity(0.0),
+                            Color.black.opacity(0.5),
+                            Color.black.opacity(0.7)
+                        ],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                    .ignoresSafeArea()
+                    .allowsHitTesting(false)
+                }
+                
+                if recorder.isRecording {
                     VStack {
                         Spacer()
                         recordingIndicatorView
@@ -274,23 +288,35 @@ extension RecordingListView {
     }
     
     var recordingIndicatorView: some View {
-        HStack(spacing: 12) {
-            Circle()
-                .fill(Color.red)
-                .frame(width: 12, height: 12)
-                .opacity(recorder.isRecording ? 1 : 0.5)
-                .animation(.easeInOut(duration: 1).repeatForever(autoreverses: true), value: recorder.isRecording)
+        GeometryReader { geometry in
+            let isPhone = UIDevice.current.userInterfaceIdiom == .phone
+            let waveformHeight = isPhone ? min(geometry.size.width * 0.12, 50) : 60
+            let maxBars = isPhone ? 60 : 80
             
-            Text(formatTime(recorder.recordingTime))
-                .font(.system(.body, design: .monospaced))
-                .fontWeight(.semibold)
-                .foregroundColor(.primary)
+            VStack(spacing: 20) {
+                HStack(spacing: 12) {
+                    Circle()
+                        .fill(Color.red)
+                        .frame(width: 10, height: 10)
+                        .opacity(recorder.isRecording ? 1 : 0.5)
+                        .animation(.easeInOut(duration: 1).repeatForever(autoreverses: true), value: recorder.isRecording)
+                        .shadow(color: Color.red.opacity(0.5), radius: 4, x: 0, y: 0)
+                    
+                    Text(formatTime(recorder.recordingTime))
+                        .font(.system(.title3, design: .monospaced))
+                        .fontWeight(.semibold)
+                        .foregroundColor(.white)
+                }
+                
+                LiveWaveformView(audioLevels: recorder.waveformLevels, maxBars: maxBars)
+                    .frame(height: waveformHeight)
+                    .padding(.horizontal, 8)
+            }
+            .padding(.horizontal, isPhone ? 20 : 28)
+            .padding(.vertical, isPhone ? 20 : 24)
+            .frame(maxWidth: .infinity)
         }
-        .padding(.horizontal, 20)
-        .padding(.vertical, 12)
-        .background(.ultraThinMaterial)
-        .cornerRadius(16)
-        .shadow(color: Color.black.opacity(0.1), radius: 8, x: 0, y: 4)
+        .frame(height: 120)
     }
     
     var recordingButtonOverlay: some View {

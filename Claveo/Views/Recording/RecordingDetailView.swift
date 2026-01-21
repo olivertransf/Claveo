@@ -17,6 +17,9 @@ struct RecordingDetailView: View {
     @State private var showingPiecePicker = false
     @State private var measureStartText = ""
     @State private var measureEndText = ""
+    @State private var showingTrimSheet = false
+    @State private var showingRestoreAlert = false
+    @State private var isRestoring = false
     
     var body: some View {
         Form {
@@ -128,6 +131,34 @@ struct RecordingDetailView: View {
                 } header: {
                     Text("Duration")
                 }
+
+                Section {
+                    Button {
+                        showingTrimSheet = true
+                    } label: {
+                        Label("Trim Recording", systemImage: "scissors")
+                    }
+                    .disabled(!FileManager.default.fileExists(atPath: recording.fileURL.path))
+                    
+                    if recording.hasTrimHistory, let originalURL = recording.originalFileURL, FileManager.default.fileExists(atPath: originalURL.path) {
+                        Button {
+                            showingRestoreAlert = true
+                        } label: {
+                            Label("Restore Original", systemImage: "arrow.counterclockwise")
+                        }
+                        .disabled(isRestoring)
+                    }
+                } header: {
+                    Text("Audio")
+                } footer: {
+                    if !FileManager.default.fileExists(atPath: recording.fileURL.path) {
+                        Text("Recording file not found.")
+                    } else if recording.hasTrimHistory {
+                        Text("Original audio is preserved. You can restore it anytime.")
+                    } else {
+                        Text("Trimming preserves the original audio for restoration.")
+                    }
+                }
                 
                 Section {
                     TextEditor(text: $recording.notes)
@@ -180,6 +211,15 @@ struct RecordingDetailView: View {
             measureStartText = recording.measureStart.map { String($0) } ?? ""
             measureEndText = recording.measureEnd.map { String($0) } ?? ""
         }
+        .sheet(isPresented: $showingTrimSheet) {
+            RecordingTrimView(recording: recording) { updatedRecording in
+                recording.duration = updatedRecording.duration
+                recording.originalFileName = updatedRecording.originalFileName
+                recording.originalDuration = updatedRecording.originalDuration
+                onSave(recording)
+            }
+            .environmentObject(themeManager)
+        }
         .sheet(isPresented: $showingPiecePicker) {
             PieceManagementView(pieces: $availablePieces)
                 .environmentObject(themeManager)
@@ -190,6 +230,56 @@ struct RecordingDetailView: View {
                 loadPieces()
             }
         }
+        .alert("Restore Original Recording", isPresented: $showingRestoreAlert) {
+            Button("Cancel", role: .cancel) { }
+            Button("Restore") {
+                Task { await restoreOriginal() }
+            }
+        } message: {
+            if let originalDuration = recording.originalDuration {
+                Text("Restore the original \(formatDuration(originalDuration)) recording? This will replace the current trimmed version.")
+            } else {
+                Text("Restore the original recording? This will replace the current trimmed version.")
+            }
+        }
+    }
+    
+    private func restoreOriginal() async {
+        guard let originalURL = recording.originalFileURL,
+              FileManager.default.fileExists(atPath: originalURL.path) else {
+            return
+        }
+        
+        isRestoring = true
+        
+        do {
+            try await RecordingTrimmer.restoreOriginal(
+                recordingURL: recording.fileURL,
+                backupURL: originalURL
+            )
+            
+            var updated = recording
+            updated.duration = updated.originalDuration ?? recording.duration
+            updated.originalFileName = nil
+            updated.originalDuration = nil
+            
+            try? FileManager.default.removeItem(at: originalURL)
+            
+            onSave(updated)
+            dismiss()
+        } catch {
+            #if DEBUG
+            print("Failed to restore original: \(error)")
+            #endif
+        }
+        
+        isRestoring = false
+    }
+    
+    private func formatDuration(_ duration: TimeInterval) -> String {
+        let minutes = Int(duration) / 60
+        let seconds = Int(duration) % 60
+        return String(format: "%d:%02d", minutes, seconds)
     }
     
     private func loadPieces() {
