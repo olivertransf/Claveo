@@ -18,6 +18,8 @@ struct PreviewRecordingListView: View {
     @State private var showingPermissionAlert = false
     @State private var selectedRecording: Recording?
     @State private var expandedRecordingId: UUID?
+    @State private var recordingToTrim: Recording?
+    @State private var recordingToShare: Recording?
     
     let previewRecordings: [Recording]?
     let previewIsRecording: Bool?
@@ -86,6 +88,15 @@ struct PreviewRecordingListView: View {
                                 onDelete: {
                                     recordingToDelete = recording
                                     showingDeleteAlert = true
+                                },
+                                onTrim: {
+                                    if player.currentRecording?.id == recording.id {
+                                        player.stop()
+                                    }
+                                    recordingToTrim = recording
+                                },
+                                onExport: {
+                                    recordingToShare = recording
                                 }
                             )
                             .contextMenu {

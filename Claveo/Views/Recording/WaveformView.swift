@@ -40,11 +40,13 @@ struct WaveformView: View {
                             let minBarHeight: CGFloat = 2
                             let maxBarHeight = geometry.size.height - 4
                             let barHeight = max(minBarHeight, normalizedAmplitude * maxBarHeight)
-                            let isPlayed = CGFloat(index) / CGFloat(waveformData.count) < CGFloat(playProgress)
+                            let barProgress = CGFloat(index) / CGFloat(max(1, waveformData.count - 1))
+                            let isPlayed = barProgress <= playProgress
                             
                             RoundedRectangle(cornerRadius: 1.5)
                                 .fill(isPlayed ? themeManager.accentColor : themeManager.accentColor.opacity(0.3))
                                 .frame(width: 2, height: barHeight)
+                                .animation(.linear(duration: 0.033), value: playProgress)
                         }
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
@@ -70,47 +72,7 @@ struct WaveformView: View {
     private func loadWaveform() {
         Task {
             do {
-                let file = try AVAudioFile(forReading: recording.fileURL)
-                guard let format = AVAudioFormat(commonFormat: .pcmFormatFloat32, sampleRate: file.fileFormat.sampleRate, channels: 1, interleaved: false) else {
-                    await MainActor.run {
-                        isLoading = false
-                    }
-                    return
-                }
-                
-                guard let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: AVAudioFrameCount(file.length)) else {
-                    await MainActor.run {
-                        isLoading = false
-                    }
-                    return
-                }
-                
-                try file.read(into: buffer)
-                
-                guard let channelData = buffer.floatChannelData else {
-                    await MainActor.run {
-                        isLoading = false
-                    }
-                    return
-                }
-                
-                // Downsample for visualization (take every Nth sample)
-                let frameCount = Int(buffer.frameLength)
-                guard frameCount > 0 else {
-                    await MainActor.run {
-                        isLoading = false
-                    }
-                    return
-                }
-                
-                let downsampleFactor = max(1, frameCount / 200) // Show ~200 bars
-                var samples: [Float] = []
-                
-                for i in stride(from: 0, to: frameCount, by: downsampleFactor) {
-                    guard i < frameCount else { break }
-                    samples.append(channelData[0][i])
-                }
-                
+                let samples = try await WaveformExtractor.extractBars(from: recording.fileURL, bars: 220)
                 await MainActor.run {
                     waveformData = samples
                     isLoading = false

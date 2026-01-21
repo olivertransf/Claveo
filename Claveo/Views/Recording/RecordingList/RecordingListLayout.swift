@@ -88,6 +88,15 @@ extension RecordingListView {
             onDelete: {
                 recordingToDelete = recording
                 showingDeleteAlert = true
+            },
+            onTrim: {
+                if player.currentRecording?.id == recording.id {
+                    player.stop()
+                }
+                recordingToTrim = recording
+            },
+            onExport: {
+                recordingToShare = recording
             }
         )
         .contextMenu {
@@ -95,6 +104,15 @@ extension RecordingListView {
                 selectedRecording = recording
             } label: {
                 Label("Edit", systemImage: "pencil")
+            }
+
+            Button {
+                if player.currentRecording?.id == recording.id {
+                    player.stop()
+                }
+                recordingToTrim = recording
+            } label: {
+                Label("Trim", systemImage: "scissors")
             }
             
             if FileManager.default.fileExists(atPath: recording.fileURL.path) {
@@ -129,6 +147,16 @@ extension RecordingListView {
                 }
                 .tint(.green)
             }
+
+            Button {
+                if player.currentRecording?.id == recording.id {
+                    player.stop()
+                }
+                recordingToTrim = recording
+            } label: {
+                Label("Trim", systemImage: "scissors")
+            }
+            .tint(.orange)
             
             Button {
                 selectedRecording = recording

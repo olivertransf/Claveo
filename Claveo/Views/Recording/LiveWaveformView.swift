@@ -25,42 +25,50 @@ struct LiveWaveformView: View {
     
     var body: some View {
         GeometryReader { geometry in
+            let availableWidth = geometry.size.width
+            let barWidth: CGFloat = 3
+            let barSpacing: CGFloat = 2.5
+            let totalBarWidth = barWidth + barSpacing
+            let maxBarsThatFit = Int((availableWidth - barSpacing) / totalBarWidth)
+            let barsToShow = min(maxBars, maxBarsThatFit)
+            
             if audioLevels.isEmpty {
-                // Show empty waveform with minimal bars
-                HStack(spacing: 2) {
-                    ForEach(0..<maxBars, id: \.self) { _ in
-                        RoundedRectangle(cornerRadius: 1.5)
-                            .fill(themeManager.accentColor.opacity(0.2))
-                            .frame(width: 2, height: 2)
+                HStack(spacing: barSpacing) {
+                    ForEach(0..<barsToShow, id: \.self) { _ in
+                        RoundedRectangle(cornerRadius: 2)
+                            .fill(Color.white.opacity(0.2))
+                            .frame(width: barWidth, height: 3)
                     }
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
             } else {
-                HStack(spacing: 2) {
-                    ForEach(Array(audioLevels.enumerated()), id: \.offset) { index, level in
+                let levelsToShow = Array(audioLevels.suffix(barsToShow))
+                
+                HStack(spacing: barSpacing) {
+                    ForEach(Array(levelsToShow.enumerated()), id: \.offset) { index, level in
                         let normalizedLevel = CGFloat(level)
-                        let minBarHeight: CGFloat = 2
-                        let maxBarHeight = geometry.size.height - 4
-                        let barHeight = max(minBarHeight, normalizedLevel * maxBarHeight)
+                        let minBarHeight: CGFloat = 3
+                        let maxBarHeight = geometry.size.height
+                        let amplifiedLevel = pow(normalizedLevel, 0.4)
+                        let sensitivityBoost: CGFloat = 2.5
+                        let barHeight = max(minBarHeight, amplifiedLevel * maxBarHeight * sensitivityBoost)
                         
-                        RoundedRectangle(cornerRadius: 1.5)
-                            .fill(themeManager.accentColor)
-                            .frame(width: 2, height: barHeight)
+                        RoundedRectangle(cornerRadius: 2)
+                            .fill(Color.white)
+                            .frame(width: barWidth, height: min(barHeight, maxBarHeight))
                     }
                     
-                    // Fill remaining space with empty bars if needed
-                    if audioLevels.count < maxBars {
-                        ForEach(audioLevels.count..<maxBars, id: \.self) { _ in
-                            RoundedRectangle(cornerRadius: 1.5)
-                                .fill(themeManager.accentColor.opacity(0.2))
-                                .frame(width: 2, height: 2)
+                    if levelsToShow.count < barsToShow {
+                        ForEach(levelsToShow.count..<barsToShow, id: \.self) { _ in
+                            RoundedRectangle(cornerRadius: 2)
+                                .fill(Color.white.opacity(0.2))
+                                .frame(width: barWidth, height: 3)
                         }
                     }
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
             }
         }
-        .frame(height: 40)
     }
 }
 

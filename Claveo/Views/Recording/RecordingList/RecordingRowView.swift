@@ -23,9 +23,41 @@ struct RecordingRowView: View {
     let onSkipForward: () -> Void
     let onEdit: () -> Void
     let onDelete: () -> Void
+    let onTrim: () -> Void
+    let onExport: () -> Void
     @Environment(\.colorScheme) var colorScheme
     @State private var isDragging = false
     @State private var dragValue: TimeInterval = 0
+    @State private var displayTime: TimeInterval = 0
+    @State private var seekTask: Task<Void, Never>?
+    @State private var lastUpdateTime: Date?
+    @State private var lastKnownTime: TimeInterval = 0
+    @State private var smoothUpdateTimer: Timer?
+    @State private var seekDelayTask: Task<Void, Never>?
+    
+    private var isPhone: Bool {
+        UIDevice.current.userInterfaceIdiom == .phone
+    }
+    
+    private var buttonSize: CGFloat {
+        isPhone ? 46 : 60
+    }
+    
+    private var buttonSpacing: CGFloat {
+        isPhone ? 2 : 8
+    }
+    
+    private var iconSize: CGFloat {
+        isPhone ? 20 : 28
+    }
+    
+    private var playIconSize: CGFloat {
+        isPhone ? 22 : 30
+    }
+    
+    private var horizontalPadding: CGFloat {
+        isPhone ? 8 : 16
+    }
     
     var body: some View {
         VStack(spacing: 0) {
@@ -35,13 +67,28 @@ struct RecordingRowView: View {
                         VStack(spacing: 8) {
                             Slider(
                                 value: Binding(
-                                    get: { isDragging ? dragValue : (currentTime ?? 0) },
+                                    get: { 
+                                        if isDragging {
+                                            return dragValue
+                                        }
+                                        return displayTime
+                                    },
                                     set: { newValue in
                                         dragValue = newValue
+                                        displayTime = newValue
+                                        lastKnownTime = newValue
+                                        lastUpdateTime = Date()
                                         if !isDragging {
                                             isDragging = true
                                         }
-                                        onSeek(newValue)
+                                        
+                                        seekTask?.cancel()
+                                        seekTask = Task {
+                                            try? await Task.sleep(nanoseconds: 100_000_000)
+                                            if !Task.isCancelled {
+                                                onSeek(newValue)
+                                            }
+                                        }
                                     }
                                 ),
                                 in: 0...max(duration, 0.1)
@@ -51,24 +98,58 @@ struct RecordingRowView: View {
                                 guard let newValue = newValue else { return }
                                 
                                 if isDragging {
-                                    // If currentTime updates close to dragValue, seek completed
-                                    if abs(newValue - dragValue) < 0.5 {
+                                    if abs(newValue - dragValue) < 0.3 {
                                         isDragging = false
+                                        displayTime = newValue
+                                        lastKnownTime = newValue
+                                        lastUpdateTime = Date()
+                                        
+                                        seekDelayTask?.cancel()
+                                        seekDelayTask = Task {
+                                            try? await Task.sleep(nanoseconds: 300_000_000)
+                                            if !Task.isCancelled && isPlaying {
+                                                startSmoothTimer()
+                                            }
+                                        }
                                     }
                                 } else {
-                                    // Update dragValue to match currentTime when not dragging
+                                    displayTime = newValue
                                     dragValue = newValue
+                                    lastKnownTime = newValue
+                                    lastUpdateTime = Date()
                                 }
+                            }
+                            .onChange(of: isPlaying) { _, playing in
+                                if playing, let current = currentTime {
+                                    lastKnownTime = current
+                                    lastUpdateTime = Date()
+                                    startSmoothTimer()
+                                } else {
+                                    stopSmoothTimer()
+                                }
+                            }
+                            .onAppear {
+                                let initial = currentTime ?? 0
+                                displayTime = initial
+                                dragValue = initial
+                                lastKnownTime = initial
+                                lastUpdateTime = Date()
+                                if isPlaying {
+                                    startSmoothTimer()
+                                }
+                            }
+                            .onDisappear {
+                                stopSmoothTimer()
                             }
                             
                             HStack {
-                                Text(formatTime(isDragging ? dragValue : (currentTime ?? 0)))
+                                Text(formatTime(isDragging ? dragValue : displayTime))
                                     .font(.system(.caption, design: .monospaced))
                                     .foregroundColor(.secondary)
                                 
                                 Spacer()
                                 
-                                let remaining = max(0, duration - (isDragging ? dragValue : (currentTime ?? 0)))
+                                let remaining = max(0, duration - (isDragging ? dragValue : displayTime))
                                 Text(isPlaying ? "-\(formatTime(remaining))" : formatTime(duration))
                                     .font(.system(.caption, design: .monospaced))
                                     .foregroundColor(.secondary)
@@ -91,44 +172,93 @@ struct RecordingRowView: View {
                     }
                     .padding(.vertical, 8)
                     
-                    HStack(spacing: 0) {
-                        Button(action: onEdit) {
-                            Image(systemName: "pencil")
-                                .font(.system(size: 20))
-                        }
-                        .buttonStyle(.plain)
-                        .frame(maxWidth: .infinity, minHeight: 56)
+                    GeometryReader { geometry in
+                        let screenWidth = geometry.size.width
+                        let padding = horizontalPadding * 2
+                        let availableWidth = screenWidth - padding
                         
-                        Button(action: onSkipBackward) {
-                            Image(systemName: "gobackward.15")
-                                .font(.system(size: 20))
-                        }
-                        .buttonStyle(.plain)
-                        .frame(maxWidth: .infinity, minHeight: 56)
+                        let minWidthForAllButtons: CGFloat = 650
+                        let showTrimAndExport = availableWidth >= minWidthForAllButtons
                         
-                        Button(action: onPlayPause) {
-                            Image(systemName: isPlaying ? "pause.fill" : "play.fill")
-                                .font(.system(size: 24))
-                        }
-                        .buttonStyle(.plain)
-                        .frame(maxWidth: .infinity, minHeight: 56)
+                        let totalButtons = showTrimAndExport ? 7 : 5
+                        let spacingCount = CGFloat(totalButtons - 1)
+                        let totalSpacing = spacingCount * buttonSpacing
+                        let maxButtonSize: CGFloat = isPhone ? 48 : 60
+                        let buttonSpace = availableWidth - totalSpacing
+                        let buttonSpacePerButton = buttonSpace / CGFloat(totalButtons)
+                        let calculatedButtonSize = min(maxButtonSize, buttonSpacePerButton)
+                        let actualButtonSize = max(40, calculatedButtonSize)
                         
-                        Button(action: onSkipForward) {
-                            Image(systemName: "goforward.15")
-                                .font(.system(size: 20))
+                        HStack(spacing: buttonSpacing) {
+                            HStack(spacing: buttonSpacing) {
+                                Button(action: onEdit) {
+                                    Image(systemName: "pencil")
+                                        .font(.system(size: iconSize))
+                                }
+                                .buttonStyle(.plain)
+                                .frame(width: actualButtonSize, height: actualButtonSize)
+                                
+                                if showTrimAndExport {
+                                    Button(action: onTrim) {
+                                        Image(systemName: "scissors")
+                                            .font(.system(size: iconSize))
+                                    }
+                                    .buttonStyle(.plain)
+                                    .frame(width: actualButtonSize, height: actualButtonSize)
+                                }
+                            }
+                            
+                            Spacer(minLength: 0)
+                            
+                            HStack(spacing: buttonSpacing) {
+                                Button(action: onSkipBackward) {
+                                    Image(systemName: "gobackward.15")
+                                        .font(.system(size: iconSize))
+                                }
+                                .buttonStyle(.plain)
+                                .frame(width: actualButtonSize, height: actualButtonSize)
+                                
+                                Button(action: onPlayPause) {
+                                    Image(systemName: isPlaying ? "pause.fill" : "play.fill")
+                                        .font(.system(size: playIconSize))
+                                }
+                                .buttonStyle(.plain)
+                                .frame(width: actualButtonSize, height: actualButtonSize)
+                                
+                                Button(action: onSkipForward) {
+                                    Image(systemName: "goforward.15")
+                                        .font(.system(size: iconSize))
+                                }
+                                .buttonStyle(.plain)
+                                .frame(width: actualButtonSize, height: actualButtonSize)
+                            }
+                            
+                            Spacer(minLength: 0)
+                            
+                            HStack(spacing: buttonSpacing) {
+                                if showTrimAndExport {
+                                    Button(action: onExport) {
+                                        Image(systemName: "square.and.arrow.up")
+                                            .font(.system(size: iconSize))
+                                    }
+                                    .buttonStyle(.plain)
+                                    .frame(width: actualButtonSize, height: actualButtonSize)
+                                    .disabled(!FileManager.default.fileExists(atPath: recording.fileURL.path))
+                                }
+                                
+                                Button(role: .destructive, action: onDelete) {
+                                    Image(systemName: "trash")
+                                        .font(.system(size: iconSize - 3))
+                                }
+                                .buttonStyle(.plain)
+                                .frame(width: actualButtonSize, height: actualButtonSize)
+                            }
                         }
-                        .buttonStyle(.plain)
-                        .frame(maxWidth: .infinity, minHeight: 56)
-                        
-                        Button(role: .destructive, action: onDelete) {
-                            Image(systemName: "trash")
-                                .font(.system(size: 20))
-                        }
-                        .buttonStyle(.plain)
-                        .frame(maxWidth: .infinity, minHeight: 56)
+                        .padding(.horizontal, horizontalPadding)
                     }
-                    .padding(.horizontal, -20)
+                    .frame(height: buttonSize)
                 }
+                .frame(maxWidth: .infinity)
             } label: {
                 HStack(alignment: .center, spacing: 12) {
                     VStack(alignment: .leading, spacing: 4) {
@@ -202,8 +332,35 @@ struct RecordingRowView: View {
             }
         }
         .contentShape(Rectangle())
+        .onChange(of: isExpanded) { _, expanded in
+            if expanded {
+                Task {
+                    _ = try? await WaveformExtractor.extractBars(from: recording.fileURL, bars: 220)
+                }
+            }
+        }
     }
 
+    private func startSmoothTimer() {
+        stopSmoothTimer()
+        guard isPlaying, !isDragging else { return }
+        smoothUpdateTimer = Timer.scheduledTimer(withTimeInterval: 0.016, repeats: true) { timer in
+            guard self.isPlaying, !self.isDragging, let lastUpdate = self.lastUpdateTime else {
+                timer.invalidate()
+                self.smoothUpdateTimer = nil
+                return
+            }
+            let elapsed = Date().timeIntervalSince(lastUpdate)
+            let interpolated = self.lastKnownTime + (elapsed * Double(self.playbackRate))
+            self.displayTime = min(interpolated, self.duration)
+        }
+    }
+    
+    private func stopSmoothTimer() {
+        smoothUpdateTimer?.invalidate()
+        smoothUpdateTimer = nil
+    }
+    
     private func formatTime(_ time: TimeInterval) -> String {
         let minutes = Int(time) / 60
         let seconds = Int(time) % 60

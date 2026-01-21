@@ -24,11 +24,15 @@ struct Recording: Identifiable, Codable {
     var measureEnd: Int?
     var notes: String // Practice session notes/comments
     
+    // Trim history (non-destructive editing)
+    var originalFileName: String? // Backup of original file before trimming
+    var originalDuration: TimeInterval? // Original duration before trimming
+    
     enum CodingKeys: String, CodingKey {
-        case id, fileName, createdAt, duration, name, tags, piece, measureStart, measureEnd, notes
+        case id, fileName, createdAt, duration, name, tags, piece, measureStart, measureEnd, notes, originalFileName, originalDuration
     }
     
-    init(id: UUID = UUID(), fileName: String, createdAt: Date = Date(), duration: TimeInterval, name: String = "", tags: [String] = [], piece: String? = nil, measureStart: Int? = nil, measureEnd: Int? = nil, notes: String = "") {
+    init(id: UUID = UUID(), fileName: String, createdAt: Date = Date(), duration: TimeInterval, name: String = "", tags: [String] = [], piece: String? = nil, measureStart: Int? = nil, measureEnd: Int? = nil, notes: String = "", originalFileName: String? = nil, originalDuration: TimeInterval? = nil) {
         self.id = id
         self.fileName = fileName
         self.createdAt = createdAt
@@ -39,6 +43,8 @@ struct Recording: Identifiable, Codable {
         self.measureStart = measureStart
         self.measureEnd = measureEnd
         self.notes = notes
+        self.originalFileName = originalFileName
+        self.originalDuration = originalDuration
     }
     
     init(from decoder: Decoder) throws {
@@ -53,6 +59,8 @@ struct Recording: Identifiable, Codable {
         measureStart = try container.decodeIfPresent(Int.self, forKey: .measureStart)
         measureEnd = try container.decodeIfPresent(Int.self, forKey: .measureEnd)
         notes = try container.decodeIfPresent(String.self, forKey: .notes) ?? "" // Backward compatibility
+        originalFileName = try container.decodeIfPresent(String.self, forKey: .originalFileName)
+        originalDuration = try container.decodeIfPresent(TimeInterval.self, forKey: .originalDuration)
     }
     
     var displayName: String {
@@ -131,6 +139,15 @@ struct Recording: Identifiable, Codable {
     
     var fileURL: URL {
         return iCloudManager.shared.getDocumentsURL().appendingPathComponent(fileName)
+    }
+    
+    var originalFileURL: URL? {
+        guard let originalFileName = originalFileName else { return nil }
+        return iCloudManager.shared.getDocumentsURL().appendingPathComponent(originalFileName)
+    }
+    
+    var hasTrimHistory: Bool {
+        return originalFileName != nil && originalDuration != nil
     }
     
     func shareableFileURL() throws -> URL {

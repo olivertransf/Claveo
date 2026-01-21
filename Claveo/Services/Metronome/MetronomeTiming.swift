@@ -41,6 +41,7 @@ extension Metronome {
         isPlaying = true
         currentBeat = -1
         beatCount = 0
+        scheduledBeatCount = 0
         isPlayingBeat = false
         
         let now = CACurrentMediaTime()
@@ -50,15 +51,9 @@ extension Metronome {
         
         scheduleBeatsAhead()
         startTimer()
-        
-        isPlayingBeat = true
-        lastBeatTime = now
-        beatCount = 1
-        scheduledBeatCount = 1
-        nextBeatTime = startTime + interval
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.01) { [weak self] in
-            self?.isPlayingBeat = false
-        }
+
+        // Immediately align UI/haptics to the first scheduled beat without re-scheduling audio.
+        checkAndPlayBeat()
     }
     
     func stop() {
@@ -66,6 +61,10 @@ extension Metronome {
         timer?.invalidate()
         timer = nil
         currentBeat = 0
+        beatCount = 0
+        scheduledBeatCount = 0
+        nextBeatTime = 0
+        startTime = 0
         stopAudioEngine()
     }
     
@@ -112,7 +111,6 @@ extension Metronome {
         
         guard let timer else { return }
         RunLoop.current.add(timer, forMode: .common)
-        RunLoop.current.add(timer, forMode: .tracking)
     }
     
     func scheduleBeatsAhead() {
@@ -188,9 +186,9 @@ extension Metronome {
         
         scheduleBeatsAhead()
         startTimer()
-        beatCount = 1
-        scheduledBeatCount = beatsToScheduleAhead
-        nextBeatTime = startTime + interval
+
+        // Immediately align UI/haptics to the first scheduled beat without re-scheduling audio.
+        checkAndPlayBeat()
     }
     
     func playBeat() {
