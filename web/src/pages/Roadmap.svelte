@@ -1,42 +1,48 @@
 <!-- Copyright (c) 2025 Oliver Tran -->
 <script>
-  import { onMount } from 'svelte';
+  import { onMount } from "svelte";
   export let navigate;
 
   let items = [
     {
-      title: 'Optical Music Recognition (OMR)',
-      status: 'In Beta - Aimed for Spring 2026',
-      description: 'Scan and digitize sheet music directly from photos. Convert printed scores into editable digital formats for practice and analysis.'
+      title: "Optical Music Recognition (OMR)",
+      description:
+        "Scan and digitize sheet music directly from photos. Convert printed scores into editable digital formats for practice and analysis.",
     },
     {
-      title: 'Enhanced Practice Analytics',
-      description: 'Deeper insights into your practice patterns with advanced statistics, progress tracking, and personalized recommendations.'
+      title: "Enhanced Practice Analytics",
+      description:
+        "Deeper insights into your practice patterns with advanced statistics, progress tracking, and personalized recommendations.",
     },
     {
-      title: 'Collaboration Features',
-      description: 'Share recordings and practice notes with teachers, collaborators, and fellow musicians.'
+      title: "Collaboration Features",
+      description:
+        "Share recordings and practice notes with teachers, collaborators, and fellow musicians.",
     },
     {
-      title: 'More Coming Soon',
-      description: "We're constantly working on new features to enhance your music practice experience. Stay tuned for updates!"
-    }
+      title: "More Coming Soon",
+      description:
+        "We're constantly working on new features to enhance your music practice experience. Stay tuned for updates!",
+    },
   ];
 
   onMount(() => {
     // Intersection Observer for scroll animations
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add('visible');
-        }
-      });
-    }, {
-      threshold: 0.2,
-      rootMargin: '0px 0px -50px 0px'
-    });
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("visible");
+          }
+        });
+      },
+      {
+        threshold: 0.2,
+        rootMargin: "0px 0px -50px 0px",
+      },
+    );
 
-    const roadmapItems = document.querySelectorAll('.roadmap-item');
+    const roadmapItems = document.querySelectorAll(".roadmap-item");
     roadmapItems.forEach((item, index) => {
       // Add staggered delay
       item.style.transitionDelay = `${index * 0.15}s`;
@@ -82,8 +88,9 @@
     <h2>Have Suggestions?</h2>
     <p>We'd love to hear your ideas for new features and improvements.</p>
     <p class="margin-top">
-      <a href="mailto:claveo.app@gmail.com" class="link-primary">claveo.app@gmail.com →</a>
+      <a href="mailto:claveo.app@gmail.com" class="link-primary"
+        >claveo.app@gmail.com →</a
+      >
     </p>
   </div>
 </div>
-
