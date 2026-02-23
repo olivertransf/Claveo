@@ -6,6 +6,7 @@
   let items = [
     {
       title: "Optical Music Recognition (OMR)",
+      status: "BETA",
       description:
         "Scan and digitize sheet music directly from photos. Convert printed scores into editable digital formats for practice and analysis.",
     },
