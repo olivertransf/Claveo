@@ -46,7 +46,18 @@ extension RecordingListView {
                 }
             }
             .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
+                ToolbarItemGroup(placement: .navigationBarLeading) {
+                    Button {
+                        showingOMRScanner = true
+                    } label: {
+                        HStack(spacing: 4) {
+                            Label("OMR", systemImage: "doc.text.viewfinder")
+                            Text("BETA")
+                                .font(.caption2.bold())
+                                .foregroundColor(.orange)
+                        }
+                    }
+
                     Button {
                         availablePieces = loadAvailablePieces()
                         showingPiecesManagement = true
@@ -147,6 +158,10 @@ extension RecordingListView {
         }
         .sheet(isPresented: $showingSettingsSheet) {
             recordingsSettingsSheet
+        }
+        .fullScreenCover(isPresented: $showingOMRScanner) {
+            OMRScannerView()
+                .environmentObject(themeManager)
         }
         .sheet(isPresented: $showingStorageInfo) {
             StorageInfoView()

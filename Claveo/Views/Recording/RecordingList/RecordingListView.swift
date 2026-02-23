@@ -32,6 +32,7 @@ struct RecordingListView: View {
     @State var editingPiece: Piece?
     @State var showingSettingsSheet = false
     @State var showingStorageInfo = false
+    @State var showingOMRScanner = false
     @State var recordingToShare: Recording?
     
     var filteredRecordings: [Recording] {
