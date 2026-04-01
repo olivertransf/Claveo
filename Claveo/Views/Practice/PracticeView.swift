@@ -101,6 +101,8 @@ struct PracticeView: View {
             .refreshable {
                 await practiceService.refreshFromiCloud()
             }
+            .navigationTitle("Practice")
+            .navigationBarTitleDisplayMode(.inline)
             .searchable(text: $searchText, prompt: "Search journal notes")
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {

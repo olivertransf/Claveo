@@ -21,6 +21,8 @@ struct AppSettings: Codable {
     var metronomeVolume: Double = 0.7
     var metronomeHapticEnabled: Bool = true
     var metronomeAutoStopOnTabSwitch: Bool = false
+    /// When true, stop the reference tone leaving the Metronome tab. Default false = tone keeps playing in background.
+    var stopToneWhenLeavingMetronomeTab: Bool = false
     var favoriteTempos: [Int] = []
     var customTimeSignatureTop: Int? = nil
     var customTimeSignatureBottom: Int? = nil
@@ -37,10 +39,34 @@ struct AppSettings: Codable {
     enum CodingKeys: String, CodingKey {
         case a4ReferenceFrequency, showFrequencyDisplay
         case lastMetronomeTempo, metronomeSound, metronomeEmphasizedSound, metronomeNonEmphasizedSound, metronomeVolume, metronomeHapticEnabled
-        case metronomeAutoStopOnTabSwitch, favoriteTempos
+        case metronomeAutoStopOnTabSwitch, stopToneWhenLeavingMetronomeTab, favoriteTempos
         case customTimeSignatureTop, customTimeSignatureBottom
         case defaultPracticeTime, practiceDurationOptions
         case accentColor, colorScheme, showTabBarText
+    }
+}
+
+extension AppSettings {
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        a4ReferenceFrequency = try c.decodeIfPresent(Double.self, forKey: .a4ReferenceFrequency) ?? 440.0
+        showFrequencyDisplay = try c.decodeIfPresent(Bool.self, forKey: .showFrequencyDisplay) ?? true
+        lastMetronomeTempo = try c.decodeIfPresent(Int.self, forKey: .lastMetronomeTempo) ?? 120
+        metronomeSound = try c.decodeIfPresent(String.self, forKey: .metronomeSound) ?? MetronomeSound.click.rawValue
+        metronomeEmphasizedSound = try c.decodeIfPresent(String.self, forKey: .metronomeEmphasizedSound) ?? MetronomeSound.click.rawValue
+        metronomeNonEmphasizedSound = try c.decodeIfPresent(String.self, forKey: .metronomeNonEmphasizedSound) ?? MetronomeSound.tick.rawValue
+        metronomeVolume = try c.decodeIfPresent(Double.self, forKey: .metronomeVolume) ?? 0.7
+        metronomeHapticEnabled = try c.decodeIfPresent(Bool.self, forKey: .metronomeHapticEnabled) ?? true
+        metronomeAutoStopOnTabSwitch = try c.decodeIfPresent(Bool.self, forKey: .metronomeAutoStopOnTabSwitch) ?? false
+        stopToneWhenLeavingMetronomeTab = try c.decodeIfPresent(Bool.self, forKey: .stopToneWhenLeavingMetronomeTab) ?? false
+        favoriteTempos = try c.decodeIfPresent([Int].self, forKey: .favoriteTempos) ?? []
+        customTimeSignatureTop = try c.decodeIfPresent(Int.self, forKey: .customTimeSignatureTop)
+        customTimeSignatureBottom = try c.decodeIfPresent(Int.self, forKey: .customTimeSignatureBottom)
+        defaultPracticeTime = try c.decodeIfPresent(Int.self, forKey: .defaultPracticeTime) ?? 30
+        practiceDurationOptions = try c.decodeIfPresent([Int].self, forKey: .practiceDurationOptions) ?? [15, 30, 45, 60]
+        accentColor = try c.decodeIfPresent(String.self, forKey: .accentColor) ?? AccentColorOption.blue.rawValue
+        colorScheme = try c.decodeIfPresent(String.self, forKey: .colorScheme) ?? ColorSchemeOption.system.rawValue
+        showTabBarText = try c.decodeIfPresent(Bool.self, forKey: .showTabBarText) ?? false
     }
 }
 

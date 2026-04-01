@@ -74,6 +74,8 @@ struct TunerView: View {
 
                 Spacer()
             }
+            .navigationTitle("Tuner")
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(action: {

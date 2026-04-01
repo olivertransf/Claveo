@@ -10,8 +10,12 @@ import SwiftUI
 
 struct MetronomeView: View {
     @EnvironmentObject var themeManager: ThemeManager
+    @EnvironmentObject var toneGenerator: ToneGeneratorEngine
     @StateObject var metronome = Metronome()
     @StateObject var settingsManager = SettingsManager.shared
+    @State var manualToneFrequencyText = ""
+    /// Scientific octave for tone generator (1…6, maps to MIDI C1…B6 range).
+    @State var selectedToneOctave = 4
     @State var tapTimes: [Date] = []
     @State var showingTemposManagement = false
     @State var showingBeatPattern = false
@@ -53,6 +57,19 @@ struct MetronomeView: View {
     var body: some View {
         NavigationStack {
             mainContentView
+        }
+        .onAppear {
+            manualToneFrequencyText = String(format: "%.1f", toneGenerator.frequency)
+        }
+        .onChange(of: toneGenerator.frequency) { _, newValue in
+            manualToneFrequencyText = String(format: "%.1f", newValue)
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .claveoSelectedTabChanged)) { notification in
+            guard let idx = notification.userInfo?["index"] as? Int else { return }
+            guard idx != 1 else { return }
+            if autoStopOnTabSwitch && metronome.isPlaying {
+                metronome.stop()
+            }
         }
         .sheet(isPresented: $showingCustomTimeSignatureSheet) {
             customTimeSignatureSheet
@@ -233,4 +250,6 @@ struct MetronomeView: View {
 
 #Preview {
     MetronomeView()
+        .environmentObject(ThemeManager.shared)
+        .environmentObject(ToneGeneratorEngine())
 }

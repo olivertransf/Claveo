@@ -53,6 +53,8 @@ struct MusicDictionaryView: View {
                     TermsListView(terms: filteredTerms, searchText: searchText)
                 }
             }
+            .navigationTitle("Dictionary")
+            .navigationBarTitleDisplayMode(.inline)
             .searchable(text: $searchText, prompt: "Search dictionary")
             .autocorrectionDisabled()
             .textInputAutocapitalization(.never)

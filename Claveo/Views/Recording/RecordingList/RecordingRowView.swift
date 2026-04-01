@@ -25,6 +25,9 @@ struct RecordingRowView: View {
     let onDelete: () -> Void
     let onTrim: () -> Void
     let onExport: () -> Void
+    var isSelectionMode: Bool = false
+    var isSelected: Bool = false
+    var onToggleSelection: (() -> Void)? = nil
     @Environment(\.colorScheme) var colorScheme
     @State private var isDragging = false
     @State private var dragValue: TimeInterval = 0
@@ -59,9 +62,91 @@ struct RecordingRowView: View {
         isPhone ? 8 : 16
     }
     
+    @ViewBuilder
+    private var rowSummaryLabel: some View {
+        HStack(alignment: .center, spacing: 12) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(recording.displayName)
+                    .font(.headline)
+                    .lineLimit(2)
+                
+                HStack(spacing: 8) {
+                    HStack(spacing: 4) {
+                        Image(systemName: "clock")
+                            .font(.caption2)
+                        Text(recording.shortDateString)
+                            .font(.caption)
+                    }
+                    .foregroundColor(.secondary)
+                    
+                    if let piece = recording.piece {
+                        Text("•")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                        HStack(spacing: 4) {
+                            Image(systemName: "music.note")
+                                .font(.caption2)
+                            Text(piece)
+                                .font(.caption)
+                                .lineLimit(1)
+                        }
+                        .foregroundColor(.secondary)
+                    }
+                }
+                
+                if !recording.tags.isEmpty {
+                    HStack(spacing: 6) {
+                        ForEach(recording.tags.prefix(3), id: \.self) { tag in
+                            Text(tag)
+                                .font(.caption2)
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 2)
+                                .background(Color(.systemGray5))
+                                .foregroundColor(.secondary)
+                                .cornerRadius(6)
+                        }
+                        if recording.tags.count > 3 {
+                            Text("+\(recording.tags.count - 3)")
+                                .font(.caption2)
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                }
+            }
+            
+            Spacer()
+            
+            VStack(alignment: .trailing, spacing: 4) {
+                Text(recording.formattedDuration)
+                    .font(.headline)
+                    .foregroundColor(.primary)
+                    .monospacedDigit()
+                
+                if isPlaying {
+                    Image(systemName: "waveform")
+                        .foregroundColor(themeManager.accentColor)
+                        .font(.caption)
+                }
+            }
+        }
+    }
+    
     var body: some View {
-        VStack(spacing: 0) {
-            DisclosureGroup(isExpanded: $isExpanded) {
+        Group {
+            if isSelectionMode {
+                Button(action: { onToggleSelection?() }) {
+                    HStack(alignment: .center, spacing: 12) {
+                        Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                            .font(.title2)
+                            .foregroundStyle(isSelected ? themeManager.accentColor : Color.secondary)
+                        rowSummaryLabel
+                    }
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+            } else {
+                VStack(spacing: 0) {
+                    DisclosureGroup(isExpanded: $isExpanded) {
                 VStack(spacing: 0) {
                     VStack(alignment: .leading, spacing: 12) {
                         VStack(spacing: 8) {
@@ -260,75 +345,7 @@ struct RecordingRowView: View {
                 }
                 .frame(maxWidth: .infinity)
             } label: {
-                HStack(alignment: .center, spacing: 12) {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(recording.displayName)
-                            .font(.headline)
-                            .lineLimit(2)
-                        
-                        // Date and piece on one row
-                        HStack(spacing: 8) {
-                            // Date
-                            HStack(spacing: 4) {
-                                Image(systemName: "clock")
-                                    .font(.caption2)
-                                Text(recording.shortDateString)
-                                    .font(.caption)
-                            }
-                            .foregroundColor(.secondary)
-                            
-                            // Piece
-                            if let piece = recording.piece {
-                                Text("•")
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
-                                HStack(spacing: 4) {
-                                    Image(systemName: "music.note")
-                                        .font(.caption2)
-                                    Text(piece)
-                                        .font(.caption)
-                                        .lineLimit(1)
-                                }
-                                .foregroundColor(.secondary)
-                            }
-                        }
-                        
-                        // Tags on separate row
-                        if !recording.tags.isEmpty {
-                            HStack(spacing: 6) {
-                                ForEach(recording.tags.prefix(3), id: \.self) { tag in
-                                    Text(tag)
-                                        .font(.caption2)
-                                        .padding(.horizontal, 6)
-                                        .padding(.vertical, 2)
-                                        .background(Color(.systemGray5))
-                                        .foregroundColor(.secondary)
-                                        .cornerRadius(6)
-                                }
-                                if recording.tags.count > 3 {
-                                    Text("+\(recording.tags.count - 3)")
-                                        .font(.caption2)
-                                        .foregroundColor(.secondary)
-                                }
-                            }
-                        }
-                    }
-                    
-                    Spacer()
-                    
-                    VStack(alignment: .trailing, spacing: 4) {
-                        Text(recording.formattedDuration)
-                            .font(.headline)
-                            .foregroundColor(.primary)
-                            .monospacedDigit()
-                        
-                        if isPlaying {
-                            Image(systemName: "waveform")
-                                .foregroundColor(themeManager.accentColor)
-                                .font(.caption)
-                        }
-                    }
-                }
+                rowSummaryLabel
             }
         }
         .contentShape(Rectangle())
@@ -337,6 +354,8 @@ struct RecordingRowView: View {
                 Task {
                     _ = try? await WaveformExtractor.extractBars(from: recording.fileURL, bars: 220)
                 }
+            }
+        }
             }
         }
     }

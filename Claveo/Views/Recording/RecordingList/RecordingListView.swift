@@ -9,6 +9,11 @@
 import SwiftUI
 
 struct RecordingListView: View {
+    struct BulkShareSession: Identifiable {
+        let id = UUID()
+        let urls: [URL]
+    }
+    
     @EnvironmentObject var themeManager: ThemeManager
     @StateObject var recorder = AudioRecorder()
     @StateObject var player = AudioPlayer()
@@ -34,6 +39,9 @@ struct RecordingListView: View {
     @State var showingStorageInfo = false
     @State var showingOMRScanner = false
     @State var recordingToShare: Recording?
+    @State var isSelectingRecordings = false
+    @State var selectedRecordingIds = Set<UUID>()
+    @State var bulkShareSession: BulkShareSession?
     
     var filteredRecordings: [Recording] {
         var filtered = recorder.recordings
@@ -140,6 +148,14 @@ struct RecordingListView: View {
                         }
                 }
             }
+        }
+        .sheet(item: $bulkShareSession) { session in
+            ShareSheet(activityItems: session.urls)
+                .onDisappear {
+                    for url in session.urls {
+                        try? FileManager.default.removeItem(at: url)
+                    }
+                }
         }
     }
 }

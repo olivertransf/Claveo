@@ -46,114 +46,142 @@ extension RecordingListView {
                 }
             }
             .toolbar {
-                ToolbarItemGroup(placement: .navigationBarLeading) {
-                    Button {
-                        showingOMRScanner = true
-                    } label: {
-                        HStack(spacing: 4) {
-                            Label("OMR", systemImage: "doc.text.viewfinder")
-                            Text("BETA")
-                                .font(.caption2.bold())
-                                .foregroundColor(.orange)
+                if isSelectingRecordings {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("Cancel") {
+                            exitRecordingSelectionMode()
                         }
                     }
-
-                    Button {
-                        availablePieces = loadAvailablePieces()
-                        showingPiecesManagement = true
-                    } label: {
-                        Label("Pieces", systemImage: "music.note.list")
-                    }
-                }
-                
-                ToolbarItemGroup(placement: .navigationBarTrailing) {
-                    Menu {
-                        Menu {
-                            Button {
-                                selectedTag = nil
-                            } label: {
-                                HStack {
-                                    Text("All")
-                                    if selectedTag == nil {
-                                        Spacer()
-                                        Image(systemName: "checkmark")
-                                    }
-                                }
+                    ToolbarItem(placement: .navigationBarTrailing) {
+                        Button {
+                            exportSelectedRecordings()
+                        } label: {
+                            if selectedRecordingIds.isEmpty {
+                                Text("Export")
+                            } else {
+                                Text("Export (\(selectedRecordingIds.count))")
                             }
-                            
-                            ForEach(RecordingTag.allCases, id: \.self) { tag in
+                        }
+                        .disabled(selectedRecordingIds.isEmpty)
+                    }
+                } else {
+                    ToolbarItemGroup(placement: .navigationBarLeading) {
+                        Button {
+                            showingOMRScanner = true
+                        } label: {
+                            HStack(spacing: 4) {
+                                Label("OMR", systemImage: "doc.text.viewfinder")
+                                Text("BETA")
+                                    .font(.caption2.bold())
+                                    .foregroundColor(.orange)
+                            }
+                        }
+
+                        Button {
+                            availablePieces = loadAvailablePieces()
+                            showingPiecesManagement = true
+                        } label: {
+                            Label("Pieces", systemImage: "music.note.list")
+                        }
+                    }
+                    
+                    ToolbarItemGroup(placement: .navigationBarTrailing) {
+                        Menu {
+                            Menu {
                                 Button {
-                                    selectedTag = tag.rawValue
+                                    selectedTag = nil
                                 } label: {
                                     HStack {
-                                        Text(tag.rawValue)
-                                        if selectedTag == tag.rawValue {
+                                        Text("All")
+                                        if selectedTag == nil {
                                             Spacer()
                                             Image(systemName: "checkmark")
                                         }
                                     }
                                 }
-                            }
-                        } label: {
-                            Label("Tags", systemImage: "tag")
-                        }
-                        
-                        Menu {
-                            Button {
-                                selectedPiece = nil
-                            } label: {
-                                HStack {
-                                    Text("All")
-                                    if selectedPiece == nil {
-                                        Spacer()
-                                        Image(systemName: "checkmark")
-                                    }
-                                }
-                            }
-                            
-                            if availablePieces.isEmpty {
-                                Text("No pieces")
-                                    .foregroundColor(.secondary)
-                            } else {
-                                ForEach(availablePieces, id: \.id) { piece in
+                                
+                                ForEach(RecordingTag.allCases, id: \.self) { tag in
                                     Button {
-                                        selectedPiece = piece.name
+                                        selectedTag = tag.rawValue
                                     } label: {
                                         HStack {
-                                            Text(piece.displayName)
-                                            if selectedPiece == piece.name {
+                                            Text(tag.rawValue)
+                                            if selectedTag == tag.rawValue {
                                                 Spacer()
                                                 Image(systemName: "checkmark")
                                             }
                                         }
                                     }
                                 }
+                            } label: {
+                                Label("Tags", systemImage: "tag")
+                            }
+                            
+                            Menu {
+                                Button {
+                                    selectedPiece = nil
+                                } label: {
+                                    HStack {
+                                        Text("All")
+                                        if selectedPiece == nil {
+                                            Spacer()
+                                            Image(systemName: "checkmark")
+                                        }
+                                    }
+                                }
+                                
+                                if availablePieces.isEmpty {
+                                    Text("No pieces")
+                                        .foregroundColor(.secondary)
+                                } else {
+                                    ForEach(availablePieces, id: \.id) { piece in
+                                        Button {
+                                            selectedPiece = piece.name
+                                        } label: {
+                                            HStack {
+                                                Text(piece.displayName)
+                                                if selectedPiece == piece.name {
+                                                    Spacer()
+                                                    Image(systemName: "checkmark")
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            } label: {
+                                Label("Pieces", systemImage: "music.note")
+                            }
+                            
+                            if selectedTag != nil || selectedPiece != nil {
+                                Divider()
+                                
+                                Button(role: .destructive) {
+                                    selectedTag = nil
+                                    selectedPiece = nil
+                                } label: {
+                                    Label("Clear All Filters", systemImage: "xmark.circle")
+                                }
                             }
                         } label: {
-                            Label("Pieces", systemImage: "music.note")
+                            Label("Filter", systemImage: selectedTag != nil || selectedPiece != nil ? "line.3.horizontal.decrease.circle.fill" : "line.3.horizontal.decrease.circle")
                         }
-                        
-                        if selectedTag != nil || selectedPiece != nil {
-                            Divider()
-                            
-                            Button(role: .destructive) {
-                                selectedTag = nil
-                                selectedPiece = nil
-                            } label: {
-                                Label("Clear All Filters", systemImage: "xmark.circle")
-                            }
-                        }
-                    } label: {
-                        Label("Filter", systemImage: selectedTag != nil || selectedPiece != nil ? "line.3.horizontal.decrease.circle.fill" : "line.3.horizontal.decrease.circle")
-                    }
 
-                    Button {
-                        showingSettingsSheet = true
-                    } label: {
-                        Label("Settings", systemImage: "gear")
+                        Button {
+                            beginRecordingSelectionMode()
+                        } label: {
+                            Label("Select", systemImage: "checkmark.circle")
+                        }
+
+                        Button {
+                            showingSettingsSheet = true
+                        } label: {
+                            Label("Settings", systemImage: "gear")
+                        }
                     }
                 }
             }
+            .navigationTitle("Recordings")
+            .navigationBarTitleDisplayMode(.inline)
             .searchable(text: $searchText, isPresented: $isSearchFocused, prompt: "Search recordings")
         }
         .sheet(isPresented: $showingSettingsSheet) {

@@ -167,7 +167,7 @@ struct Recording: Identifiable, Codable {
             .trimmingCharacters(in: .whitespacesAndNewlines)
         
         let shareableFileName = sanitizedName.isEmpty ? "Recording" : sanitizedName
-        let tempFileName = "\(shareableFileName).\(fileExtension)"
+        let tempFileName = "\(shareableFileName)-\(id.uuidString.prefix(8)).\(fileExtension)"
         
         let tempDirectory = FileManager.default.temporaryDirectory
         let tempURL = tempDirectory.appendingPathComponent(tempFileName)

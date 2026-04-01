@@ -10,6 +10,37 @@ import SwiftUI
 import UIKit
 
 extension RecordingListView {
+    func beginRecordingSelectionMode() {
+        expandedRecordingId = nil
+        isSelectingRecordings = true
+        selectedRecordingIds.removeAll()
+    }
+    
+    func exitRecordingSelectionMode() {
+        isSelectingRecordings = false
+        selectedRecordingIds.removeAll()
+    }
+    
+    func toggleRecordingSelection(_ id: UUID) {
+        if selectedRecordingIds.contains(id) {
+            selectedRecordingIds.remove(id)
+        } else {
+            selectedRecordingIds.insert(id)
+        }
+    }
+    
+    func exportSelectedRecordings() {
+        let recordings = filteredRecordings.filter { selectedRecordingIds.contains($0.id) }
+        var urls: [URL] = []
+        for recording in recordings {
+            guard FileManager.default.fileExists(atPath: recording.fileURL.path) else { continue }
+            guard let url = try? recording.shareableFileURL() else { continue }
+            urls.append(url)
+        }
+        guard !urls.isEmpty else { return }
+        bulkShareSession = RecordingListView.BulkShareSession(urls: urls)
+    }
+    
     @ViewBuilder
     var mainContentView: some View {
         if shouldShowEmptyState {
@@ -44,6 +75,7 @@ extension RecordingListView {
         .listStyle(.automatic)
     }
     
+    @ViewBuilder
     func recordingRow(for recording: Recording) -> some View {
         let isExpandedBinding = Binding<Bool>(
             get: { expandedRecordingId == recording.id },
@@ -52,7 +84,7 @@ extension RecordingListView {
             }
         )
         
-        return RecordingRowView(
+        let row = RecordingRowView(
             recording: recording,
             isExpanded: isExpandedBinding,
             isPlaying: player.isPlaying && player.currentRecording?.id == recording.id,
@@ -97,73 +129,84 @@ extension RecordingListView {
             },
             onExport: {
                 recordingToShare = recording
+            },
+            isSelectionMode: isSelectingRecordings,
+            isSelected: selectedRecordingIds.contains(recording.id),
+            onToggleSelection: {
+                toggleRecordingSelection(recording.id)
             }
         )
-        .contextMenu {
-            Button {
-                selectedRecording = recording
-            } label: {
-                Label("Edit", systemImage: "pencil")
-            }
+        
+        if isSelectingRecordings {
+            row
+        } else {
+            row
+                .contextMenu {
+                    Button {
+                        selectedRecording = recording
+                    } label: {
+                        Label("Edit", systemImage: "pencil")
+                    }
 
-            Button {
-                if player.currentRecording?.id == recording.id {
-                    player.stop()
+                    Button {
+                        if player.currentRecording?.id == recording.id {
+                            player.stop()
+                        }
+                        recordingToTrim = recording
+                    } label: {
+                        Label("Trim", systemImage: "scissors")
+                    }
+                    
+                    if FileManager.default.fileExists(atPath: recording.fileURL.path) {
+                        ShareLink(
+                            item: RecordingFileTransferable(recording: recording),
+                            preview: SharePreview(recording.displayName, icon: Image(systemName: "waveform"))
+                        ) {
+                            Label("Export", systemImage: "square.and.arrow.up")
+                        }
+                    }
+                    
+                    Button(role: .destructive) {
+                        recordingToDelete = recording
+                        showingDeleteAlert = true
+                    } label: {
+                        Label("Delete", systemImage: "trash")
+                    }
                 }
-                recordingToTrim = recording
-            } label: {
-                Label("Trim", systemImage: "scissors")
-            }
-            
-            if FileManager.default.fileExists(atPath: recording.fileURL.path) {
-                ShareLink(
-                    item: RecordingFileTransferable(recording: recording),
-                    preview: SharePreview(recording.displayName, icon: Image(systemName: "waveform"))
-                ) {
-                    Label("Export", systemImage: "square.and.arrow.up")
-                }
-            }
-            
-            Button(role: .destructive) {
-                recordingToDelete = recording
-                showingDeleteAlert = true
-            } label: {
-                Label("Delete", systemImage: "trash")
-            }
-        }
-        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-            Button(role: .destructive) {
-                recordingToDelete = recording
-                showingDeleteAlert = true
-            } label: {
-                Label("Delete", systemImage: "trash")
-            }
-            
-            if FileManager.default.fileExists(atPath: recording.fileURL.path) {
-                Button {
-                    recordingToShare = recording
-                } label: {
-                    Label("Export", systemImage: "square.and.arrow.up")
-                }
-                .tint(.green)
-            }
+                .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                    Button(role: .destructive) {
+                        recordingToDelete = recording
+                        showingDeleteAlert = true
+                    } label: {
+                        Label("Delete", systemImage: "trash")
+                    }
+                    
+                    if FileManager.default.fileExists(atPath: recording.fileURL.path) {
+                        Button {
+                            recordingToShare = recording
+                        } label: {
+                            Label("Export", systemImage: "square.and.arrow.up")
+                        }
+                        .tint(.green)
+                    }
 
-            Button {
-                if player.currentRecording?.id == recording.id {
-                    player.stop()
+                    Button {
+                        if player.currentRecording?.id == recording.id {
+                            player.stop()
+                        }
+                        recordingToTrim = recording
+                    } label: {
+                        Label("Trim", systemImage: "scissors")
+                    }
+                    .tint(.orange)
+                    
+                    Button {
+                        selectedRecording = recording
+                    } label: {
+                        Label("Edit", systemImage: "pencil")
+                    }
+                    .tint(.blue)
                 }
-                recordingToTrim = recording
-            } label: {
-                Label("Trim", systemImage: "scissors")
-            }
-            .tint(.orange)
-            
-            Button {
-                selectedRecording = recording
-            } label: {
-                Label("Edit", systemImage: "pencil")
-            }
-            .tint(.blue)
         }
     }
     

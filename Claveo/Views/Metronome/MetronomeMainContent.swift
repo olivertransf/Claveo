@@ -221,7 +221,9 @@ extension MetronomeView {
                             .animation(.easeInOut(duration: 0.2), value: metronome.beatPattern.count)
                         }
                     }
-                    
+
+                    toneGeneratorSection
+
                     if !favoriteTempos.isEmpty {
                         VStack(alignment: .leading, spacing: 12) {
                             HStack {
@@ -293,8 +295,9 @@ extension MetronomeView {
                         .padding(.vertical, 8)
                     }
                 }
-
             }
+            .navigationTitle("Metronome")
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItemGroup(placement: .navigationBarTrailing) {
                     Button {
@@ -323,11 +326,6 @@ extension MetronomeView {
                 syncSettingsFromManager()
                 // Don't override tempo on appear - it's already loaded from lastMetronomeTempo in init
             }
-            .onDisappear {
-                if autoStopOnTabSwitch && metronome.isPlaying {
-                    metronome.stop()
-                }
-            }
             .onChange(of: metronome.soundType) { _, _ in
                 settingsManager.setMetronomeSound(metronome.soundType)
             }
@@ -351,6 +349,153 @@ extension MetronomeView {
                 syncSettingsFromManager()
             }
         }
+    }
+
+    private static let toneChromaticShortNames = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
+
+    private var toneGridSixColumns: [GridItem] {
+        Array(repeating: GridItem(.flexible(), spacing: 8), count: 6)
+    }
+
+    var toneGeneratorSection: some View {
+        let a4 = settingsManager.settings.a4ReferenceFrequency
+
+        return VStack(alignment: .leading, spacing: 16) {
+            VStack(spacing: 10) {
+                Rectangle()
+                    .fill(Color(.separator))
+                    .frame(height: 2)
+                    .padding(.horizontal, 16)
+
+                Divider()
+            }
+            .padding(.top, 20)
+            .padding(.bottom, 4)
+
+            HStack(spacing: 8) {
+                Image(systemName: "waveform.path")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                Text("Tone Generator")
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
+                    .foregroundStyle(.secondary)
+                Spacer()
+            }
+            .padding(.horizontal, 20)
+
+            Text(String(format: "%.1f Hz", toneGenerator.frequency))
+                .font(.system(size: 28, weight: .medium, design: .rounded))
+                .monospacedDigit()
+                .frame(maxWidth: .infinity)
+
+            HStack(spacing: 8) {
+                TextField("Manual", text: $manualToneFrequencyText)
+                    .keyboardType(.decimalPad)
+                    .textFieldStyle(.roundedBorder)
+                    .font(.body.monospacedDigit())
+                    .onSubmit { commitManualToneFrequency() }
+                Button("Apply") {
+                    commitManualToneFrequency()
+                }
+                .buttonStyle(.bordered)
+                .tint(themeManager.accentColor)
+            }
+            .padding(.horizontal, 20)
+
+            Button {
+                if toneGenerator.isPlaying {
+                    toneGenerator.stop()
+                } else {
+                    toneGenerator.start()
+                }
+            } label: {
+                Label(
+                    toneGenerator.isPlaying ? "Stop Tone" : "Play Tone",
+                    systemImage: toneGenerator.isPlaying ? "stop.fill" : "play.fill"
+                )
+                .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(themeManager.accentColor)
+            .padding(.horizontal, 20)
+
+            LazyVGrid(columns: toneGridSixColumns, spacing: 10) {
+                ForEach(0..<6, id: \.self) { noteIdx in
+                    tonePitchButton(noteIndex: noteIdx, a4: a4)
+                }
+            }
+            .padding(.horizontal, 20)
+
+            LazyVGrid(columns: toneGridSixColumns, spacing: 10) {
+                ForEach(6..<12, id: \.self) { noteIdx in
+                    tonePitchButton(noteIndex: noteIdx, a4: a4)
+                }
+            }
+            .padding(.horizontal, 20)
+
+            Text("Octave")
+                .font(.subheadline)
+                .fontWeight(.semibold)
+                .foregroundStyle(.secondary)
+                .padding(.horizontal, 20)
+                .padding(.top, 8)
+
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 10) {
+                    ForEach(1...6, id: \.self) { octave in
+                        let selected = selectedToneOctave == octave
+                        Button {
+                            selectedToneOctave = octave
+                        } label: {
+                            Text("\(octave)")
+                                .font(.title3.weight(.semibold))
+                                .monospacedDigit()
+                                .frame(minWidth: 56, minHeight: 52)
+                                .padding(.horizontal, 10)
+                                .background(
+                                    Capsule(style: .continuous)
+                                        .fill(selected ? themeManager.accentColor : Color(.tertiarySystemFill))
+                                )
+                                .foregroundStyle(selected ? Color.white : Color.primary)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .padding(.horizontal, 20)
+                .padding(.vertical, 6)
+            }
+        }
+        .padding(.bottom, 24)
+    }
+
+    private func tonePitchButton(noteIndex: Int, a4: Double) -> some View {
+        let midi = 24 + (selectedToneOctave - 1) * 12 + noteIndex
+        let hz = ToneGeneratorEngine.midiNoteToHz(midi: midi, a4: a4)
+        let name = Self.toneChromaticShortNames[noteIndex]
+        return Button {
+            toneGenerator.applyFrequency(hz)
+        } label: {
+            Text(name)
+                .font(.subheadline.weight(.semibold))
+                .multilineTextAlignment(.center)
+                .minimumScaleFactor(0.7)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 14)
+                .background(
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .fill(Color(.tertiarySystemFill))
+                )
+        }
+        .buttonStyle(.plain)
+    }
+
+    func commitManualToneFrequency() {
+        let trimmed = manualToneFrequencyText.replacingOccurrences(of: ",", with: ".")
+        if let v = Double(trimmed) {
+            toneGenerator.applyFrequency(v)
+        }
+        manualToneFrequencyText = String(format: "%.1f", toneGenerator.frequency)
     }
 }
 

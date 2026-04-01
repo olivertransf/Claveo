@@ -74,6 +74,7 @@ class SettingsManager: ObservableObject {
         settings.metronomeSound = defaults.string(forKey: "metronomeSound") ?? MetronomeSound.click.rawValue
         settings.metronomeHapticEnabled = defaults.object(forKey: "metronomeHapticEnabled") as? Bool ?? true
         settings.metronomeAutoStopOnTabSwitch = defaults.bool(forKey: "metronomeAutoStopOnTabSwitch")
+        settings.stopToneWhenLeavingMetronomeTab = defaults.object(forKey: "stopToneWhenLeavingMetronomeTab") as? Bool ?? false
         
         // Custom time signature
         let customTop = defaults.integer(forKey: "customTimeSignatureTop")
@@ -145,6 +146,7 @@ class SettingsManager: ObservableObject {
         defaults.set(settings.metronomeSound, forKey: "metronomeSound")
         defaults.set(settings.metronomeHapticEnabled, forKey: "metronomeHapticEnabled")
         defaults.set(settings.metronomeAutoStopOnTabSwitch, forKey: "metronomeAutoStopOnTabSwitch")
+        defaults.set(settings.stopToneWhenLeavingMetronomeTab, forKey: "stopToneWhenLeavingMetronomeTab")
         
         // Custom time signature
         if let top = settings.customTimeSignatureTop, let bottom = settings.customTimeSignatureBottom {
