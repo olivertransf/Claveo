@@ -23,7 +23,6 @@ struct TunerView: View {
         )
     }
 
-    @State private var showingSettingsSheet = false
 
     private var selectedPreset: FrequencyPreset {
         FrequencyPreset.preset(for: settingsManager.settings.a4ReferenceFrequency)
@@ -77,14 +76,6 @@ struct TunerView: View {
             .navigationTitle("Tuner")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(action: {
-                        showingSettingsSheet = true
-                    }) {
-                        Image(systemName: "gear")
-                            .foregroundColor(themeManager.accentColor)
-                    }
-                }
             }
             .padding()
             .alert("Microphone Access Required", isPresented: $showingPermissionAlert) {
@@ -111,79 +102,6 @@ struct TunerView: View {
             .onChange(of: settingsManager.settings.a4ReferenceFrequency) { _, _ in
                 if pitchDetector.frequency > 0 {
                     pitchDetector.recalculateNote()
-                }
-            }
-        }
-        .sheet(isPresented: $showingSettingsSheet) {
-            tunerSettingsSheet
-        }
-    }
-
-    var tunerSettingsSheet: some View {
-        NavigationStack {
-            Form {
-                Section("Reference Pitch") {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("A4 Reference Frequency")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-
-                        HStack {
-                            Slider(value: a4ReferenceFrequency, in: 400...480, step: 1)
-                            TextField("Hz", text: $manualFrequencyText)
-                                .keyboardType(.decimalPad)
-                                .multilineTextAlignment(.trailing)
-                                .frame(width: 70)
-                                .textFieldStyle(.roundedBorder)
-                                .focused($isFrequencyFieldFocused)
-                                .onSubmit {
-                                    if let value = Double(manualFrequencyText), value >= 400 && value <= 480 {
-                                        settingsManager.update(\.a4ReferenceFrequency, value: value)
-                                    } else {
-                                        // Reset to current value if invalid
-                                        manualFrequencyText = String(format: "%.1f", settingsManager.settings.a4ReferenceFrequency)
-                                    }
-                                    isFrequencyFieldFocused = false
-                                }
-                                .onChange(of: settingsManager.settings.a4ReferenceFrequency) { _, newValue in
-                                    // Only update if user isn't actively editing the field
-                                    if !isFrequencyFieldFocused {
-                                        manualFrequencyText = String(format: "%.1f", newValue)
-                                    }
-                                }
-                        }
-                    }
-
-                    // Preset frequencies
-                    Picker("Preset Frequencies", selection: Binding(
-                        get: { selectedPreset },
-                        set: { preset in
-                            if let frequency = preset.frequency {
-                                settingsManager.update(\.a4ReferenceFrequency, value: frequency)
-                            }
-                        }
-                    )) {
-                        ForEach(FrequencyPreset.allCases, id: \.self) { preset in
-                            if preset == .custom {
-                                Text(preset.displayName).tag(preset)
-                            } else {
-                                Text(preset.fullName).tag(preset)
-                            }
-                        }
-                    }
-                }
-
-                Section("Display") {
-                    Toggle("Show Frequency Display", isOn: showFrequencyDisplay)
-                }
-            }
-            .navigationTitle("Tuner Settings")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Done") {
-                        showingSettingsSheet = false
-                    }
                 }
             }
         }

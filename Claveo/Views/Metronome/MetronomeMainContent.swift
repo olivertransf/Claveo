@@ -305,12 +305,6 @@ extension MetronomeView {
                     } label: {
                         Image(systemName: "speaker.wave.2.fill")
                     }
-                    
-                    Button {
-                        showingSettingsSheet = true
-                    } label: {
-                        Image(systemName: "gearshape")
-                    }
                 }
             }
             .sheet(isPresented: $showingTemposManagement) {
@@ -349,6 +343,7 @@ extension MetronomeView {
                 syncSettingsFromManager()
             }
         }
+        .scrollDismissesKeyboard(.interactively)
     }
 
     private static let toneChromaticShortNames = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
@@ -394,7 +389,17 @@ extension MetronomeView {
                     .keyboardType(.decimalPad)
                     .textFieldStyle(.roundedBorder)
                     .font(.body.monospacedDigit())
+                    .focused($isToneFrequencyFocused)
                     .onSubmit { commitManualToneFrequency() }
+                    .toolbar {
+                        ToolbarItemGroup(placement: .keyboard) {
+                            Spacer()
+                            Button("Done") {
+                                commitManualToneFrequency()
+                                isToneFrequencyFocused = false
+                            }
+                        }
+                    }
                 Button("Apply") {
                     commitManualToneFrequency()
                 }
@@ -447,6 +452,10 @@ extension MetronomeView {
                         let selected = selectedToneOctave == octave
                         Button {
                             selectedToneOctave = octave
+                            let noteIndex = selectedNoteIndex ?? 0
+                            let midi = 24 + (octave - 1) * 12 + noteIndex
+                            let hz = ToneGeneratorEngine.midiNoteToHz(midi: midi, a4: a4)
+                            toneGenerator.applyFrequency(hz)
                         } label: {
                             Text("\(octave)")
                                 .font(.title3.weight(.semibold))
@@ -470,11 +479,12 @@ extension MetronomeView {
     }
 
     private func tonePitchButton(noteIndex: Int, a4: Double) -> some View {
-        let midi = 24 + (selectedToneOctave - 1) * 12 + noteIndex
-        let hz = ToneGeneratorEngine.midiNoteToHz(midi: midi, a4: a4)
         let name = Self.toneChromaticShortNames[noteIndex]
         return Button {
+            let midi = 24 + (selectedToneOctave - 1) * 12 + noteIndex
+            let hz = ToneGeneratorEngine.midiNoteToHz(midi: midi, a4: a4)
             toneGenerator.applyFrequency(hz)
+            selectedNoteIndex = noteIndex
         } label: {
             Text(name)
                 .font(.subheadline.weight(.semibold))

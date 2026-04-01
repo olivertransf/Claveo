@@ -15,7 +15,6 @@ struct PracticeView: View {
     @State private var selectedDate = Date()
     @State private var sheetDate = Date() // Separate date for the sheet to ensure correct value
     @State private var showingQuickEntry = false
-    @State private var showingSettings = false
     @State private var currentWeekOffset = 0 // 0 = this week, -1 = last week, etc.
     @State private var searchText = ""
 
@@ -105,22 +104,12 @@ struct PracticeView: View {
             .navigationBarTitleDisplayMode(.inline)
             .searchable(text: $searchText, prompt: "Search journal notes")
             .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button {
-                        showingSettings = true
-                    } label: {
-                        Image(systemName: "gearshape")
-                    }
-                }
             }
             .sheet(item: $selectedEntry) { entry in
                 PracticeEntryDetailView(entry: entry)
             }
             .sheet(isPresented: $showingQuickEntry) {
                 QuickPracticeEntryView(date: sheetDate)
-            }
-            .sheet(isPresented: $showingSettings) {
-                PracticeSettingsView()
             }
         }
     }

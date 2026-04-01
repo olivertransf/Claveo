@@ -172,11 +172,6 @@ extension RecordingListView {
                             Label("Select", systemImage: "checkmark.circle")
                         }
 
-                        Button {
-                            showingSettingsSheet = true
-                        } label: {
-                            Label("Settings", systemImage: "gear")
-                        }
                     }
                 }
             }
@@ -184,9 +179,7 @@ extension RecordingListView {
             .navigationBarTitleDisplayMode(.inline)
             .searchable(text: $searchText, isPresented: $isSearchFocused, prompt: "Search recordings")
         }
-        .sheet(isPresented: $showingSettingsSheet) {
-            recordingsSettingsSheet
-        }
+
         .fullScreenCover(isPresented: $showingOMRScanner) {
             OMRScannerView()
                 .environmentObject(themeManager)
@@ -197,84 +190,6 @@ extension RecordingListView {
         }
     }
 
-    var recordingsSettingsSheet: some View {
-        NavigationStack {
-            Form {
-                // Appearance Settings (moved from Settings tab)
-                Section("Appearance") {
-                    Picker("Color Scheme", selection: $themeManager.colorSchemeOption) {
-                        ForEach(ColorSchemeOption.allCases) { option in
-                            Text(option.rawValue)
-                                .tag(option)
-                        }
-                    }
-
-                    Picker("Accent Color", selection: $themeManager.accentColorOption) {
-                        ForEach(AccentColorOption.allCases) { option in
-                            HStack {
-                                Circle()
-                                    .fill(option.color)
-                                    .frame(width: 20, height: 20)
-                                Text(option.rawValue)
-                            }
-                            .tag(option)
-                        }
-                    }
-
-                    // Only show this option on iPhone (iPad always shows text)
-                    if UIDevice.current.userInterfaceIdiom == .phone {
-                        Toggle("Show Tab Bar Labels", isOn: Binding(
-                            get: { settingsManager.settings.showTabBarText },
-                            set: { settingsManager.update(\.showTabBarText, value: $0) }
-                        ))
-                    }
-                }
-
-                // Storage Settings (moved from Settings tab)
-                Section("Storage") {
-                    Button(action: {
-                        showingSettingsSheet = false
-                        showingStorageInfo = true
-                    }) {
-                        HStack {
-                            Text("Storage Location")
-                            Spacer()
-                            Text(iCloudManager.shared.getStorageLocation())
-                                .foregroundColor(.secondary)
-                                .font(.caption)
-                        }
-                    }
-
-                    if iCloudManager.shared.isAvailable {
-                        Label("iCloud Drive Enabled", systemImage: "icloud.fill")
-                            .foregroundColor(themeManager.accentColor)
-                    } else {
-                        Label("Using Local Storage", systemImage: "folder.fill")
-                            .foregroundColor(.themeSecondaryLabel)
-                    }
-                }
-
-                // About (moved from Settings tab)
-                Section("About") {
-                    HStack {
-                        Text("Version")
-                        Spacer()
-                        Text("1.0")
-                            .foregroundColor(.secondary)
-                    }
-                }
-            }
-            .navigationTitle("Settings")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Done") {
-                        showingSettingsSheet = false
-                    }
-                }
-            }
-        }
-    }
 
     struct StorageInfoView: View {
         @Environment(\.dismiss) private var dismiss
