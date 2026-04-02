@@ -35,7 +35,17 @@ struct AppSettings: Codable {
     var accentColor: String = AccentColorOption.blue.rawValue
     var colorScheme: String = ColorSchemeOption.system.rawValue
     var showTabBarText: Bool = false
-    
+
+    // Navigation
+    var lastSelectedTab: Int = 0
+
+    // Metronome pattern
+    var metronomeTimeSignature: String = TimeSignature.fourFour.rawValue
+    var metronomeBeatPattern: [Bool] = []
+
+    /// Clef names enabled for Note Identification (`ClefName.rawValue`: treble, bass, alto, tenor).
+    var noteIdentificationEnabledClefRawValues: [String] = ["treble", "bass", "alto", "tenor"]
+
     enum CodingKeys: String, CodingKey {
         case a4ReferenceFrequency, showFrequencyDisplay
         case lastMetronomeTempo, metronomeSound, metronomeEmphasizedSound, metronomeNonEmphasizedSound, metronomeVolume, metronomeHapticEnabled
@@ -43,6 +53,9 @@ struct AppSettings: Codable {
         case customTimeSignatureTop, customTimeSignatureBottom
         case defaultPracticeTime, practiceDurationOptions
         case accentColor, colorScheme, showTabBarText
+        case lastSelectedTab
+        case metronomeTimeSignature, metronomeBeatPattern
+        case noteIdentificationEnabledClefRawValues
     }
 }
 
@@ -67,6 +80,11 @@ extension AppSettings {
         accentColor = try c.decodeIfPresent(String.self, forKey: .accentColor) ?? AccentColorOption.blue.rawValue
         colorScheme = try c.decodeIfPresent(String.self, forKey: .colorScheme) ?? ColorSchemeOption.system.rawValue
         showTabBarText = try c.decodeIfPresent(Bool.self, forKey: .showTabBarText) ?? false
+        lastSelectedTab = try c.decodeIfPresent(Int.self, forKey: .lastSelectedTab) ?? 0
+        metronomeTimeSignature = try c.decodeIfPresent(String.self, forKey: .metronomeTimeSignature) ?? TimeSignature.fourFour.rawValue
+        metronomeBeatPattern = try c.decodeIfPresent([Bool].self, forKey: .metronomeBeatPattern) ?? []
+        noteIdentificationEnabledClefRawValues = try c.decodeIfPresent([String].self, forKey: .noteIdentificationEnabledClefRawValues)
+            ?? ["treble", "bass", "alto", "tenor"]
     }
 }
 

@@ -17,10 +17,11 @@ class SettingsManager: ObservableObject {
     @Published var settings = AppSettings()
     
     private let settingsFileName = "settings.json"
-    private var settingsURL: URL {
+    /// Cached URL — `getDocumentsURL()` calls `NSFileCoordinator` internally, so we only compute this once.
+    private lazy var settingsURL: URL = {
         iCloudManager.shared.getDocumentsURL().appendingPathComponent(settingsFileName)
-    }
-    
+    }()
+
     private init() {
         loadSettings()
         
@@ -48,6 +49,19 @@ class SettingsManager: ObservableObject {
             // Fall back to UserDefaults (local cache)
             loadFromUserDefaults()
         }
+        migrateTabIndicesForExercisesTabIfNeeded()
+    }
+
+    /// One-time remap after adding Exercises at index 4: old 4/5/6 (Dictionary/Settings/Chords) → 5/6/7.
+    private func migrateTabIndicesForExercisesTabIfNeeded() {
+        let key = "claveoTabIndicesExercisesMigration_v1"
+        guard !UserDefaults.standard.bool(forKey: key) else { return }
+        let t = settings.lastSelectedTab
+        if (4...6).contains(t) {
+            settings.lastSelectedTab = t + 1
+            UserDefaults.standard.set(settings.lastSelectedTab, forKey: "lastSelectedTab")
+        }
+        UserDefaults.standard.set(true, forKey: key)
     }
     
     private func loadFromiCloud() -> AppSettings? {
@@ -110,27 +124,38 @@ class SettingsManager: ObservableObject {
             // First launch: default based on device type
             settings.showTabBarText = UIDevice.current.userInterfaceIdiom == .pad
         }
+
+        // Navigation
+        settings.lastSelectedTab = defaults.integer(forKey: "lastSelectedTab")
+
+        // Metronome pattern
+        settings.metronomeTimeSignature = defaults.string(forKey: "metronomeTimeSignature") ?? TimeSignature.fourFour.rawValue
+        if let data = defaults.data(forKey: "metronomeBeatPattern"),
+           let decoded = try? JSONDecoder().decode([Bool].self, from: data) {
+            settings.metronomeBeatPattern = decoded
+        }
+
+        if let data = defaults.data(forKey: "noteIdentificationEnabledClefRawValues"),
+           let decoded = try? JSONDecoder().decode([String].self, from: data) {
+            settings.noteIdentificationEnabledClefRawValues = decoded
+        }
     }
     
     // MARK: - Save Settings
     
     func saveSettings() {
-        // Save to both iCloud and UserDefaults
-        saveToiCloud()
+        // UserDefaults is memory-mapped — fast, keep on main thread.
         saveToUserDefaults()
-    }
-    
-    private func saveToiCloud() {
-        guard let encoded = try? JSONEncoder().encode(settings) else { return }
-        
-        do {
-            try iCloudManager.shared.writeFile(data: encoded, to: settingsURL)
-        } catch {
-            #if DEBUG
-            print("Failed to save settings to iCloud: \(error.localizedDescription)")
-            #endif
-            // Fallback to direct write if coordination fails
-            try? encoded.write(to: settingsURL, options: [.atomic])
+        // iCloud uses NSFileCoordinator (blocking I/O) — always run off the main thread.
+        let snapshot = settings
+        let url = settingsURL
+        Task.detached(priority: .utility) {
+            guard let encoded = try? JSONEncoder().encode(snapshot) else { return }
+            do {
+                try iCloudManager.shared.writeFile(data: encoded, to: url)
+            } catch {
+                try? encoded.write(to: url, options: [.atomic])
+            }
         }
     }
     
@@ -172,23 +197,38 @@ class SettingsManager: ObservableObject {
         defaults.set(settings.accentColor, forKey: "accentColor")
         defaults.set(settings.colorScheme, forKey: "colorScheme")
         defaults.set(settings.showTabBarText, forKey: "showTabBarText")
+
+        // Note: lastSelectedTab is written directly by ContentView to avoid @Published re-renders.
+
+        // Metronome pattern
+        defaults.set(settings.metronomeTimeSignature, forKey: "metronomeTimeSignature")
+        if let encoded = try? JSONEncoder().encode(settings.metronomeBeatPattern) {
+            defaults.set(encoded, forKey: "metronomeBeatPattern")
+        }
+
+        if let encoded = try? JSONEncoder().encode(settings.noteIdentificationEnabledClefRawValues) {
+            defaults.set(encoded, forKey: "noteIdentificationEnabledClefRawValues")
+        }
     }
     
     // MARK: - Sync
     
     func syncFromiCloud() {
-        // When coming back online, sync from iCloud
-        // This ensures offline changes are preserved (they're already in UserDefaults)
-        // and iCloud changes are merged in
-        if let iCloudSettings = loadFromiCloud() {
-            // For now, iCloud takes precedence when syncing
-            // Offline changes are already saved to UserDefaults and will be synced to iCloud
-            settings = iCloudSettings
-            saveToUserDefaults()
-        } else {
-            // If iCloud file doesn't exist, ensure local changes are synced to iCloud
-            // This handles the case where user made changes offline
-            saveToiCloud()
+        let url = settingsURL
+        let currentSettings = settings
+        Task.detached(priority: .utility) {
+            if let data = try? iCloudManager.shared.readFile(from: url),
+               let decoded = try? JSONDecoder().decode(AppSettings.self, from: data) {
+                await MainActor.run { [weak self] in
+                    self?.settings = decoded
+                    self?.saveToUserDefaults()
+                }
+            } else {
+                // No iCloud file — push local settings up.
+                if let encoded = try? JSONEncoder().encode(currentSettings) {
+                    try? iCloudManager.shared.writeFile(data: encoded, to: url)
+                }
+            }
         }
     }
     

@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		4AA528B72ED6D75500CAD0E1 /* Tuna in Frameworks */ = {isa = PBXBuildFile; productRef = 4AA528B62ED6D75500CAD0E1 /* Tuna */; };
 		4AA528BA2ED6D75500CAD0E2 /* Inject in Frameworks */ = {isa = PBXBuildFile; productRef = 4AA528B92ED6D75500CAD0E2 /* Inject */; };
+		4CC728C12ED6D75500CAD0E1 /* VexFoundation in Frameworks */ = {isa = PBXBuildFile; productRef = 4CC728C22ED6D75500CAD0E1 /* VexFoundation */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -30,6 +31,7 @@
 			files = (
 				4AA528B72ED6D75500CAD0E1 /* Tuna in Frameworks */,
 				4AA528BA2ED6D75500CAD0E2 /* Inject in Frameworks */,
+				4CC728C12ED6D75500CAD0E1 /* VexFoundation in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -74,6 +76,7 @@
 			packageProductDependencies = (
 				4AA528B62ED6D75500CAD0E1 /* Tuna */,
 				4AA528B92ED6D75500CAD0E2 /* Inject */,
+				4CC728C22ED6D75500CAD0E1 /* VexFoundation */,
 			);
 			productName = Claveo;
 			productReference = 4AA78F9D2ED028BF009BDB04 /* Claveo.app */;
@@ -106,6 +109,7 @@
 			packageReferences = (
 				4AA528B52ED6D75500CAD0E1 /* XCRemoteSwiftPackageReference "Tuna" */,
 				4AA528B82ED6D75500CAD0E2 /* XCRemoteSwiftPackageReference "Inject" */,
+				4CC728C02ED6D75500CAD0E1 /* XCRemoteSwiftPackageReference "VexFoundation" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 4AA78F9E2ED028BF009BDB04 /* Products */;
@@ -299,7 +303,7 @@
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 15.0;
-				MARKETING_VERSION = 1.4;
+				MARKETING_VERSION = 1.5;
 				PRODUCT_BUNDLE_IDENTIFIER = com.olivertran.Claveo;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
@@ -354,7 +358,7 @@
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 15.0;
-				MARKETING_VERSION = 1.4;
+				MARKETING_VERSION = 1.5;
 				PRODUCT_BUNDLE_IDENTIFIER = com.olivertran.Claveo;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
@@ -412,6 +416,14 @@
 				minimumVersion = 1.2.4;
 			};
 		};
+		4CC728C02ED6D75500CAD0E1 /* XCRemoteSwiftPackageReference "VexFoundation" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/migueldeicaza/VexFoundation.git";
+			requirement = {
+				branch = main;
+				kind = branch;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -424,6 +436,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 4AA528B82ED6D75500CAD0E2 /* XCRemoteSwiftPackageReference "Inject" */;
 			productName = Inject;
+		};
+		4CC728C22ED6D75500CAD0E1 /* VexFoundation */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 4CC728C02ED6D75500CAD0E1 /* XCRemoteSwiftPackageReference "VexFoundation" */;
+			productName = VexFoundation;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

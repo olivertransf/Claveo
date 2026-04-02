@@ -13,17 +13,24 @@ struct ContentView: View {
     @EnvironmentObject var themeManager: ThemeManager
     @StateObject private var settingsManager = SettingsManager.shared
     @StateObject private var toneGenerator = ToneGeneratorEngine()
-    @State private var selectedTabIndex = 0
+    @State private var selectedTabIndex: Int = {
+        let tab = SettingsManager.shared.settings.lastSelectedTab
+        return (0...7).contains(tab) ? tab : 0
+    }()
     /// Drives the tab bar's visual highlight on compact screens (0–3, or 99 for the More slot).
-    @State private var tabBarHighlight = 0
+    @State private var tabBarHighlight: Int = {
+        let tab = SettingsManager.shared.settings.lastSelectedTab
+        return tab >= 4 ? 99 : tab
+    }()
     @State private var showMoreMenu = false
     @State private var moreTabHandler = MoreTabHandler()
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
 
     private let overflowTabs: [(tag: Int, name: String, icon: String)] = [
-        (4, "Dictionary", "book"),
-        (5, "Settings", "gear"),
-        (6, "Chords", "music.note.list")
+        (4, "Exercises", "list.bullet.clipboard"),
+        (5, "Dictionary", "book"),
+        (7, "Chords", "music.note.list"),
+        (6, "Settings", "gear")
     ]
 
     var showTabBarText: Bool {
@@ -186,15 +193,18 @@ struct ContentView: View {
     @ViewBuilder
     private var overflowContent: some View {
         ZStack {
-            MusicDictionaryView()
+            ExercisesRootView()
                 .opacity(selectedTabIndex == 4 ? 1 : 0)
                 .allowsHitTesting(selectedTabIndex == 4)
-            SettingsView()
+            MusicDictionaryView()
                 .opacity(selectedTabIndex == 5 ? 1 : 0)
                 .allowsHitTesting(selectedTabIndex == 5)
-            ChordScaleReferenceView()
+            SettingsView()
                 .opacity(selectedTabIndex == 6 ? 1 : 0)
                 .allowsHitTesting(selectedTabIndex == 6)
+            ChordScaleReferenceView()
+                .opacity(selectedTabIndex == 7 ? 1 : 0)
+                .allowsHitTesting(selectedTabIndex == 7)
         }
     }
 
@@ -215,14 +225,17 @@ struct ContentView: View {
             PracticeView()
                 .tabItem { Label("Practice", systemImage: "calendar.badge.clock") }
                 .tag(3)
+            ExercisesRootView()
+                .tabItem { Label("Exercises", systemImage: "list.bullet.clipboard") }
+                .tag(4)
             MusicDictionaryView()
                 .tabItem { Label("Dictionary", systemImage: "book") }
-                .tag(4)
-            SettingsView()
-                .tabItem { Label("Settings", systemImage: "gear") }
                 .tag(5)
             ChordScaleReferenceView()
                 .tabItem { Label("Chords", systemImage: "music.note.list") }
+                .tag(7)
+            SettingsView()
+                .tabItem { Label("Settings", systemImage: "gear") }
                 .tag(6)
         }
         .tint(themeManager.accentColor)
@@ -237,6 +250,9 @@ struct ContentView: View {
         if newIndex != 1, settingsManager.settings.stopToneWhenLeavingMetronomeTab {
             toneGenerator.stop()
         }
+        // Write directly to UserDefaults — avoids mutating @Published settings and triggering
+        // re-renders across all 9 SettingsManager observers mid-tab-transition.
+        UserDefaults.standard.set(newIndex, forKey: "lastSelectedTab")
         NotificationCenter.default.post(
             name: .claveoSelectedTabChanged,
             object: nil,

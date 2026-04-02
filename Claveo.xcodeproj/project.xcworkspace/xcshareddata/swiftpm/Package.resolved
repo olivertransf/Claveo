@@ -1,5 +1,5 @@
 {
-  "originHash" : "625a6a384488a7904451cc35683c5e7d1d52b042f022df7d228c6808571da664",
+  "originHash" : "26139fffd185b2414ea4c864e631a76a479ce30223a0ecfff32c4a79c120c9a9",
   "pins" : [
     {
       "identity" : "inject",
@@ -17,6 +17,15 @@
       "state" : {
         "revision" : "cfcfaf9e6e0d605b242c91f1b3decc9486c1b173",
         "version" : "0.9.1"
+      }
+    },
+    {
+      "identity" : "vexfoundation",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/migueldeicaza/VexFoundation.git",
+      "state" : {
+        "branch" : "main",
+        "revision" : "b7f260aa95a0da212c9973f06ea01011acc31d0a"
       }
     }
   ],
