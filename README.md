@@ -1,83 +1,83 @@
 # Claveo
 
-A complete music practice companion app for iPhone and iPad, featuring practice recording, metronome, tuner, and music dictionary.
+A free music practice companion for **iPhone** and **iPad**: record sessions, run a metronome and tuner, journal practice time, and use theory tools—all in one app. No ads; optional **iCloud** sync across your devices.
 
-[![App Store](https://img.shields.io/badge/App%20Store-Available-blue)](https://apps.apple.com/us/app/claveo-music-companion/id6755795790)
+[![App Store](https://img.shields.io/badge/App%20Store-Download-0D96F6?logo=app-store)](https://apps.apple.com/us/app/claveo-music-companion/id6755795790)
 
-## About
+## Features
 
-Claveo is a free, comprehensive music practice app designed for musicians of all levels. The app provides essential tools for practice, learning, and improvement.
+- **Recording** — Practice takes with a piece library, tags, non-destructive trim, playback speed, search, and export/share  
+- **Practice journal** — Minutes, notes, ratings, streaks, and stats; optional links to recordings  
+- **Metronome** — Tap tempo, standard and custom time signatures, accents, saved tempos, optional haptics, reference tone  
+- **Tuner** — Live pitch from the mic; custom A4 and optional Hz readout  
+- **Exercises** — Note reading on the staff, key signatures, interval ear training  
+- **Chord & scale reference** — Diatonic chords and scales by root  
+- **Music dictionary** — Searchable terms and definitions  
+- **Layout** — Reorder tabs (four on the bar, rest in More), accent colors, light/dark mode  
+- **OMR (beta)** — Scan sheet music from photos or PDFs for experimental digitization workflows  
 
-### Features
+Roadmap and web copy live in the repo; see the [site roadmap](https://claveo.app/roadmap) for planned work.
 
-- **Practice Recording**: Record unlimited sessions with crystal-clear audio quality
-- **Advanced Metronome**: Precise tempo control with customizable beat patterns and time signatures
-- **Precision Tuner**: Real-time pitch detection with professional accuracy
-- **Music Dictionary**: Searchable database of music terms and definitions
-- **Practice Journal**: Track your practice sessions with detailed entries and statistics
-- **Habit Tracking**: Monitor your practice consistency and build better habits
-
-### Upcoming Features
-
-- **Optical Music Recognition (OMR)**: Scan and digitize sheet music from photos (Beta - January 2026)
-
-## Project Structure
-
-This repository contains both the iOS app and the official website:
+## Repository layout
 
 ```
 Claveo/
-├── Claveo/              # iOS app (Swift/SwiftUI)
-│   ├── Models/          # Data models
-│   ├── Services/        # Business logic and services
-│   └── Views/           # SwiftUI views
-└── web/                 # Official website (Svelte)
-    ├── src/
-    │   ├── pages/       # Website pages
-    │   └── styles.css   # Global styles
-    └── public/          # Static assets
+├── Claveo/                 # iOS app (Swift / SwiftUI)
+│   ├── Models/
+│   ├── Services/
+│   └── Views/
+├── web/                    # Marketing site (Svelte + Vite)
+│   ├── src/
+│   │   ├── pages/          # Home, About, Roadmap, Privacy
+│   │   └── assets/         # Bundled App Store screenshots (carousel)
+│   ├── public/             # Static assets (icon, screenshots, etc.)
+│   └── package.json
+├── Claveo.xcodeproj
+├── netlify.toml            # Build: cd web && npm install && npm run build → web/dist
+└── LICENSE
 ```
 
-## Tech Stack
+## Requirements
 
-### iOS App
-- **Language**: Swift
-- **Framework**: SwiftUI
-- **Dependencies**:
-  - **Tuna**: Pitch detection library by [alladinian](https://github.com/alladinian/Tuna)
-
-### Website
-- **Framework**: Svelte
-- **Build Tool**: Vite
-- **Deployment**: Netlify
+- **iOS app**: Xcode 16+ recommended, deployment target **iOS 17.6**  
+- **Website**: Node.js 18+ (for local dev and Netlify builds)
 
 ## Development
 
-### iOS App
+### iOS
 
-Open `Claveo.xcodeproj` in Xcode to build and run the app.
+Open `Claveo.xcodeproj` in Xcode, select an iPhone or iPad simulator (or device), and run.
 
 ### Website
 
 ```bash
 cd web
 npm install
-npm run dev    # Development server (http://localhost:5173)
-npm run build  # Production build
+npm run dev     # http://localhost:5173
+npm run build   # output: web/dist/
 ```
+
+Production deploys use the root **`netlify.toml`** (publish `web/dist`, SPA fallback to `index.html`).
+
+## Tech stack
+
+| Area | Stack |
+|------|--------|
+| App | Swift, SwiftUI, AVFoundation, CoreML (OMR) |
+| Packages (SPM) | [Tuna](https://github.com/alladinian/Tuna) (pitch detection), [VexFoundation](https://github.com/migueldeicaza/VexFoundation) (staff rendering in exercises) |
+| Site | Svelte, Vite |
 
 ## License
 
-Copyright (c) 2025 Oliver Tran. All rights reserved.
-
-See [LICENSE](LICENSE) for more information.
+Copyright (c) 2025 Oliver Tran. See [LICENSE](LICENSE).
 
 ## Contact
 
-For questions, feedback, or licensing inquiries: **claveo.app@gmail.com**
+**claveo.app@gmail.com** — questions, feedback, or licensing.
 
 ## Links
 
-- [App Store](https://apps.apple.com/us/app/claveo-music-companion/id6755795790)
-- [Official Website](https://claveo.netlify.app/)
-
+- **Website** — [claveo.app](https://claveo.app/)  
+- **App Store** — [Claveo](https://apps.apple.com/us/app/claveo-music-companion/id6755795790)  
+- **Privacy policy** — [claveo.app/privacy-policy](https://claveo.app/privacy-policy.html)  
+- **Source** — [github.com/olivertransf/Claveo](https://github.com/olivertransf/Claveo)
