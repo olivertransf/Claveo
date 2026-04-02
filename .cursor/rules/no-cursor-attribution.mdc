@@ -1,0 +1,10 @@
+---
+description: Do not add Cursor branding or AI tool attribution to the product or docs
+alwaysApply: true
+---
+
+# No Cursor / AI builder attribution
+
+- Do **not** add footers, badges, meta tags, README lines, or UI copy such as “Made with Cursor”, “Built with Cursor”, or similar tool attribution anywhere in this repository (app, website, marketing copy, or legal pages).
+- Do **not** suggest or implement such strings when editing existing files or creating new ones.
+- If you encounter existing attribution of that kind, remove it unless the user explicitly asks to keep it.
