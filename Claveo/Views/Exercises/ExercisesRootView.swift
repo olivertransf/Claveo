@@ -29,12 +29,44 @@ struct ExercisesRootView: View {
                                 .foregroundStyle(themeManager.accentColor)
                         }
                     }
+                    NavigationLink {
+                        KeySignatureIdentificationExerciseView()
+                    } label: {
+                        Label {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Key Signature Identification")
+                                    .font(.body)
+                                Text("Name major or minor keys from the treble key signature.")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                        } icon: {
+                            Image(systemName: "key.horizontal")
+                                .foregroundStyle(themeManager.accentColor)
+                        }
+                    }
+                    NavigationLink {
+                        IntervalEarTrainingExerciseView()
+                    } label: {
+                        Label {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Interval Ear Training")
+                                    .font(.body)
+                                Text("Identify intervals from two short notes near octave 4.")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                        } icon: {
+                            Image(systemName: "arrow.left.and.right")
+                                .foregroundStyle(themeManager.accentColor)
+                        }
+                    }
                 } header: {
                     Text("Pitch")
                 }
             }
             .navigationTitle("Exercises")
-            .navigationBarTitleDisplayMode(.large)
+            .navigationBarTitleDisplayMode(.inline)
         }
     }
 }

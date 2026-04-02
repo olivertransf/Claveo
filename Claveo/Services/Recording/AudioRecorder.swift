@@ -22,7 +22,6 @@ class AudioRecorder: NSObject, ObservableObject {
     @Published var newlyCreatedRecordingId: UUID?
     
     private var audioRecorder: AVAudioRecorder?
-    private var recordingTimer: Timer?
     private var levelTimer: Timer?
     private var currentRecordingURL: URL?
     private let maxWaveformLevels = 100 // Store last 100 samples for waveform
@@ -195,33 +194,27 @@ class AudioRecorder: NSObject, ObservableObject {
             waveformLevels = [] // Reset waveform buffer
             
             let recorderRef = audioRecorder
-            recordingTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
-                guard let self = self else { return }
+            // Single timer on .common so it keeps firing while scrolling (default-mode timers pause in .tracking).
+            // Duration comes from recorder.currentTime + file duration on stop, not fixed 0.1s increments.
+            let timer = Timer(timeInterval: 0.1, repeats: true) { [weak self] _ in
+                recorderRef?.updateMeters()
+                let elapsed = recorderRef?.currentTime ?? 0
+                let level = recorderRef?.averagePower(forChannel: 0)
                 Task { @MainActor [weak self] in
                     guard let self = self else { return }
-                    self.recordingTime += 0.1
-                }
-            }
-            
-            levelTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
-                guard let self = self else { return }
-                recorderRef?.updateMeters()
-                if let level = recorderRef?.averagePower(forChannel: 0) {
-                    Task { @MainActor [weak self] in
-                        guard let self = self else { return }
-                        // Convert from dB to 0-1 range
+                    self.recordingTime = elapsed
+                    if let level {
                         let normalizedLevel = pow(10, level / 20)
                         self.audioLevel = max(0, min(1, normalizedLevel))
-                        
-                        // Add to waveform buffer
                         self.waveformLevels.append(self.audioLevel)
-                        // Keep only the most recent samples
                         if self.waveformLevels.count > self.maxWaveformLevels {
                             self.waveformLevels.removeFirst()
                         }
                     }
                 }
             }
+            RunLoop.main.add(timer, forMode: .common)
+            levelTimer = timer
         } catch {
             permissionError = "Failed to start recording: \(error.localizedDescription)"
         }
@@ -234,20 +227,20 @@ class AudioRecorder: NSObject, ObservableObject {
         let impactFeedback = UIImpactFeedbackGenerator(style: .light)
         impactFeedback.impactOccurred()
         
+        let url = currentRecordingURL
+        let elapsedBeforeStop = audioRecorder?.currentTime ?? recordingTime
+
         audioRecorder?.stop()
         isRecording = false
-        
-        recordingTimer?.invalidate()
-        recordingTimer = nil
-        
+
         levelTimer?.invalidate()
         levelTimer = nil
-        
+
         audioLevel = 0.0
         waveformLevels = [] // Clear waveform buffer
-        
-        if let url = currentRecordingURL {
-            let duration = recordingTime
+
+        if let url {
+            let duration = Self.durationFromAudioFile(at: url) ?? elapsedBeforeStop
             // File is already in iCloud directory, so it will sync automatically
             let recording = Recording(
                 fileName: url.lastPathComponent,
@@ -263,7 +256,17 @@ class AudioRecorder: NSObject, ObservableObject {
         currentRecordingURL = nil
         recordingTime = 0
     }
-    
+
+    /// Prefer encoded file length so metadata matches playback after stop (AAC finalize).
+    private static func durationFromAudioFile(at url: URL) -> TimeInterval? {
+        guard FileManager.default.fileExists(atPath: url.path) else { return nil }
+        if let player = try? AVAudioPlayer(contentsOf: url) {
+            let d = player.duration
+            if d.isFinite, d > 0 { return d }
+        }
+        return nil
+    }
+
     func updateRecording(_ recording: Recording) {
         if let index = recordings.firstIndex(where: { $0.id == recording.id }) {
             recordings[index] = recording
@@ -339,7 +342,6 @@ extension AudioRecorder: AVAudioRecorderDelegate {
                     try? FileManager.default.removeItem(at: url)
                 }
                 isRecording = false
-                recordingTimer?.invalidate()
                 levelTimer?.invalidate()
                 audioLevel = 0.0
                 waveformLevels = []

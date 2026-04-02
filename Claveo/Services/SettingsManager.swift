@@ -127,6 +127,10 @@ class SettingsManager: ObservableObject {
 
         // Navigation
         settings.lastSelectedTab = defaults.integer(forKey: "lastSelectedTab")
+        if let data = defaults.data(forKey: "tabBarCustomizationOrder"),
+           let decoded = try? JSONDecoder().decode([Int].self, from: data) {
+            settings.tabBarCustomizationOrder = AppSettings.normalizedTabBarOrder(decoded)
+        }
 
         // Metronome pattern
         settings.metronomeTimeSignature = defaults.string(forKey: "metronomeTimeSignature") ?? TimeSignature.fourFour.rawValue
@@ -138,6 +142,11 @@ class SettingsManager: ObservableObject {
         if let data = defaults.data(forKey: "noteIdentificationEnabledClefRawValues"),
            let decoded = try? JSONDecoder().decode([String].self, from: data) {
             settings.noteIdentificationEnabledClefRawValues = decoded
+        }
+
+        if let data = defaults.data(forKey: "keySignatureIdentificationEnabledModeRawValues"),
+           let decoded = try? JSONDecoder().decode([String].self, from: data) {
+            settings.keySignatureIdentificationEnabledModeRawValues = decoded
         }
     }
     
@@ -200,6 +209,12 @@ class SettingsManager: ObservableObject {
 
         // Note: lastSelectedTab is written directly by ContentView to avoid @Published re-renders.
 
+        if let encoded = try? JSONEncoder().encode(
+            AppSettings.normalizedTabBarOrder(settings.tabBarCustomizationOrder)
+        ) {
+            defaults.set(encoded, forKey: "tabBarCustomizationOrder")
+        }
+
         // Metronome pattern
         defaults.set(settings.metronomeTimeSignature, forKey: "metronomeTimeSignature")
         if let encoded = try? JSONEncoder().encode(settings.metronomeBeatPattern) {
@@ -208,6 +223,10 @@ class SettingsManager: ObservableObject {
 
         if let encoded = try? JSONEncoder().encode(settings.noteIdentificationEnabledClefRawValues) {
             defaults.set(encoded, forKey: "noteIdentificationEnabledClefRawValues")
+        }
+
+        if let encoded = try? JSONEncoder().encode(settings.keySignatureIdentificationEnabledModeRawValues) {
+            defaults.set(encoded, forKey: "keySignatureIdentificationEnabledModeRawValues")
         }
     }
     

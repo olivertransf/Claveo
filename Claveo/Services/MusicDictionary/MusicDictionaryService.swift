@@ -16,10 +16,14 @@ class MusicDictionaryService: ObservableObject {
     @Published var isLoading = false
     @Published var errorMessage: String?
     
-    private init() {
+    private init() {}
+
+    /// Load JSON on first use from `MusicDictionaryView` so opening other overflow tabs (e.g. Practice) does not parse the dictionary.
+    func loadDictionaryIfNeeded() {
+        guard dictionary == nil, !isLoading else { return }
         loadDictionary()
     }
-    
+
     func loadDictionary() {
         isLoading = true
         errorMessage = nil

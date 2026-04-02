@@ -39,12 +39,28 @@ struct AppSettings: Codable {
     // Navigation
     var lastSelectedTab: Int = 0
 
+    /// Order of main tabs (semantic ids 0…7). First four = bottom bar on compact width; remaining four = More menu / trailing tabs.
+    /// Default matches historical layout: Chords before Settings in the overflow strip.
+    var tabBarCustomizationOrder: [Int] = [0, 1, 2, 3, 4, 5, 7, 6]
+
+    static let defaultTabBarCustomizationOrder: [Int] = [0, 1, 2, 3, 4, 5, 7, 6]
+
+    static func normalizedTabBarOrder(_ order: [Int]) -> [Int] {
+        guard order.count == 8, Set(order) == Set(0...7) else {
+            return defaultTabBarCustomizationOrder
+        }
+        return order
+    }
+
     // Metronome pattern
     var metronomeTimeSignature: String = TimeSignature.fourFour.rawValue
     var metronomeBeatPattern: [Bool] = []
 
     /// Clef names enabled for Note Identification (`ClefName.rawValue`: treble, bass, alto, tenor).
     var noteIdentificationEnabledClefRawValues: [String] = ["treble", "bass", "alto", "tenor"]
+
+    /// Modes enabled for Key Signature Identification (`"major"`, `"minor"`).
+    var keySignatureIdentificationEnabledModeRawValues: [String] = ["major", "minor"]
 
     enum CodingKeys: String, CodingKey {
         case a4ReferenceFrequency, showFrequencyDisplay
@@ -53,9 +69,10 @@ struct AppSettings: Codable {
         case customTimeSignatureTop, customTimeSignatureBottom
         case defaultPracticeTime, practiceDurationOptions
         case accentColor, colorScheme, showTabBarText
-        case lastSelectedTab
+        case lastSelectedTab, tabBarCustomizationOrder
         case metronomeTimeSignature, metronomeBeatPattern
         case noteIdentificationEnabledClefRawValues
+        case keySignatureIdentificationEnabledModeRawValues
     }
 }
 
@@ -81,10 +98,14 @@ extension AppSettings {
         colorScheme = try c.decodeIfPresent(String.self, forKey: .colorScheme) ?? ColorSchemeOption.system.rawValue
         showTabBarText = try c.decodeIfPresent(Bool.self, forKey: .showTabBarText) ?? false
         lastSelectedTab = try c.decodeIfPresent(Int.self, forKey: .lastSelectedTab) ?? 0
+        let rawOrder = try c.decodeIfPresent([Int].self, forKey: .tabBarCustomizationOrder)
+        tabBarCustomizationOrder = AppSettings.normalizedTabBarOrder(rawOrder ?? AppSettings.defaultTabBarCustomizationOrder)
         metronomeTimeSignature = try c.decodeIfPresent(String.self, forKey: .metronomeTimeSignature) ?? TimeSignature.fourFour.rawValue
         metronomeBeatPattern = try c.decodeIfPresent([Bool].self, forKey: .metronomeBeatPattern) ?? []
         noteIdentificationEnabledClefRawValues = try c.decodeIfPresent([String].self, forKey: .noteIdentificationEnabledClefRawValues)
             ?? ["treble", "bass", "alto", "tenor"]
+        keySignatureIdentificationEnabledModeRawValues = try c.decodeIfPresent([String].self, forKey: .keySignatureIdentificationEnabledModeRawValues)
+            ?? ["major", "minor"]
     }
 }
 

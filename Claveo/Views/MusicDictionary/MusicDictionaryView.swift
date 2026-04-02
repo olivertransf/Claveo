@@ -9,6 +9,9 @@
 import SwiftUI
 
 struct MusicDictionaryView: View {
+    /// When false (e.g. another overflow tab is visible), skip loading JSON so Practice and other tabs do not pay dictionary parse cost.
+    var isTabSelected: Bool = true
+
     @EnvironmentObject var themeManager: ThemeManager
     @StateObject private var dictionaryService = MusicDictionaryService.shared
     @StateObject private var settingsManager = SettingsManager.shared
@@ -58,6 +61,10 @@ struct MusicDictionaryView: View {
             .searchable(text: $searchText, prompt: "Search dictionary")
             .autocorrectionDisabled()
             .textInputAutocapitalization(.never)
+            .task(id: isTabSelected) {
+                guard isTabSelected else { return }
+                dictionaryService.loadDictionaryIfNeeded()
+            }
         }
     }
     

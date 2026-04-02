@@ -220,80 +220,80 @@ extension MetronomeView {
                             .padding(.horizontal, 20)
                             .animation(.easeInOut(duration: 0.2), value: metronome.beatPattern.count)
                         }
-                    }
 
-                    toneGeneratorSection
+                        if !favoriteTempos.isEmpty {
+                            VStack(alignment: .leading, spacing: 12) {
+                                HStack {
+                                    Image(systemName: "star.fill")
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                    Text("Favorite Tempos")
+                                        .font(.subheadline)
+                                        .fontWeight(.semibold)
+                                        .foregroundColor(.secondary)
+                                    Spacer()
+                                }
+                                .padding(.horizontal, 24)
 
-                    if !favoriteTempos.isEmpty {
-                        VStack(alignment: .leading, spacing: 12) {
-                            HStack {
-                                Image(systemName: "star.fill")
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
-                                Text("Favorite Tempos")
-                                    .font(.subheadline)
-                                    .fontWeight(.semibold)
-                                    .foregroundColor(.secondary)
-                                Spacer()
-                            }
-                            .padding(.horizontal, 24)
-                            
-                            ScrollView(.horizontal, showsIndicators: false) {
-                                HStack(spacing: 12) {
-                                    ForEach(favoriteTempos, id: \.self) { tempo in
-                                        Button(action: {
-                                            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                                                metronome.tempo = tempo
-                                            }
-                                        }) {
-                                            HStack(spacing: 6) {
-                                                Text("\(tempo)")
-                                                    .font(.system(.body, design: .rounded))
-                                                    .fontWeight(.semibold)
-                                                    .monospacedDigit()
-                                                Text("BPM")
-                                                    .font(.caption2)
-                                                    .fontWeight(.medium)
-                                                    .opacity(0.8)
-                                            }
-                                            .foregroundColor(metronome.tempo == tempo ? .white : .primary)
-                                            .padding(.horizontal, 16)
-                                            .padding(.vertical, 10)
-                                            .background(
-                                                Group {
-                                                    if metronome.tempo == tempo {
-                                                        RoundedRectangle(cornerRadius: 16)
-                                                            .fill(themeManager.accentColor)
-                                                            .shadow(color: themeManager.accentColor.opacity(0.3), radius: 8, x: 0, y: 4)
-                                                    } else {
-                                                        RoundedRectangle(cornerRadius: 16)
-                                                            .fill(Color(.systemGray6))
-                                                    }
-                                                }
-                                            )
-                                            .overlay(
-                                                RoundedRectangle(cornerRadius: 16)
-                                                    .stroke(metronome.tempo == tempo ? themeManager.accentColor.opacity(0.3) : Color.clear, lineWidth: 1)
-                                            )
-                                            .scaleEffect(metronome.tempo == tempo ? 1.05 : 1.0)
-                                        }
-                                        .buttonStyle(.plain)
-                                        .contextMenu {
-                                            Button(role: .destructive, action: {
-                                                withAnimation {
-                                                    removeFavoriteTempo(tempo)
+                                ScrollView(.horizontal, showsIndicators: false) {
+                                    HStack(spacing: 12) {
+                                        ForEach(favoriteTempos, id: \.self) { tempo in
+                                            Button(action: {
+                                                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                                                    metronome.tempo = tempo
                                                 }
                                             }) {
-                                                Label("Delete", systemImage: "trash")
+                                                HStack(spacing: 6) {
+                                                    Text("\(tempo)")
+                                                        .font(.system(.body, design: .rounded))
+                                                        .fontWeight(.semibold)
+                                                        .monospacedDigit()
+                                                    Text("BPM")
+                                                        .font(.caption2)
+                                                        .fontWeight(.medium)
+                                                        .opacity(0.8)
+                                                }
+                                                .foregroundColor(metronome.tempo == tempo ? .white : .primary)
+                                                .padding(.horizontal, 16)
+                                                .padding(.vertical, 10)
+                                                .background(
+                                                    Group {
+                                                        if metronome.tempo == tempo {
+                                                            RoundedRectangle(cornerRadius: 16)
+                                                                .fill(themeManager.accentColor)
+                                                                .shadow(color: themeManager.accentColor.opacity(0.3), radius: 8, x: 0, y: 4)
+                                                        } else {
+                                                            RoundedRectangle(cornerRadius: 16)
+                                                                .fill(Color(.systemGray6))
+                                                        }
+                                                    }
+                                                )
+                                                .overlay(
+                                                    RoundedRectangle(cornerRadius: 16)
+                                                        .stroke(metronome.tempo == tempo ? themeManager.accentColor.opacity(0.3) : Color.clear, lineWidth: 1)
+                                                )
+                                                .scaleEffect(metronome.tempo == tempo ? 1.05 : 1.0)
+                                            }
+                                            .buttonStyle(.plain)
+                                            .contextMenu {
+                                                Button(role: .destructive, action: {
+                                                    withAnimation {
+                                                        removeFavoriteTempo(tempo)
+                                                    }
+                                                }) {
+                                                    Label("Delete", systemImage: "trash")
+                                                }
                                             }
                                         }
                                     }
+                                    .padding(.horizontal, 24)
                                 }
-                                .padding(.horizontal, 24)
                             }
+                            .padding(.vertical, 8)
                         }
-                        .padding(.vertical, 8)
                     }
+
+                    toneGeneratorSection
                 }
             }
             .navigationTitle("Metronome")

@@ -17,27 +17,74 @@ struct ContentView: View {
         let tab = SettingsManager.shared.settings.lastSelectedTab
         return (0...7).contains(tab) ? tab : 0
     }()
-    /// Drives the tab bar's visual highlight on compact screens (0–3, or 99 for the More slot).
+    /// Drives the tab bar's visual highlight on compact screens (0–3 bar slots, or 99 for the More slot).
     @State private var tabBarHighlight: Int = {
         let tab = SettingsManager.shared.settings.lastSelectedTab
-        return tab >= 4 ? 99 : tab
+        guard (0...7).contains(tab) else { return 0 }
+        let bar = Array(
+            AppSettings.normalizedTabBarOrder(SettingsManager.shared.settings.tabBarCustomizationOrder).prefix(4)
+        )
+        if let idx = bar.firstIndex(of: tab) { return idx }
+        return 99
     }()
     @State private var showMoreMenu = false
     @State private var moreTabHandler = MoreTabHandler()
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
 
-    private let overflowTabs: [(tag: Int, name: String, icon: String)] = [
-        (4, "Exercises", "list.bullet.clipboard"),
-        (5, "Dictionary", "book"),
-        (7, "Chords", "music.note.list"),
-        (6, "Settings", "gear")
-    ]
+    private var tabOrder: [Int] {
+        AppSettings.normalizedTabBarOrder(settingsManager.settings.tabBarCustomizationOrder)
+    }
+
+    private var barSemanticIds: [Int] {
+        Array(tabOrder.prefix(4))
+    }
+
+    private var moreMenuTabs: [(tag: Int, name: String, icon: String)] {
+        tabOrder.dropFirst(4).map {
+            (tag: $0, name: AppTabRegistry.title($0), icon: AppTabRegistry.systemImage($0))
+        }
+    }
 
     var showTabBarText: Bool {
         if UIDevice.current.userInterfaceIdiom == .pad {
             return true
         }
         return settingsManager.settings.showTabBarText
+    }
+
+    @ViewBuilder
+    private func tabContent(semanticId: Int) -> some View {
+        let isSelected = selectedTabIndex == semanticId
+        switch semanticId {
+        case 0:
+            RecordingListView()
+        case 1:
+            MetronomeView()
+                .environmentObject(toneGenerator)
+                .environmentObject(themeManager)
+        case 2:
+            TunerView()
+        case 3:
+            PracticeView()
+        case 4:
+            ExercisesRootView()
+        case 5:
+            MusicDictionaryView(isTabSelected: isSelected)
+        case 6:
+            SettingsView()
+        case 7:
+            ChordScaleReferenceView()
+        default:
+            EmptyView()
+        }
+    }
+
+    private func reconcileTabBarHighlight() {
+        if let idx = barSemanticIds.firstIndex(of: selectedTabIndex) {
+            tabBarHighlight = idx
+        } else {
+            tabBarHighlight = 99
+        }
     }
 
     // MARK: - Body
@@ -67,7 +114,7 @@ struct ContentView: View {
                     }
 
                 MoreMenuView(
-                    tabs: overflowTabs,
+                    tabs: moreMenuTabs,
                     selectedTabIndex: $selectedTabIndex,
                     tabBarHighlight: $tabBarHighlight,
                     showMoreMenu: $showMoreMenu
@@ -79,13 +126,15 @@ struct ContentView: View {
         }
         .animation(.spring(duration: 0.25), value: showMoreMenu)
         .onChange(of: showMoreMenu) { _, isShowing in
-            // Snap highlight back when menu is dismissed without picking an overflow tab.
-            if !isShowing && selectedTabIndex < 4 {
-                tabBarHighlight = selectedTabIndex
+            if !isShowing, barSemanticIds.contains(selectedTabIndex) {
+                tabBarHighlight = barSemanticIds.firstIndex(of: selectedTabIndex) ?? 0
             }
         }
         .onChange(of: horizontalSizeClass) { _, _ in
-            tabBarHighlight = selectedTabIndex < 4 ? selectedTabIndex : 99
+            reconcileTabBarHighlight()
+        }
+        .onChange(of: settingsManager.settings.tabBarCustomizationOrder) { _, _ in
+            reconcileTabBarHighlight()
         }
         .onChange(of: selectedTabIndex) { _, newIndex in
             handleTabChange(newIndex: newIndex)
@@ -103,13 +152,14 @@ struct ContentView: View {
             get: { tabBarHighlight },
             set: { newValue in
                 if newValue == 99 {
-                    if selectedTabIndex >= 4 { tabBarHighlight = 99 }
+                    if !barSemanticIds.contains(selectedTabIndex) { tabBarHighlight = 99 }
                     withAnimation(.spring(duration: 0.25)) {
                         showMoreMenu = true
                     }
                 } else {
+                    guard newValue >= 0, newValue < barSemanticIds.count else { return }
                     tabBarHighlight = newValue
-                    selectedTabIndex = newValue
+                    selectedTabIndex = barSemanticIds[newValue]
                     withAnimation(.spring(duration: 0.25)) {
                         showMoreMenu = false
                     }
@@ -120,46 +170,22 @@ struct ContentView: View {
 
     private var compactTabView: some View {
         TabView(selection: tabViewSelection) {
-            RecordingListView()
-                .tabItem {
-                    if showTabBarText {
-                        Label("Recordings", systemImage: "waveform")
-                    } else {
-                        Image(systemName: "waveform")
+            ForEach(0..<4, id: \.self) { slot in
+                let semanticId = barSemanticIds[slot]
+                tabContent(semanticId: semanticId)
+                    .id(semanticId)
+                    .tabItem {
+                        if showTabBarText {
+                            Label(
+                                AppTabRegistry.title(semanticId),
+                                systemImage: AppTabRegistry.systemImage(semanticId)
+                            )
+                        } else {
+                            Image(systemName: AppTabRegistry.systemImage(semanticId))
+                        }
                     }
-                }
-                .tag(0)
-
-            MetronomeView()
-                .environmentObject(toneGenerator)
-                .tabItem {
-                    if showTabBarText {
-                        Label("Metronome", systemImage: "metronome")
-                    } else {
-                        Image(systemName: "metronome")
-                    }
-                }
-                .tag(1)
-
-            TunerView()
-                .tabItem {
-                    if showTabBarText {
-                        Label("Tuner", systemImage: "tuningfork")
-                    } else {
-                        Image(systemName: "tuningfork")
-                    }
-                }
-                .tag(2)
-
-            PracticeView()
-                .tabItem {
-                    if showTabBarText {
-                        Label("Practice", systemImage: "calendar.badge.clock")
-                    } else {
-                        Image(systemName: "calendar.badge.clock")
-                    }
-                }
-                .tag(3)
+                    .tag(slot)
+            }
 
             // Fifth slot: hosts overflow content and serves as the More tap target.
             overflowContent
@@ -177,9 +203,7 @@ struct ContentView: View {
         // on the already-selected item, which SwiftUI's binding alone cannot catch).
         .background(
             MoreTabHandlerInstaller(handler: moreTabHandler) {
-                // Keep the current regular tab visible as background; only
-                // switch to the overflow slot when already on an overflow tab.
-                if selectedTabIndex >= 4 {
+                if !barSemanticIds.contains(selectedTabIndex) {
                     tabBarHighlight = 99
                 }
                 withAnimation(.spring(duration: 0.25)) {
@@ -189,22 +213,18 @@ struct ContentView: View {
         )
     }
 
-    /// Both overflow views stay in the hierarchy so their @State survives tab switches.
+    /// Hosts every tab that can appear in the "More" strip (positions 5–8 in `tabOrder`).
+    /// Must mirror `moreMenuTabs` semantics — not a fixed 4/5/6/7 list — so reordering can put Recordings, Practice, etc. in overflow.
     @ViewBuilder
     private var overflowContent: some View {
+        let overflowSemanticIds = Array(tabOrder.dropFirst(4))
         ZStack {
-            ExercisesRootView()
-                .opacity(selectedTabIndex == 4 ? 1 : 0)
-                .allowsHitTesting(selectedTabIndex == 4)
-            MusicDictionaryView()
-                .opacity(selectedTabIndex == 5 ? 1 : 0)
-                .allowsHitTesting(selectedTabIndex == 5)
-            SettingsView()
-                .opacity(selectedTabIndex == 6 ? 1 : 0)
-                .allowsHitTesting(selectedTabIndex == 6)
-            ChordScaleReferenceView()
-                .opacity(selectedTabIndex == 7 ? 1 : 0)
-                .allowsHitTesting(selectedTabIndex == 7)
+            ForEach(overflowSemanticIds, id: \.self) { semanticId in
+                tabContent(semanticId: semanticId)
+                    .id(semanticId)
+                    .opacity(selectedTabIndex == semanticId ? 1 : 0)
+                    .allowsHitTesting(selectedTabIndex == semanticId)
+            }
         }
     }
 
@@ -212,31 +232,17 @@ struct ContentView: View {
 
     private var fullTabView: some View {
         TabView(selection: $selectedTabIndex) {
-            RecordingListView()
-                .tabItem { Label("Recordings", systemImage: "waveform") }
-                .tag(0)
-            MetronomeView()
-                .environmentObject(toneGenerator)
-                .tabItem { Label("Metronome", systemImage: "metronome") }
-                .tag(1)
-            TunerView()
-                .tabItem { Label("Tuner", systemImage: "tuningfork") }
-                .tag(2)
-            PracticeView()
-                .tabItem { Label("Practice", systemImage: "calendar.badge.clock") }
-                .tag(3)
-            ExercisesRootView()
-                .tabItem { Label("Exercises", systemImage: "list.bullet.clipboard") }
-                .tag(4)
-            MusicDictionaryView()
-                .tabItem { Label("Dictionary", systemImage: "book") }
-                .tag(5)
-            ChordScaleReferenceView()
-                .tabItem { Label("Chords", systemImage: "music.note.list") }
-                .tag(7)
-            SettingsView()
-                .tabItem { Label("Settings", systemImage: "gear") }
-                .tag(6)
+            ForEach(tabOrder, id: \.self) { semanticId in
+                tabContent(semanticId: semanticId)
+                    .id(semanticId)
+                    .tabItem {
+                        Label(
+                            AppTabRegistry.title(semanticId),
+                            systemImage: AppTabRegistry.systemImage(semanticId)
+                        )
+                    }
+                    .tag(semanticId)
+            }
         }
         .tint(themeManager.accentColor)
         .onChange(of: selectedTabIndex) { _, newIndex in

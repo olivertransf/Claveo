@@ -34,11 +34,13 @@ struct SettingsView: View {
         NavigationStack {
             Form {
                 appearanceSection
+                tabsSection
                 metronomeSection
                 tunerSection
                 practiceSection
                 storageSection
                 aboutSection
+                contactSection
             }
             .frame(maxWidth: 900)
             .frame(maxWidth: .infinity)
@@ -87,6 +89,18 @@ struct SettingsView: View {
                     get: { settingsManager.settings.showTabBarText },
                     set: { settingsManager.update(\.showTabBarText, value: $0) }
                 ))
+            }
+        }
+    }
+
+    // MARK: - Tabs
+
+    var tabsSection: some View {
+        Section("Tabs") {
+            NavigationLink {
+                TabBarOrderSettingsView()
+            } label: {
+                Label("Customize tab order", systemImage: "arrow.up.arrow.down.square")
             }
         }
     }
@@ -341,6 +355,19 @@ struct SettingsView: View {
                 Text(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "—")
                     .foregroundColor(.secondary)
             }
+        }
+    }
+
+    /// Marketing site (contact, privacy, support). Update if the canonical URL changes.
+    private static let claveoWebsiteURL = URL(string: "https://claveo.app")!
+
+    var contactSection: some View {
+        Section {
+            Link(destination: Self.claveoWebsiteURL) {
+                Label("Website & contact", systemImage: "safari")
+            }
+        } footer: {
+            Text("Visit claveo.app for help, feedback, and product updates.")
         }
     }
 }

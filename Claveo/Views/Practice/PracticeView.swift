@@ -36,7 +36,7 @@ struct PracticeView: View {
             }
             .refreshable { await practiceService.refreshFromiCloud() }
             .navigationTitle("Practice")
-            .navigationBarTitleDisplayMode(.large)
+            .navigationBarTitleDisplayMode(.inline)
             .searchable(text: $searchText, prompt: "Search journal notes")
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
@@ -58,9 +58,11 @@ struct PracticeView: View {
             }
             .sheet(item: $selectedEntry) { entry in
                 PracticeEntryDetailView(entry: entry)
+                    .environmentObject(themeManager)
             }
             .sheet(isPresented: $showingQuickEntry) {
                 QuickPracticeEntryView(date: sheetDate)
+                    .environmentObject(themeManager)
             }
             .sheet(isPresented: $showingSettings) {
                 PracticeSettingsView()

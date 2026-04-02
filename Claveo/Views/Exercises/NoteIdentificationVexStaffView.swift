@@ -108,7 +108,7 @@ struct NoteIdentificationVexStaffView: View {
                 }
                 Spacer(minLength: 0)
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+            .frame(width: geo.size.width, height: geo.size.height, alignment: .center)
         }
     }
 }

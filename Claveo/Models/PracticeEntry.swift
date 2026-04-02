@@ -8,7 +8,7 @@
 
 import Foundation
 
-struct PracticeEntry: Identifiable, Codable {
+struct PracticeEntry: Identifiable, Codable, Equatable {
     var id = UUID()
     var date: Date
     var duration: Int // in minutes
@@ -17,6 +17,22 @@ struct PracticeEntry: Identifiable, Codable {
     var rating: Int? // 1-5 stars, optional
     var lastModified: Date = Date()
     var isDeleted: Bool = false
+
+    enum CodingKeys: String, CodingKey {
+        case id, date, duration, notes, linkedRecordingIds, rating, lastModified, isDeleted
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decodeIfPresent(UUID.self, forKey: .id) ?? UUID()
+        date = try c.decode(Date.self, forKey: .date)
+        duration = try c.decode(Int.self, forKey: .duration)
+        notes = try c.decodeIfPresent(String.self, forKey: .notes)
+        linkedRecordingIds = try c.decodeIfPresent([UUID].self, forKey: .linkedRecordingIds) ?? []
+        rating = try c.decodeIfPresent(Int.self, forKey: .rating)
+        lastModified = try c.decodeIfPresent(Date.self, forKey: .lastModified) ?? Date()
+        isDeleted = try c.decodeIfPresent(Bool.self, forKey: .isDeleted) ?? false
+    }
 
     // Computed properties
     var formattedDate: String {

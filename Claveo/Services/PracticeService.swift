@@ -253,14 +253,43 @@ class PracticeService: ObservableObject {
     }
 
     private func loadEntries() {
-        // Try to load from iCloud first
-        if let iCloudEntries = loadFromiCloud() {
-            allEntries = iCloudEntries
-            // Update local cache
+        let localEntries = loadFromUserDefaultsReturning()
+
+        if let cloudEntries = loadFromiCloud() {
+            // Merge so an empty or stale cloud file cannot wipe local-only data (common iCloud race).
+            allEntries = mergeEntries(local: localEntries, cloud: cloudEntries)
             saveToUserDefaults()
+            saveToiCloud()
         } else {
-            // Fall back to UserDefaults (local cache)
-            loadFromUserDefaults()
+            allEntries = localEntries
+        }
+    }
+
+    /// Last-modified-wins merge (same rules as sync).
+    private func mergeEntries(local: [PracticeEntry], cloud: [PracticeEntry]) -> [PracticeEntry] {
+        var map: [UUID: PracticeEntry] = [:]
+        for e in local { map[e.id] = e }
+        for cloudEntry in cloud {
+            if let localEntry = map[cloudEntry.id] {
+                if cloudEntry.lastModified > localEntry.lastModified {
+                    map[cloudEntry.id] = cloudEntry
+                }
+            } else {
+                map[cloudEntry.id] = cloudEntry
+            }
+        }
+        return Array(map.values)
+    }
+
+    private func loadFromUserDefaultsReturning() -> [PracticeEntry] {
+        guard let data = UserDefaults.standard.data(forKey: entriesKey) else { return [] }
+        do {
+            return try JSONDecoder().decode([PracticeEntry].self, from: data)
+        } catch {
+            #if DEBUG
+            print("Error loading practice entries from UserDefaults: \(error)")
+            #endif
+            return []
         }
     }
 
@@ -286,16 +315,6 @@ class PracticeService: ObservableObject {
         return nil
     }
 
-    private func loadFromUserDefaults() {
-        guard let data = UserDefaults.standard.data(forKey: entriesKey) else { return }
-
-        do {
-            allEntries = try JSONDecoder().decode([PracticeEntry].self, from: data)
-        } catch {
-            print("Error loading practice entries from UserDefaults: \(error)")
-        }
-    }
-
     // MARK: - iCloud Sync
 
     func syncFromiCloud() {
@@ -309,60 +328,19 @@ class PracticeService: ObservableObject {
         
         // When coming back online, sync from iCloud
         if let iCloudEntries = loadFromiCloud() {
-            // Match Logic: Last Modified Wins
-            // Merge cloud entries into local allEntries
-            
-            var entryMap: [UUID: PracticeEntry] = [:]
-            
-            // Start with local entries
-            for entry in allEntries {
-                entryMap[entry.id] = entry
-            }
-            
-            // Merge iCloud entries
-            var changeCount = 0
-            
-            for cloudEntry in iCloudEntries {
-                if let localEntry = entryMap[cloudEntry.id] {
-                    // Conflict resolution: prefer the one with later modification date
-                    if cloudEntry.lastModified > localEntry.lastModified {
-                        entryMap[cloudEntry.id] = cloudEntry
-                        changeCount += 1
-                    }
-                    // Else: keep local version
-                } else {
-                    // New entry from cloud
-                    entryMap[cloudEntry.id] = cloudEntry
-                    changeCount += 1
-                }
-            }
-            
-            // No need to "Add remaining local entries" because we started with them in the map
-            // and only updated or added to it.
-            
-            if changeCount > 0 {
-                let mergedEntries = Array(entryMap.values)
-                allEntries = mergedEntries
-                
+            let merged = mergeEntries(local: allEntries, cloud: iCloudEntries)
+            if merged != allEntries {
+                allEntries = merged
                 #if DEBUG
-                print("✅ Sync complete: Updated \(changeCount) entries from cloud. Total: \(allEntries.count) (including deleted)")
+                print("✅ Sync complete: merged cloud. Total: \(allEntries.count) (including deleted)")
                 #endif
-                
-                // Save merged result back to both locations to propagate merges
                 saveToUserDefaults()
-                saveToiCloud()
             } else {
                 #if DEBUG
                 print("✅ Sync complete: No changes from cloud needed.")
                 #endif
-                
-                // If we have local changes that aren't in cloud (cloud count < local count or just different),
-                // we should push them up.
-                // Simple heuristic: if counts differ or we just feel like it, save to cloud to be safe.
-                // Since efficient save checks are hard without diffing, we'll just save if we have any entries.
-                saveToiCloud()
             }
-            
+            saveToiCloud()
         } else {
             // If iCloud file doesn't exist, ensure local changes are synced to iCloud
             // This handles the case where user made changes offline

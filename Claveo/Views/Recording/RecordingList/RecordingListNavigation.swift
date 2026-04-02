@@ -87,79 +87,58 @@ extension RecordingListView {
                     
                     ToolbarItemGroup(placement: .navigationBarTrailing) {
                         Menu {
-                            Menu {
+                            Section {
                                 Button {
                                     selectedTag = nil
                                 } label: {
-                                    HStack {
-                                        Text("All")
-                                        if selectedTag == nil {
-                                            Spacer()
-                                            Image(systemName: "checkmark")
-                                        }
-                                    }
+                                    filterMenuRow(title: "Any tag", selected: selectedTag == nil)
                                 }
-                                
+
                                 ForEach(RecordingTag.allCases, id: \.self) { tag in
                                     Button {
                                         selectedTag = tag.rawValue
                                     } label: {
-                                        HStack {
-                                            Text(tag.rawValue)
-                                            if selectedTag == tag.rawValue {
-                                                Spacer()
-                                                Image(systemName: "checkmark")
-                                            }
-                                        }
+                                        filterMenuRow(title: tag.rawValue, selected: selectedTag == tag.rawValue)
                                     }
                                 }
-                            } label: {
-                                Label("Tags", systemImage: "tag")
+                            } header: {
+                                Label("Tags", systemImage: "tag.fill")
                             }
-                            
-                            Menu {
+
+                            Section {
                                 Button {
                                     selectedPiece = nil
                                 } label: {
-                                    HStack {
-                                        Text("All")
-                                        if selectedPiece == nil {
-                                            Spacer()
-                                            Image(systemName: "checkmark")
-                                        }
-                                    }
+                                    filterMenuRow(title: "Any piece", selected: selectedPiece == nil)
                                 }
-                                
+
                                 if availablePieces.isEmpty {
-                                    Text("No pieces")
-                                        .foregroundColor(.secondary)
+                                    Text("No pieces in library")
+                                        .foregroundStyle(.secondary)
                                 } else {
                                     ForEach(availablePieces, id: \.id) { piece in
                                         Button {
                                             selectedPiece = piece.name
                                         } label: {
-                                            HStack {
-                                                Text(piece.displayName)
-                                                if selectedPiece == piece.name {
-                                                    Spacer()
-                                                    Image(systemName: "checkmark")
-                                                }
-                                            }
+                                            filterMenuRow(
+                                                title: piece.displayName,
+                                                selected: selectedPiece == piece.name
+                                            )
                                         }
                                     }
                                 }
-                            } label: {
-                                Label("Pieces", systemImage: "music.note")
+                            } header: {
+                                Label("Pieces", systemImage: "music.note.list")
                             }
-                            
+
                             if selectedTag != nil || selectedPiece != nil {
-                                Divider()
-                                
-                                Button(role: .destructive) {
-                                    selectedTag = nil
-                                    selectedPiece = nil
-                                } label: {
-                                    Label("Clear All Filters", systemImage: "xmark.circle")
+                                Section {
+                                    Button(role: .destructive) {
+                                        selectedTag = nil
+                                        selectedPiece = nil
+                                    } label: {
+                                        Label("Clear all filters", systemImage: "xmark.circle.fill")
+                                    }
                                 }
                             }
                         } label: {
@@ -321,7 +300,19 @@ extension RecordingListView {
         .buttonStyle(.plain)
         .shadow(color: Color.black.opacity(0.2), radius: 12, x: 0, y: 6)
     }
-    
+
+    @ViewBuilder
+    func filterMenuRow(title: String, selected: Bool) -> some View {
+        HStack(alignment: .firstTextBaseline) {
+            Text(title)
+                .multilineTextAlignment(.leading)
+            Spacer(minLength: 10)
+            if selected {
+                Image(systemName: "checkmark.circle.fill")
+                    .foregroundStyle(themeManager.accentColor)
+            }
+        }
+    }
 }
 
 struct ConditionalSearchableModifier: ViewModifier {

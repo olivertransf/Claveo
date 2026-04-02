@@ -75,9 +75,11 @@ struct MetronomeView: View {
         }
         .sheet(isPresented: $showingCustomTimeSignatureSheet) {
             customTimeSignatureSheet
+                .environmentObject(themeManager)
         }
         .sheet(isPresented: $showingVolumeSheet) {
             volumeSheet
+                .environmentObject(themeManager)
         }
     }
     
@@ -109,6 +111,7 @@ struct MetronomeView: View {
                 }
             }
             .navigationTitle("Custom Time Signature")
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") {
