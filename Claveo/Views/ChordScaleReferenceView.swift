@@ -9,32 +9,78 @@ import SwiftUI
 struct ChordScaleReferenceView: View {
     @EnvironmentObject var themeManager: ThemeManager
     @State private var selectedRoot = 0
+    @State private var useFlats = false
+
+    // MARK: - Derived
+
+    /// Root of the relative minor key (major 6th = +9 semitones).
+    private var relativeMinorRoot: Int { (selectedRoot + 9) % 12 }
+
+    private var rootName: String { noteNameFor(selectedRoot) }
+    private var relativeMinorName: String { noteNameFor(relativeMinorRoot) }
 
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 28) {
+                    accidentalPicker
                     rootPicker
-                    scaleSection(title: "\(rootName) Major Scale",
-                                 notes: scaleNotes(intervals: Self.majorIntervals),
-                                 degrees: Self.scaleDegreeNumerals)
-                    scaleSection(title: "\(rootName) Natural Minor Scale",
-                                 notes: scaleNotes(intervals: Self.minorIntervals),
-                                 degrees: Self.scaleDegreeNumerals)
-                    chordSection(title: "\(rootName) Major — Diatonic Chords",
-                                 root: selectedRoot,
-                                 intervals: Self.majorIntervals,
-                                 qualities: Self.majorDiatonic)
-                    chordSection(title: "\(rootName) Minor — Diatonic Chords",
-                                 root: selectedRoot,
-                                 intervals: Self.minorIntervals,
-                                 qualities: Self.minorDiatonic)
+                    scaleSection(
+                        title: "\(rootName) Major Scale",
+                        notes: scaleNotes(from: selectedRoot, intervals: Self.majorIntervals),
+                        degrees: Self.scaleDegreeNumerals
+                    )
+                    scaleSection(
+                        title: "\(relativeMinorName) Natural Minor Scale  ·  relative minor of \(rootName)",
+                        notes: scaleNotes(from: relativeMinorRoot, intervals: Self.minorIntervals),
+                        degrees: Self.scaleDegreeNumerals
+                    )
+                    chordSection(
+                        title: "\(rootName) Major — Diatonic Chords",
+                        root: selectedRoot,
+                        intervals: Self.majorIntervals,
+                        qualities: Self.majorDiatonic
+                    )
+                    chordSection(
+                        title: "\(relativeMinorName) Minor — Diatonic Chords  ·  relative minor",
+                        root: relativeMinorRoot,
+                        intervals: Self.minorIntervals,
+                        qualities: Self.minorDiatonic
+                    )
                 }
                 .padding(.vertical, 20)
             }
             .navigationTitle("Chord & Scale Reference")
             .navigationBarTitleDisplayMode(.inline)
         }
+    }
+
+    // MARK: - Accidental toggle
+
+    private var accidentalPicker: some View {
+        HStack(spacing: 0) {
+            ForEach(["Sharps  ♯", "Flats  ♭"].indices, id: \.self) { i in
+                let isSelected = useFlats == (i == 1)
+                Button { useFlats = (i == 1) } label: {
+                    Text(["Sharps  ♯", "Flats  ♭"][i])
+                        .font(.subheadline.weight(.semibold))
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 8)
+                        .background(
+                            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                .fill(isSelected ? themeManager.accentColor : Color.clear)
+                        )
+                        .foregroundStyle(isSelected ? .white : .primary)
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(3)
+        .background(
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .fill(Color(.tertiarySystemFill))
+        )
+        .padding(.horizontal, 20)
     }
 
     // MARK: - Root picker
@@ -44,16 +90,24 @@ struct ChordScaleReferenceView: View {
             HStack(spacing: 8) {
                 ForEach(0..<12, id: \.self) { root in
                     let isSelected = selectedRoot == root
-                    Button { selectedRoot = root } label: {
-                        Text(Self.sharpNames[root])
-                            .font(.subheadline.weight(.semibold))
-                            .frame(minWidth: 48, minHeight: 44)
-                            .padding(.horizontal, 4)
-                            .background(
-                                Capsule(style: .continuous)
-                                    .fill(isSelected ? themeManager.accentColor : Color(.tertiarySystemFill))
-                            )
-                            .foregroundStyle(isSelected ? .white : .primary)
+                    let relMinor = (root + 9) % 12
+                    Button {
+                        selectedRoot = root
+                    } label: {
+                        VStack(spacing: 2) {
+                            Text(noteNameFor(root))
+                                .font(.subheadline.weight(.semibold))
+                            Text("\(noteNameFor(relMinor))m")
+                                .font(.caption2)
+                                .foregroundStyle(isSelected ? .white.opacity(0.8) : .secondary)
+                        }
+                        .frame(minWidth: 52, minHeight: 52)
+                        .padding(.horizontal, 4)
+                        .background(
+                            Capsule(style: .continuous)
+                                .fill(isSelected ? themeManager.accentColor : Color(.tertiarySystemFill))
+                        )
+                        .foregroundStyle(isSelected ? .white : .primary)
                     }
                     .buttonStyle(.plain)
                 }
@@ -74,7 +128,7 @@ struct ChordScaleReferenceView: View {
                 HStack(spacing: 10) {
                     ForEach(Array(notes.enumerated()), id: \.offset) { i, pitch in
                         VStack(spacing: 5) {
-                            Text(noteName(pitch))
+                            Text(noteNameFor(pitch))
                                 .font(.subheadline.weight(.semibold))
                                 .frame(width: 44, height: 44)
                                 .background(
@@ -142,12 +196,12 @@ struct ChordScaleReferenceView: View {
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(.secondary)
 
-            Text(noteName(degreeRoot) + quality.suffix)
+            Text(noteNameFor(degreeRoot) + quality.suffix)
                 .font(.title3.weight(.bold))
 
             HStack(spacing: 4) {
                 ForEach(triad, id: \.self) { pitch in
-                    Text(noteName(pitch))
+                    Text(noteNameFor(pitch))
                         .font(.caption2.weight(.medium))
                         .padding(.horizontal, 5)
                         .padding(.vertical, 3)
@@ -169,15 +223,13 @@ struct ChordScaleReferenceView: View {
 
     // MARK: - Helpers
 
-    private var rootName: String { Self.sharpNames[selectedRoot] }
-
-    private func scaleNotes(intervals: [Int]) -> [Int] {
-        intervals.map { (selectedRoot + $0) % 12 }
+    /// Returns the display name for a pitch respecting the current sharps/flats setting.
+    private func noteNameFor(_ pitch: Int) -> String {
+        useFlats ? Self.flatNames[pitch] : Self.sharpNames[pitch]
     }
 
-    /// Returns the context-aware note name (sharps vs. flats based on root).
-    private func noteName(_ pitch: Int) -> String {
-        Self.flatRoots.contains(selectedRoot) ? Self.flatNames[pitch] : Self.sharpNames[pitch]
+    private func scaleNotes(from root: Int, intervals: [Int]) -> [Int] {
+        intervals.map { (root + $0) % 12 }
     }
 
     // MARK: - Static data
@@ -224,8 +276,8 @@ fileprivate enum ChordQuality: Equatable {
 
     /// Roman numeral label for the given scale degree.
     func numeral(for degree: Int, isMajorContext: Bool) -> String {
-        let majorNumerals    = ["I", "ii", "iii", "IV",  "V",  "vi",  "vii°"]
-        let minorNumerals    = ["i", "ii°", "III", "iv", "v",  "VI",  "VII"]
+        let majorNumerals = ["I", "ii", "iii", "IV",  "V",  "vi",  "vii°"]
+        let minorNumerals = ["i", "ii°", "III", "iv", "v",  "VI",  "VII"]
         return isMajorContext ? majorNumerals[degree] : minorNumerals[degree]
     }
 }

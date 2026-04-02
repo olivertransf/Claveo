@@ -318,7 +318,7 @@ extension MetronomeView {
             }
             .onAppear {
                 syncSettingsFromManager()
-                // Don't override tempo on appear - it's already loaded from lastMetronomeTempo in init
+                syncNoteSelection()
             }
             .onChange(of: metronome.soundType) { _, _ in
                 settingsManager.setMetronomeSound(metronome.soundType)
@@ -356,16 +356,9 @@ extension MetronomeView {
         let a4 = settingsManager.settings.a4ReferenceFrequency
 
         return VStack(alignment: .leading, spacing: 16) {
-            VStack(spacing: 10) {
-                Rectangle()
-                    .fill(Color(.separator))
-                    .frame(height: 2)
-                    .padding(.horizontal, 16)
-
-                Divider()
-            }
-            .padding(.top, 20)
-            .padding(.bottom, 4)
+            Divider()
+                .padding(.top, 20)
+                .padding(.bottom, 4)
 
             HStack(spacing: 8) {
                 Image(systemName: "waveform.path")
@@ -480,6 +473,7 @@ extension MetronomeView {
 
     private func tonePitchButton(noteIndex: Int, a4: Double) -> some View {
         let name = Self.toneChromaticShortNames[noteIndex]
+        let isSelected = selectedNoteIndex == noteIndex
         return Button {
             let midi = 24 + (selectedToneOctave - 1) * 12 + noteIndex
             let hz = ToneGeneratorEngine.midiNoteToHz(midi: midi, a4: a4)
@@ -494,8 +488,9 @@ extension MetronomeView {
                 .padding(.vertical, 14)
                 .background(
                     RoundedRectangle(cornerRadius: 10, style: .continuous)
-                        .fill(Color(.tertiarySystemFill))
+                        .fill(isSelected ? themeManager.accentColor : Color(.tertiarySystemFill))
                 )
+                .foregroundStyle(isSelected ? Color.white : Color.primary)
         }
         .buttonStyle(.plain)
     }
@@ -506,6 +501,7 @@ extension MetronomeView {
             toneGenerator.applyFrequency(v)
         }
         manualToneFrequencyText = String(format: "%.1f", toneGenerator.frequency)
+        syncNoteSelection()
     }
 }
 

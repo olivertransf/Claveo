@@ -83,20 +83,31 @@ class Metronome: ObservableObject {
         if tempoToLoad >= 20 && tempoToLoad <= 300 {
             tempo = tempoToLoad
         }
-        
+
+        // Load time signature
+        if let saved = TimeSignature(rawValue: settings.metronomeTimeSignature) {
+            timeSignature = saved
+        }
+
         // Load custom time signature
         if let top = settings.customTimeSignatureTop, let bottom = settings.customTimeSignatureBottom {
             customTimeSignature = (top, bottom)
         }
-        
+
         // Load saved preferences
         if let sound = MetronomeSound(rawValue: settings.metronomeSound) {
             soundType = sound
         }
         hapticEnabled = settings.metronomeHapticEnabled
-        
+
         updateInterval()
         updateBeatPattern()
+
+        // Restore saved beat pattern if it matches the current beat count
+        let savedPattern = settings.metronomeBeatPattern
+        if savedPattern.count == beatsPerMeasure {
+            beatPattern = savedPattern
+        }
         
         // Prepare haptic generators
         hapticGenerator.prepare()

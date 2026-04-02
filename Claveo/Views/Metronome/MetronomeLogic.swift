@@ -23,6 +23,23 @@ extension MetronomeView {
     
     func toggleBeat(_ index: Int) {
         metronome.beatPattern[index].toggle()
+        settingsManager.update(\.metronomeBeatPattern, value: metronome.beatPattern)
+    }
+
+    /// Derives selectedNoteIndex and selectedToneOctave from the current tone generator frequency.
+    /// Uses the same MIDI formula as tonePitchButton: midi = 24 + (octave - 1) * 12 + noteIndex.
+    func syncNoteSelection() {
+        let a4 = settingsManager.settings.a4ReferenceFrequency
+        let hz = toneGenerator.frequency
+        let rawMidi = 69.0 + 12.0 * log2(hz / a4)
+        let midi = Int(rawMidi.rounded())
+        let relMidi = midi - 24
+        guard relMidi >= 0 else { return }
+        let octave = relMidi / 12 + 1
+        let noteIndex = relMidi % 12
+        guard (1...6).contains(octave) else { return }
+        selectedNoteIndex = noteIndex
+        selectedToneOctave = octave
     }
     
     func tapTempo() {

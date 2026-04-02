@@ -29,145 +29,173 @@ struct QuickPracticeEntryView: View {
 
     var body: some View {
         NavigationStack {
-            Form {
-                // Date Display
-                Section {
+            ScrollView {
+                VStack(spacing: 24) {
+                    // Date header
                     HStack {
-                        Text("Date")
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(existingEntry != nil ? "Edit Session" : "Log Session")
+                                .font(.title2.weight(.bold))
+                            Text(formattedDate(date))
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                        }
                         Spacer()
-                        Text(formattedDate(date))
-                            .foregroundColor(.secondary)
                     }
-                }
+                    .padding(.horizontal, 20)
+                    .padding(.top, 4)
 
-                // Duration
-                Section("Duration") {
-                    VStack(alignment: .leading, spacing: 8) {
-                        HStack {
-                            Text("\(duration) min")
+                    // Duration card
+                    VStack(alignment: .leading, spacing: 14) {
+                        Label("Duration", systemImage: "clock")
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(.secondary)
+
+                        HStack(alignment: .firstTextBaseline, spacing: 4) {
+                            Text("\(duration)")
+                                .font(.system(size: 48, weight: .bold, design: .rounded))
+                                .monospacedDigit()
+                            Text("min")
                                 .font(.title3)
-                                .fontWeight(.semibold)
-                            Spacer()
+                                .foregroundStyle(.secondary)
+                                .padding(.bottom, 4)
                         }
 
-                        HStack {
-                            ForEach(durationOptions, id: \.self) { mins in
+                        if !durationOptions.isEmpty {
+                            HStack(spacing: 8) {
+                                ForEach(durationOptions, id: \.self) { mins in
+                                    Button { duration = mins } label: {
+                                        Text("\(mins)")
+                                            .font(.subheadline.weight(.semibold))
+                                            .foregroundStyle(duration == mins ? .white : themeManager.accentColor)
+                                            .frame(maxWidth: .infinity)
+                                            .padding(.vertical, 9)
+                                            .background(
+                                                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                                    .fill(duration == mins ? themeManager.accentColor : themeManager.accentColor.opacity(0.1))
+                                            )
+                                    }
+                                    .buttonStyle(.plain)
+                                }
+                            }
+                        }
+
+                        Slider(value: .init(get: { Double(duration) }, set: { duration = Int($0) }), in: 5...180, step: 5)
+                            .tint(themeManager.accentColor)
+                    }
+                    .padding(18)
+                    .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(Color(.secondarySystemGroupedBackground)))
+                    .padding(.horizontal, 20)
+
+                    // Rating card
+                    VStack(alignment: .leading, spacing: 14) {
+                        Label("How did it go?", systemImage: "star")
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(.secondary)
+
+                        HStack(spacing: 0) {
+                            ForEach(1...5, id: \.self) { star in
                                 Button {
-                                    duration = mins
+                                    withAnimation(.spring(response: 0.2, dampingFraction: 0.6)) {
+                                        rating = (rating == star) ? nil : star
+                                    }
                                 } label: {
-                                    Text("\(mins)")
-                                        .font(.subheadline)
-                                        .fontWeight(.medium)
-                                        .foregroundColor(duration == mins ? .white : themeManager.accentColor)
+                                    Image(systemName: star <= (rating ?? 0) ? "star.fill" : "star")
+                                        .font(.system(size: 32))
+                                        .foregroundStyle(star <= (rating ?? 0) ? .yellow : Color(.tertiaryLabel))
                                         .frame(maxWidth: .infinity)
-                                        .padding(.vertical, 8)
-                                        .background(duration == mins ? themeManager.accentColor : themeManager.accentColor.opacity(0.1))
-                                        .cornerRadius(8)
+                                        .padding(.vertical, 6)
+                                        .contentShape(Rectangle())
+                                        .scaleEffect(star <= (rating ?? 0) ? 1.1 : 1.0)
                                 }
                                 .buttonStyle(.plain)
                             }
                         }
-
-                        Slider(value: .init(get: { Double(duration) }, set: { duration = Int($0) }),
-                               in: 5...180, step: 5)
-                            .tint(themeManager.accentColor)
                     }
-                    .padding(.vertical, 4)
-                }
+                    .padding(18)
+                    .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(Color(.secondarySystemGroupedBackground)))
+                    .padding(.horizontal, 20)
 
-                // Quick Notes
-                Section("Notes (Optional)") {
-                    TextEditor(text: $notes)
-                        .frame(minHeight: 100)
-                        .scrollContentBackground(.hidden)
-                        .overlay(
-                            Group {
-                                if notes.isEmpty {
-                                    VStack {
-                                        HStack {
-                                            Text("What did you practice?")
-                                                .foregroundColor(.secondary)
-                                                .padding(.top, 8)
-                                                .padding(.leading, 5)
-                                            Spacer()
-                                        }
-                                        Spacer()
-                                    }
-                                }
-                            },
-                            alignment: .topLeading
-                        )
-                }
+                    // Notes card
+                    VStack(alignment: .leading, spacing: 12) {
+                        Label("Notes", systemImage: "note.text")
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(.secondary)
 
-                // Quick Rating
-                Section("How did it go?") {
-                    HStack(spacing: 16) {
-                        Spacer()
-                        ForEach(1...5, id: \.self) { star in
-                            Button {
-                                rating = (rating == star) ? nil : star
-                            } label: {
-                                Image(systemName: star <= (rating ?? 0) ? "star.fill" : "star")
-                                    .font(.title)
-                                    .foregroundColor(.yellow)
-                                    .frame(width: 44, height: 44)
-                                    .contentShape(Rectangle())
+                        ZStack(alignment: .topLeading) {
+                            if notes.isEmpty {
+                                Text("What did you practice today?")
+                                    .font(.body)
+                                    .foregroundStyle(.tertiary)
+                                    .padding(.top, 2)
+                                    .allowsHitTesting(false)
                             }
-                            .buttonStyle(.plain)
+                            TextEditor(text: $notes)
+                                .font(.body)
+                                .frame(minHeight: 90)
+                                .scrollContentBackground(.hidden)
                         }
-                        Spacer()
                     }
-                    .padding(.vertical, 8)
-                }
+                    .padding(18)
+                    .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(Color(.secondarySystemGroupedBackground)))
+                    .padding(.horizontal, 20)
 
-                // Linked Recordings (if any exist)
-                if !recorder.recordings.isEmpty {
-                    Section("Link Recording") {
+                    // Link recordings
+                    if !recorder.recordings.isEmpty {
                         Button {
                             showingRecordings = true
                         } label: {
                             HStack {
-                                Text("Select Recordings")
+                                Label("Link Recording", systemImage: "waveform")
+                                    .font(.subheadline.weight(.semibold))
+                                    .foregroundStyle(.primary)
                                 Spacer()
                                 if !selectedRecordings.isEmpty {
-                                    Text("\(selectedRecordings.count)")
-                                        .foregroundColor(themeManager.accentColor)
+                                    Text("\(selectedRecordings.count) linked")
+                                        .font(.subheadline)
+                                        .foregroundStyle(themeManager.accentColor)
                                 }
                                 Image(systemName: "chevron.right")
-                                    .foregroundColor(.secondary)
+                                    .font(.caption.weight(.semibold))
+                                    .foregroundStyle(.tertiary)
                             }
+                            .padding(18)
+                            .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(Color(.secondarySystemGroupedBackground)))
                         }
+                        .buttonStyle(.plain)
+                        .padding(.horizontal, 20)
                     }
-                }
 
-                // Delete existing entry
-                if existingEntry != nil {
-                    Section {
+                    // Delete
+                    if existingEntry != nil {
                         Button(role: .destructive) {
-                            if let entry = existingEntry {
-                                practiceService.deleteEntry(entry)
-                            }
+                            if let entry = existingEntry { practiceService.deleteEntry(entry) }
                             dismiss()
                         } label: {
                             Text("Delete Entry")
+                                .font(.subheadline.weight(.semibold))
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 14)
+                                .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(Color.red.opacity(0.1)))
+                                .foregroundStyle(.red)
                         }
+                        .buttonStyle(.plain)
+                        .padding(.horizontal, 20)
                     }
                 }
+                .padding(.bottom, 32)
             }
-            .navigationTitle(existingEntry != nil ? "Edit Practice" : "Log Practice")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Cancel") {
-                        dismiss()
-                    }
+                    Button("Cancel") { dismiss() }
                 }
-
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Save") {
                         saveEntry()
                         dismiss()
                     }
+                    .fontWeight(.semibold)
                 }
             }
             .sheet(isPresented: $showingRecordings) {

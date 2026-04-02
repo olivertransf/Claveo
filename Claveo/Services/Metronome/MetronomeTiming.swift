@@ -83,8 +83,10 @@ extension Metronome {
         // Clear custom time signature when selecting a standard one
         SettingsManager.shared.update(\.customTimeSignatureTop, value: nil)
         SettingsManager.shared.update(\.customTimeSignatureBottom, value: nil)
+        SettingsManager.shared.update(\.metronomeTimeSignature, value: signature.rawValue)
+        SettingsManager.shared.update(\.metronomeBeatPattern, value: beatPattern)
     }
-    
+
     func setCustomTimeSignature(top: Int, bottom: Int) {
         let allowedBottoms: [Int] = [1, 2, 4, 8, 16]
         let clampedTop = max(1, min(16, top))
@@ -94,9 +96,10 @@ extension Metronome {
         if isPlaying {
             currentBeat = 0
         }
-        // Save custom time signature
+        // Save custom time signature and reset beat pattern
         SettingsManager.shared.update(\.customTimeSignatureTop, value: clampedTop)
         SettingsManager.shared.update(\.customTimeSignatureBottom, value: validBottom)
+        SettingsManager.shared.update(\.metronomeBeatPattern, value: beatPattern)
     }
     
     func startTimer() {
