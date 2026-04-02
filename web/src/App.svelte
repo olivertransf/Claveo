@@ -168,7 +168,7 @@
 {#if currentPage === 'privacy'}
   <PrivacyPolicy navigate={navigate} />
 {:else if currentPage === 'roadmap'}
-  <Roadmap navigate={navigate} />
+  <Roadmap />
 {:else if currentPage === 'about'}
   <About navigate={navigate} />
 {:else}

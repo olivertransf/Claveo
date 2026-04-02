@@ -10,10 +10,13 @@ web/
 │   ├── styles.css          ✅ Global styles
 │   └── pages/
 │       ├── Home.svelte     ✅ Homepage
+│       ├── About.svelte
+│       ├── Roadmap.svelte
 │       └── PrivacyPolicy.svelte ✅ Privacy page
 ├── public/                 ✅ Static assets
 │   ├── icon.png
-│   └── screenshots/
+│   ├── screenshots/
+│   └── appstorescreenshots/  (App Store JPGs 1343.jpg–1351.jpg; see Home.svelte order)
 ├── dist/                   ✅ Build output (auto-generated)
 ├── index.html              ✅ Vite entry point
 ├── package.json            ✅ Dependencies
