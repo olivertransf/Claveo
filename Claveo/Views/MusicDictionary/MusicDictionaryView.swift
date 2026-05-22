@@ -98,6 +98,10 @@ struct MusicDictionaryView: View {
         let terms: [MusicTerm]
         let searchText: String
 
+        private var sortedTerms: [MusicTerm] {
+            terms.sorted { $0.term < $1.term }
+        }
+
         var body: some View {
             if terms.isEmpty {
                 ContentUnavailableView {
@@ -108,7 +112,7 @@ struct MusicDictionaryView: View {
             } else {
                 List {
                     // Always show flat alphabetical list
-                    ForEach(terms.sorted(by: { $0.term < $1.term })) { term in
+                    ForEach(sortedTerms) { term in
                         NavigationLink {
                             TermDetailView(term: term)
                         } label: {

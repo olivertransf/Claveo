@@ -11,7 +11,7 @@ import SwiftUI
 struct AddPracticeView: View {
     @Environment(\.dismiss) var dismiss
     @StateObject private var practiceService = PracticeService.shared
-    @StateObject private var recorder = AudioRecorder()
+    @ObservedObject private var recorder = AudioRecorder.shared
 
     @State private var date = Date()
     @State private var duration = 30 // minutes

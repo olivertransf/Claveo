@@ -108,9 +108,7 @@ struct ContentView: View {
                 Color.black.opacity(0.2)
                     .ignoresSafeArea()
                     .onTapGesture {
-                        withAnimation(.spring(duration: 0.25)) {
-                            showMoreMenu = false
-                        }
+                        showMoreMenu = false
                     }
 
                 MoreMenuView(
@@ -124,7 +122,7 @@ struct ContentView: View {
                 .transition(.move(edge: .bottom).combined(with: .opacity))
             }
         }
-        .animation(.spring(duration: 0.25), value: showMoreMenu)
+        .animation(.easeOut(duration: 0.2), value: showMoreMenu)
         .onChange(of: showMoreMenu) { _, isShowing in
             if !isShowing, barSemanticIds.contains(selectedTabIndex) {
                 tabBarHighlight = barSemanticIds.firstIndex(of: selectedTabIndex) ?? 0
@@ -153,14 +151,12 @@ struct ContentView: View {
             set: { newValue in
                 if newValue == 99 {
                     if !barSemanticIds.contains(selectedTabIndex) { tabBarHighlight = 99 }
-                    withAnimation(.spring(duration: 0.25)) {
-                        showMoreMenu = true
-                    }
+                    showMoreMenu = true
                 } else {
                     guard newValue >= 0, newValue < barSemanticIds.count else { return }
                     tabBarHighlight = newValue
                     selectedTabIndex = barSemanticIds[newValue]
-                    withAnimation(.spring(duration: 0.25)) {
+                    withAnimation(.easeOut(duration: 0.2)) {
                         showMoreMenu = false
                     }
                 }
@@ -206,7 +202,7 @@ struct ContentView: View {
                 if !barSemanticIds.contains(selectedTabIndex) {
                     tabBarHighlight = 99
                 }
-                withAnimation(.spring(duration: 0.25)) {
+                withAnimation(.easeOut(duration: 0.2)) {
                     showMoreMenu = true
                 }
             }
@@ -365,13 +361,11 @@ private struct MoreMenuView: View {
                 Button {
                     selectedTabIndex = tab.tag
                     tabBarHighlight = 99
-                    withAnimation(.spring(duration: 0.25)) {
-                        showMoreMenu = false
-                    }
+                    showMoreMenu = false
                 } label: {
-                    VStack(spacing: 3) {
+                    VStack(spacing: 4) {
                         Image(systemName: tab.icon)
-                            .font(.system(size: 20))
+                            .font(.body.weight(.medium))
                             .foregroundStyle(
                                 selectedTabIndex == tab.tag
                                     ? themeManager.accentColor

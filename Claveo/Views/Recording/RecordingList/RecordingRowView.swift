@@ -349,13 +349,6 @@ struct RecordingRowView: View {
             }
         }
         .contentShape(Rectangle())
-        .onChange(of: isExpanded) { _, expanded in
-            if expanded {
-                Task {
-                    _ = try? await WaveformExtractor.extractBars(from: recording.fileURL, bars: 220)
-                }
-            }
-        }
             }
         }
     }
@@ -363,7 +356,7 @@ struct RecordingRowView: View {
     private func startSmoothTimer() {
         stopSmoothTimer()
         guard isPlaying, !isDragging else { return }
-        smoothUpdateTimer = Timer.scheduledTimer(withTimeInterval: 0.016, repeats: true) { timer in
+        smoothUpdateTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { timer in
             guard self.isPlaying, !self.isDragging, let lastUpdate = self.lastUpdateTime else {
                 timer.invalidate()
                 self.smoothUpdateTimer = nil

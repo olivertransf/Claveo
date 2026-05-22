@@ -13,7 +13,7 @@ struct QuickPracticeEntryView: View {
     @EnvironmentObject var themeManager: ThemeManager
     @StateObject private var practiceService = PracticeService.shared
     @StateObject private var settingsManager = SettingsManager.shared
-    @StateObject private var recorder = AudioRecorder()
+    @ObservedObject private var recorder = AudioRecorder.shared
     @State private var durationOptions: [Int] = []
 
     let date: Date

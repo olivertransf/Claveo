@@ -42,8 +42,6 @@ extension Metronome {
         currentBeat = -1
         beatCount = 0
         scheduledBeatCount = 0
-        isPlayingBeat = false
-        
         let now = CACurrentMediaTime()
         startTime = now
         nextBeatTime = now
@@ -118,45 +116,45 @@ extension Metronome {
     
     func scheduleBeatsAhead() {
         guard let player = playerNode, audioEngine != nil else { return }
-        
-        for i in 0..<beatsToScheduleAhead {
+
+        // Schedule from elapsed time, not UI beatCount — avoids silence when the main thread lags.
+        let now = CACurrentMediaTime()
+        let elapsedBeats = max(0, Int(floor((now - startTime) / interval)))
+        let targetScheduled = elapsedBeats + beatsToScheduleAhead
+        let beatsToAdd = targetScheduled - scheduledBeatCount
+        guard beatsToAdd > 0 else { return }
+
+        for i in 0..<beatsToAdd {
             let beatNumber = scheduledBeatCount + i
             let beatTimeInSeconds = startTime + (Double(beatNumber) * interval)
             let beatHostTime = AVAudioTime.hostTime(forSeconds: beatTimeInSeconds)
-            
+
             let beatInMeasure = beatNumber % beatsPerMeasure
             let isAccent = beatInMeasure < beatPattern.count && beatPattern[beatInMeasure]
-            
+
             let buffer = isAccent ? accentBufferConverted : normalBufferConverted
             guard let audioBuffer = buffer else { continue }
-            
+
             let audioTime = AVAudioTime(hostTime: beatHostTime)
             player.scheduleBuffer(audioBuffer, at: audioTime, options: [], completionHandler: nil)
         }
-        
-        scheduledBeatCount += beatsToScheduleAhead
+
+        scheduledBeatCount += beatsToAdd
     }
-    
+
     func checkAndPlayBeat() {
-        guard !isPlayingBeat else { return }
-        
         let currentTime = CACurrentMediaTime()
-        
-        let beatsAhead = scheduledBeatCount - beatCount
-        if beatsAhead < 2 {
-            scheduleBeatsAhead()
-        }
-        
-        if currentTime >= nextBeatTime - 0.001 {
-            isPlayingBeat = true
+        scheduleBeatsAhead()
+
+        // Catch up UI/haptics if the timer was delayed (cap avoids a long main-thread loop).
+        var catchUpCount = 0
+        while currentTime >= nextBeatTime - 0.001, catchUpCount < 8 {
             lastBeatTime = currentTime
             beatCount += 1
-            
             currentBeat = (beatCount - 1) % beatsPerMeasure
-            
+
             if hapticEnabled {
                 let isAccent = currentBeat < beatPattern.count && beatPattern[currentBeat]
-                // Prepare generators right before use for better reliability
                 if isAccent {
                     hapticGenerator.prepare()
                     hapticGenerator.impactOccurred(intensity: 1.0)
@@ -165,11 +163,9 @@ extension Metronome {
                     hapticGeneratorLight.impactOccurred(intensity: 0.5)
                 }
             }
-            
+
             nextBeatTime = startTime + (Double(beatCount) * interval)
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.005) { [weak self] in
-                self?.isPlayingBeat = false
-            }
+            catchUpCount += 1
         }
     }
     
@@ -181,8 +177,6 @@ extension Metronome {
         beatCount = 0
         scheduledBeatCount = 0
         lastBeatTime = 0
-        isPlayingBeat = false
-        
         playerNode?.stop()
         playerNode?.reset()
         playerNode?.play()

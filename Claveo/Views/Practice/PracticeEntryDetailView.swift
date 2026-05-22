@@ -13,7 +13,7 @@ struct PracticeEntryDetailView: View {
     @EnvironmentObject var themeManager: ThemeManager
     @StateObject private var practiceService = PracticeService.shared
     @State private var currentEntry: PracticeEntry
-    @StateObject private var recorder = AudioRecorder()
+    @ObservedObject private var recorder = AudioRecorder.shared
     @StateObject private var player = AudioPlayer()
     @State private var showingEditSheet = false
     @State private var expandedRecordingId: UUID?
@@ -256,7 +256,6 @@ struct PracticeRecordingPlayer: View {
                         .buttonStyle(.plain)
                         .frame(maxWidth: .infinity, minHeight: 56)
                     }
-                    .padding(.horizontal, -20)
                 }
             } label: {
                 HStack(alignment: .center, spacing: 12) {
@@ -312,7 +311,7 @@ struct EditPracticeView: View {
     let entry: PracticeEntry
     let onSave: (PracticeEntry) -> Void
     @StateObject private var practiceService = PracticeService.shared
-    @StateObject private var recorder = AudioRecorder()
+    @ObservedObject private var recorder = AudioRecorder.shared
 
     @State private var date: Date
     @State private var duration: Int

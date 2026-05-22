@@ -1,6 +1,9 @@
 [build]
   publish = "web/dist"
-  command = "cd web && npm install && npm run build"
+  command = "cd web && npm ci && npm run build"
+
+[build.environment]
+  NODE_VERSION = "22"
 
 [[redirects]]
   from = "/*"

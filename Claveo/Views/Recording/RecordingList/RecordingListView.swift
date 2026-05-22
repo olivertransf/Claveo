@@ -15,7 +15,7 @@ struct RecordingListView: View {
     }
     
     @EnvironmentObject var themeManager: ThemeManager
-    @StateObject var recorder = AudioRecorder()
+    @ObservedObject var recorder = AudioRecorder.shared
     @StateObject var player = AudioPlayer()
     @StateObject var settingsManager = SettingsManager.shared
     @State var showingDeleteAlert = false
@@ -42,9 +42,11 @@ struct RecordingListView: View {
     @State var selectedRecordingIds = Set<UUID>()
     @State var bulkShareSession: BulkShareSession?
     
-    var filteredRecordings: [Recording] {
+    @State var filteredRecordings: [Recording] = []
+
+    func refreshFilteredRecordings() {
         var filtered = recorder.recordings
-        
+
         if !searchText.isEmpty {
             let searchLower = searchText.lowercased()
             filtered = filtered.filter { recording in
@@ -53,16 +55,16 @@ struct RecordingListView: View {
                 recording.notes.lowercased().contains(searchLower)
             }
         }
-        
-        if let selectedTag = selectedTag {
+
+        if let selectedTag {
             filtered = filtered.filter { $0.tags.contains(selectedTag) }
         }
-        
-        if let selectedPiece = selectedPiece {
+
+        if let selectedPiece {
             filtered = filtered.filter { $0.piece == selectedPiece }
         }
-        
-        return filtered.sorted { $0.createdAt > $1.createdAt }
+
+        filteredRecordings = filtered.sorted { $0.createdAt > $1.createdAt }
     }
     
     var body: some View {
@@ -137,7 +139,13 @@ struct RecordingListView: View {
         }
         .onAppear {
             availablePieces = loadAvailablePieces()
+            refreshFilteredRecordings()
         }
+        .onChange(of: recorder.recordings.count) { _, _ in refreshFilteredRecordings() }
+        .onChange(of: recorder.isLoadingRecordings) { _, _ in refreshFilteredRecordings() }
+        .onChange(of: searchText) { _, _ in refreshFilteredRecordings() }
+        .onChange(of: selectedTag) { _, _ in refreshFilteredRecordings() }
+        .onChange(of: selectedPiece) { _, _ in refreshFilteredRecordings() }
         .sheet(item: $recordingToShare) { recording in
             if FileManager.default.fileExists(atPath: recording.fileURL.path) {
                 if let shareableURL = try? recording.shareableFileURL() {

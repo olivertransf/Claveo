@@ -1,3 +1,4 @@
+@preconcurrency import AVFAudio
 import AVFoundation
 import Combine
 import SwiftUI
@@ -64,8 +65,8 @@ final class TrimPreviewPlayer: NSObject, ObservableObject, AVAudioPlayerDelegate
         timer?.invalidate()
         timer = Timer.scheduledTimer(withTimeInterval: 0.033, repeats: true) { [weak self] _ in
             guard let self else { return }
-            let t = player.currentTime
-            Task { @MainActor in
+            MainActor.assumeIsolated {
+                let t = player.currentTime
                 self.currentTime = t
                 if t >= stopAt {
                     self.pause()
@@ -339,16 +340,17 @@ private struct TrimWaveformView: View {
             let endX = x(for: selectionEnd, width: w)
 
             ZStack {
-                // Waveform bars - positioned at their time-based X coordinates
-                ForEach(Array(bars.enumerated()), id: \.offset) { index, amp in
-                    let barTime = timeForBar(at: index)
-                    let barX = x(for: barTime, width: w)
-                    let inSelection = barX >= startX && barX <= endX
-                    
-                    RoundedRectangle(cornerRadius: 2)
-                        .fill(inSelection ? accentColor : accentColor.opacity(0.22))
-                        .frame(width: barWidth, height: max(2, ampHeight(amp, height: h)))
-                        .position(x: barX, y: h / 2)
+                Canvas { context, canvasSize in
+                    WaveformDrawing.drawTimedBars(
+                        in: context,
+                        size: canvasSize,
+                        bars: bars,
+                        duration: duration,
+                        selectionStart: selectionStart,
+                        selectionEnd: selectionEnd,
+                        accentColor: accentColor,
+                        barWidth: barWidth
+                    )
                 }
 
                 // Dim outside selection
@@ -376,7 +378,6 @@ private struct TrimWaveformView: View {
                     .fill(Color.primary.opacity(0.85))
                     .frame(width: 2, height: h)
                     .position(x: x(for: currentTime, width: w), y: h / 2)
-                    .animation(.linear(duration: 0.033), value: currentTime)
                     .allowsHitTesting(false)
 
                 // Handles

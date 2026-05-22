@@ -10,7 +10,7 @@ import Foundation
 import UniformTypeIdentifiers
 import SwiftUI
 
-struct Recording: Identifiable, Codable {
+struct Recording: Identifiable, Codable, Sendable {
     var id: UUID
     let fileName: String
     var createdAt: Date
@@ -150,11 +150,18 @@ struct Recording: Identifiable, Codable {
         return originalFileName != nil && originalDuration != nil
     }
     
-    func shareableFileURL() throws -> URL {
-        let originalURL = fileURL
+    nonisolated func shareableFileURL(documentsBase: URL) throws -> URL {
+        let originalURL = documentsBase.appendingPathComponent(fileName)
         let fileExtension = originalURL.pathExtension
         
-        let sanitizedName = displayName
+        let fallbackTitle: String = {
+            let formatter = DateFormatter()
+            formatter.dateStyle = .medium
+            formatter.timeStyle = .short
+            return formatter.string(from: createdAt)
+        }()
+        let rawName = name.isEmpty ? "Recording \(fallbackTitle)" : name
+        let sanitizedName = rawName
             .replacingOccurrences(of: "/", with: "-")
             .replacingOccurrences(of: "\\", with: "-")
             .replacingOccurrences(of: ":", with: "-")
@@ -180,14 +187,22 @@ struct Recording: Identifiable, Codable {
         
         return tempURL
     }
+
+    @MainActor
+    func shareableFileURL() throws -> URL {
+        try shareableFileURL(documentsBase: iCloudManager.shared.getDocumentsURL())
+    }
 }
 
 struct RecordingFileTransferable: Transferable {
     let recording: Recording
-    
+
     static var transferRepresentation: some TransferRepresentation {
         FileRepresentation(contentType: UTType.audio) { transferable in
-            let shareableURL = try transferable.recording.shareableFileURL()
+            let shareableURL = try await MainActor.run {
+                let base = iCloudManager.shared.getDocumentsURL()
+                return try transferable.recording.shareableFileURL(documentsBase: base)
+            }
             return SentTransferredFile(shareableURL)
         } importing: { received in
             let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent(received.file.lastPathComponent)
@@ -195,11 +210,13 @@ struct RecordingFileTransferable: Transferable {
                 try FileManager.default.removeItem(at: tempURL)
             }
             try FileManager.default.copyItem(at: received.file, to: tempURL)
-            let placeholderRecording = Recording(
-                fileName: tempURL.lastPathComponent,
-                createdAt: Date(),
-                duration: 0
-            )
+            let placeholderRecording = await MainActor.run {
+                Recording(
+                    fileName: tempURL.lastPathComponent,
+                    createdAt: Date(),
+                    duration: 0
+                )
+            }
             return RecordingFileTransferable(recording: placeholderRecording)
         }
     }

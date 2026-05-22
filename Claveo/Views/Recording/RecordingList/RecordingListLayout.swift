@@ -43,7 +43,10 @@ extension RecordingListView {
     
     @ViewBuilder
     var mainContentView: some View {
-        if shouldShowEmptyState {
+        if recorder.isLoadingRecordings && recorder.recordings.isEmpty {
+            ProgressView("Loading recordings…")
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+        } else if shouldShowEmptyState {
             emptyStateView
         } else {
             recordingsList
@@ -52,7 +55,8 @@ extension RecordingListView {
     
     var shouldShowEmptyState: Bool {
         guard !recorder.isRecording else { return false }
-        
+        if recorder.isLoadingRecordings && recorder.recordings.isEmpty { return false }
+
         let hasRecordings = !recorder.recordings.isEmpty
         if !hasRecordings {
             return true

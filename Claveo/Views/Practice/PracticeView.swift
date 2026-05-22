@@ -148,7 +148,7 @@ struct PracticeView: View {
     private var weekStripHeader: some View {
         HStack {
             Button {
-                withAnimation(.spring(response: 0.3, dampingFraction: 0.75)) {
+                withAnimation(.easeOut(duration: 0.2)) {
                     if currentWeekOffset > -52 { currentWeekOffset -= 1 }
                 }
             } label: {
@@ -167,7 +167,7 @@ struct PracticeView: View {
             Spacer()
 
             Button {
-                withAnimation(.spring(response: 0.3, dampingFraction: 0.75)) {
+                withAnimation(.easeOut(duration: 0.2)) {
                     if currentWeekOffset < 0 { currentWeekOffset += 1 }
                 }
             } label: {
@@ -181,28 +181,35 @@ struct PracticeView: View {
 
     @State private var dragOffset: CGFloat = 0
 
+    private var weekDayItems: [(index: Int, date: Date, isToday: Bool, isPracticed: Bool, isFuture: Bool, mins: Int)] {
+        (0..<7).map { index in
+            let date = dateForIndex(index)
+            let mins = practiceService.entriesForDate(date).reduce(0) { $0 + $1.duration }
+            return (
+                index,
+                date,
+                calendar.isDateInToday(date),
+                practiceService.hasPracticeOnDate(date),
+                date > Date(),
+                mins
+            )
+        }
+    }
+
     private var weekDaysRow: some View {
         HStack(spacing: 6) {
-            ForEach(0..<7, id: \.self) { index in
-                let date = dateForIndex(index)
-                let isToday = calendar.isDateInToday(date)
-                let isPracticed = practiceService.hasPracticeOnDate(date)
-                let isFuture = date > Date()
-                let mins = practiceService.entriesForDate(date).reduce(0) { $0 + $1.duration }
-
+            ForEach(weekDayItems, id: \.index) { item in
                 WeekDayCell(
-                    date: date,
-                    isToday: isToday,
-                    isPracticed: isPracticed,
-                    isFuture: isFuture,
-                    minutesPracticed: mins,
+                    date: item.date,
+                    isToday: item.isToday,
+                    isPracticed: item.isPracticed,
+                    isFuture: item.isFuture,
+                    minutesPracticed: item.mins,
                     accentColor: themeManager.accentColor
                 ) {
-                    sheetDate = date
-                    selectedDate = date
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.01) {
-                        showingQuickEntry = true
-                    }
+                    sheetDate = item.date
+                    selectedDate = item.date
+                    showingQuickEntry = true
                 }
             }
         }
@@ -211,7 +218,7 @@ struct PracticeView: View {
             DragGesture()
                 .onChanged { dragOffset = $0.translation.width }
                 .onEnded { value in
-                    withAnimation(.spring(response: 0.3, dampingFraction: 0.75)) {
+                    withAnimation(.easeOut(duration: 0.2)) {
                         if value.translation.width > 50 && currentWeekOffset > -52 {
                             currentWeekOffset -= 1
                         } else if value.translation.width < -50 && currentWeekOffset < 0 {
@@ -242,7 +249,7 @@ struct PracticeView: View {
             if filteredEntries.isEmpty {
                 emptyState
             } else {
-                VStack(spacing: 10) {
+                LazyVStack(spacing: 10) {
                     ForEach(filteredEntries) { entry in
                         SessionCard(entry: entry, accentColor: themeManager.accentColor)
                             .padding(.horizontal, 20)

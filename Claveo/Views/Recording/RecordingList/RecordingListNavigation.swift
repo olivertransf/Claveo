@@ -230,14 +230,13 @@ extension RecordingListView {
             let waveformHeight = isPhone ? min(geometry.size.width * 0.12, 50) : 60
             let maxBars = isPhone ? 60 : 80
             
-            VStack(spacing: 20) {
-                HStack(spacing: 12) {
+            VStack(spacing: 16) {
+                HStack(spacing: 10) {
                     Circle()
                         .fill(Color.red)
                         .frame(width: 10, height: 10)
-                        .opacity(recorder.isRecording ? 1 : 0.5)
-                        .animation(.easeInOut(duration: 1).repeatForever(autoreverses: true), value: recorder.isRecording)
-                        .shadow(color: Color.red.opacity(0.5), radius: 4, x: 0, y: 0)
+                        .opacity(recorder.isRecording ? 1 : 0.45)
+                        .symbolEffect(.pulse, options: .repeating, isActive: recorder.isRecording)
                     
                     Text(formatTime(recorder.recordingTime))
                         .font(.system(.title3, design: .monospaced))
@@ -249,8 +248,8 @@ extension RecordingListView {
                     .frame(height: waveformHeight)
                     .padding(.horizontal, 8)
             }
-            .padding(.horizontal, isPhone ? 20 : 28)
-            .padding(.vertical, isPhone ? 20 : 24)
+            .padding(.horizontal, 24)
+            .padding(.vertical, 20)
             .frame(maxWidth: .infinity)
         }
         .frame(height: 120)
@@ -266,39 +265,29 @@ extension RecordingListView {
                 }
             }
         }) {
-            ZStack(alignment: .center) {
+            ZStack {
+                Circle()
+                    .fill(Color.red.opacity(0.18))
+                    .frame(width: 76, height: 76)
+
+                Circle()
+                    .fill(Color.red)
+                    .frame(width: 64, height: 64)
+
                 if recorder.isRecording {
-                    Circle()
-                        .fill(Color.red.opacity(0.2))
-                        .frame(width: 80, height: 80)
-                        .blur(radius: 8)
-                    
-                    Circle()
-                        .fill(Color.red)
-                        .frame(width: 72, height: 72)
-                    
-                    RoundedRectangle(cornerRadius: 8)
+                    RoundedRectangle(cornerRadius: 6)
                         .fill(Color.white)
-                        .frame(width: 28, height: 28)
+                        .frame(width: 24, height: 24)
                 } else {
-                    Circle()
-                        .fill(Color.red.opacity(0.2))
-                        .frame(width: 80, height: 80)
-                        .blur(radius: 8)
-                    
-                    Circle()
-                        .fill(Color.red)
-                        .frame(width: 72, height: 72)
-                    
                     Image(systemName: "mic.fill")
-                        .font(.system(size: 28, weight: .medium))
-                        .foregroundColor(.white)
+                        .font(.title2.weight(.semibold))
+                        .foregroundStyle(.white)
                 }
             }
-            .frame(width: 80, height: 80)
+            .frame(width: 76, height: 76)
         }
         .buttonStyle(.plain)
-        .shadow(color: Color.black.opacity(0.2), radius: 12, x: 0, y: 6)
+        .shadow(color: .black.opacity(0.15), radius: 6, y: 3)
     }
 
     @ViewBuilder

@@ -158,8 +158,8 @@ class SettingsManager: ObservableObject {
         // iCloud uses NSFileCoordinator (blocking I/O) — always run off the main thread.
         let snapshot = settings
         let url = settingsURL
+        guard let encoded = try? JSONEncoder().encode(snapshot) else { return }
         Task.detached(priority: .utility) {
-            guard let encoded = try? JSONEncoder().encode(snapshot) else { return }
             do {
                 try iCloudManager.shared.writeFile(data: encoded, to: url)
             } catch {
@@ -236,15 +236,14 @@ class SettingsManager: ObservableObject {
         let url = settingsURL
         let currentSettings = settings
         Task.detached(priority: .utility) {
-            if let data = try? iCloudManager.shared.readFile(from: url),
-               let decoded = try? JSONDecoder().decode(AppSettings.self, from: data) {
-                await MainActor.run { [weak self] in
-                    self?.settings = decoded
-                    self?.saveToUserDefaults()
-                }
-            } else {
-                // No iCloud file — push local settings up.
-                if let encoded = try? JSONEncoder().encode(currentSettings) {
+            let data = try? iCloudManager.shared.readFile(from: url)
+            await MainActor.run { [weak self] in
+                guard let self else { return }
+                if let data,
+                   let decoded = try? JSONDecoder().decode(AppSettings.self, from: data) {
+                    self.settings = decoded
+                    self.saveToUserDefaults()
+                } else if let encoded = try? JSONEncoder().encode(currentSettings) {
                     try? iCloudManager.shared.writeFile(data: encoded, to: url)
                 }
             }

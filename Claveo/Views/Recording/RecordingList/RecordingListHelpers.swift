@@ -16,6 +16,7 @@ extension RecordingListView {
         }
         selectedRecording = recording
         recorder.newlyCreatedRecordingId = nil
+        refreshFilteredRecordings()
     }
     
     func loadAvailablePieces() -> [Piece] {

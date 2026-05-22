@@ -106,13 +106,15 @@ enum RecordingTrimmer {
 
         try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
             exporter.exportAsynchronously {
-                switch exporter.status {
+                let status = exporter.status
+                let exportError = exporter.error
+                switch status {
                 case .completed:
                     continuation.resume()
                 case .failed, .cancelled:
-                    continuation.resume(throwing: RecordingTrimmerError.exportFailed(underlying: exporter.error))
+                    continuation.resume(throwing: RecordingTrimmerError.exportFailed(underlying: exportError))
                 default:
-                    continuation.resume(throwing: RecordingTrimmerError.exportFailed(underlying: exporter.error))
+                    continuation.resume(throwing: RecordingTrimmerError.exportFailed(underlying: exportError))
                 }
             }
         }

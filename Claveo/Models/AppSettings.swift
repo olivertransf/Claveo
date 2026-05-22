@@ -8,7 +8,7 @@
 
 import Foundation
 
-struct AppSettings: Codable {
+struct AppSettings: Codable, Sendable {
     // Tuner Settings
     var a4ReferenceFrequency: Double = 440.0
     var showFrequencyDisplay: Bool = true

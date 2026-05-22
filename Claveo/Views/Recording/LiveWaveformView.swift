@@ -9,66 +9,60 @@
 import SwiftUI
 
 struct LiveWaveformView: View {
-    @EnvironmentObject var themeManager: ThemeManager
     let audioLevels: [Float]
     let maxBars: Int
-    
+
     init(audioLevels: [Float], maxBars: Int = 50) {
         self.maxBars = maxBars
-        // Take the most recent levels if we have more than maxBars
         if audioLevels.count > maxBars {
             self.audioLevels = Array(audioLevels.suffix(maxBars))
         } else {
             self.audioLevels = audioLevels
         }
     }
-    
+
     var body: some View {
-        GeometryReader { geometry in
-            let availableWidth = geometry.size.width
+        Canvas { context, size in
             let barWidth: CGFloat = 3
-            let barSpacing: CGFloat = 2.5
-            let totalBarWidth = barWidth + barSpacing
-            let maxBarsThatFit = Int((availableWidth - barSpacing) / totalBarWidth)
-            let barsToShow = min(maxBars, maxBarsThatFit)
-            
+            let spacing: CGFloat = 2.5
+            let step = barWidth + spacing
+            let maxFit = max(1, Int((size.width - spacing) / step))
+            let barsToShow = min(maxBars, maxFit)
+
             if audioLevels.isEmpty {
-                HStack(spacing: barSpacing) {
-                    ForEach(0..<barsToShow, id: \.self) { _ in
-                        RoundedRectangle(cornerRadius: 2)
-                            .fill(Color.white.opacity(0.2))
-                            .frame(width: barWidth, height: 3)
-                    }
+                for index in 0..<barsToShow {
+                    let x = CGFloat(index) * step
+                    let rect = CGRect(x: x, y: size.height / 2 - 1.5, width: barWidth, height: 3)
+                    context.fill(
+                        Path(roundedRect: rect, cornerRadius: 2),
+                        with: .color(.white.opacity(0.2))
+                    )
                 }
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
-            } else {
-                let levelsToShow = Array(audioLevels.suffix(barsToShow))
-                
-                HStack(spacing: barSpacing) {
-                    ForEach(Array(levelsToShow.enumerated()), id: \.offset) { index, level in
-                        let normalizedLevel = CGFloat(level)
-                        let minBarHeight: CGFloat = 3
-                        let maxBarHeight = geometry.size.height
-                        let amplifiedLevel = pow(normalizedLevel, 0.4)
-                        let sensitivityBoost: CGFloat = 2.5
-                        let barHeight = max(minBarHeight, amplifiedLevel * maxBarHeight * sensitivityBoost)
-                        
-                        RoundedRectangle(cornerRadius: 2)
-                            .fill(Color.white)
-                            .frame(width: barWidth, height: min(barHeight, maxBarHeight))
-                    }
-                    
-                    if levelsToShow.count < barsToShow {
-                        ForEach(levelsToShow.count..<barsToShow, id: \.self) { _ in
-                            RoundedRectangle(cornerRadius: 2)
-                                .fill(Color.white.opacity(0.2))
-                                .frame(width: barWidth, height: 3)
-                        }
-                    }
+                return
+            }
+
+            let levels = Array(audioLevels.suffix(barsToShow))
+            let maxAmp = max(levels.max() ?? 0.001, 0.001)
+            let midY = size.height / 2
+
+            for (index, level) in levels.enumerated() {
+                let amplified = pow(CGFloat(level / maxAmp), 0.4) * 2.5
+                let height = min(size.height, max(3, amplified * size.height))
+                let x = CGFloat(index) * step
+                let rect = CGRect(x: x, y: midY - height / 2, width: barWidth, height: height)
+                context.fill(Path(roundedRect: rect, cornerRadius: 2), with: .color(.white))
+            }
+
+            if levels.count < barsToShow {
+                for index in levels.count..<barsToShow {
+                    let x = CGFloat(index) * step
+                    let rect = CGRect(x: x, y: midY - 1.5, width: barWidth, height: 3)
+                    context.fill(
+                        Path(roundedRect: rect, cornerRadius: 2),
+                        with: .color(.white.opacity(0.2))
+                    )
                 }
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
             }
         }
     }
 }
-

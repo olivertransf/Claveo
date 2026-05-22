@@ -13,6 +13,8 @@ import UIKit
 
 @MainActor
 class AudioRecorder: NSObject, ObservableObject {
+    static let shared = AudioRecorder()
+
     @Published var isRecording = false
     @Published var recordings: [Recording] = []
     @Published var recordingTime: TimeInterval = 0
@@ -20,33 +22,60 @@ class AudioRecorder: NSObject, ObservableObject {
     @Published var waveformLevels: [Float] = []
     @Published var permissionError: String?
     @Published var newlyCreatedRecordingId: UUID?
-    
+    @Published private(set) var isLoadingRecordings = false
+
+    private var hasLoadedFromDisk = false
     private var audioRecorder: AVAudioRecorder?
     private var levelTimer: Timer?
     private var currentRecordingURL: URL?
-    private let maxWaveformLevels = 100 // Store last 100 samples for waveform
+    private var recordingStartedAt: Date?
+    private let maxWaveformLevels = 60
+    private var waveformPublishTick = 0
+    private var sessionObservers: [NSObjectProtocol] = []
     
     override init() {
         super.init()
-        loadRecordings()
-        setupAudioSession()
-        
-        // Listen for app becoming active to sync recordings
+        loadRecordingsFromCache()
+        installSessionObservers()
+
         NotificationCenter.default.addObserver(
             forName: UIApplication.willEnterForegroundNotification,
             object: nil,
             queue: .main
         ) { [weak self] _ in
             Task { @MainActor [weak self] in
-                self?.syncRecordingsFromiCloud()
+                self?.refreshRecordingProgressFromFile()
+                await self?.reloadRecordingsFromDisk()
             }
         }
-        
-        #if DEBUG
-        // Debug: Print storage location
-        print("📁 Storage Location: \(iCloudManager.shared.getStorageLocation())")
-        print("📁 Storage Path: \(iCloudManager.shared.getStoragePath())")
-        #endif
+    }
+
+    /// Loads metadata from iCloud/local after `iCloudManager.warmUpIfNeeded()`.
+    func reloadRecordingsFromDisk(force: Bool = false) async {
+        if hasLoadedFromDisk && !force {
+            syncRecordingsFromiCloud()
+            return
+        }
+
+        let showLoading = recordings.isEmpty
+        if showLoading { isLoadingRecordings = true }
+        defer {
+            if showLoading { isLoadingRecordings = false }
+            hasLoadedFromDisk = true
+        }
+
+        await iCloudManager.shared.warmUpIfNeeded()
+
+        let documentsPath = iCloudManager.shared.getDocumentsURL()
+        let fileURL = documentsPath.appendingPathComponent("recordings.json")
+
+        let loaded: [Recording]? = await Task.detached(priority: .utility) {
+            Self.readRecordingsFile(at: fileURL)
+        }.value
+
+        if let loaded {
+            recordings = loaded
+        }
     }
     
     private func syncRecordingsFromiCloud() {
@@ -79,15 +108,101 @@ class AudioRecorder: NSObject, ObservableObject {
     }
 
     func refreshRecordings() async {
-        // Refresh recordings from iCloud (for pull-to-refresh)
-        await MainActor.run {
-            syncRecordingsFromiCloud()
-        }
+        await reloadRecordingsFromDisk(force: true)
     }
     
-    private func setupAudioSession() {
-        // Don't activate session here - do it when recording starts
-        // This prevents conflicts with other audio sessions
+    private func installSessionObservers() {
+        let center = NotificationCenter.default
+
+        sessionObservers.append(
+            center.addObserver(
+                forName: AVAudioSession.interruptionNotification,
+                object: AVAudioSession.sharedInstance(),
+                queue: .main
+            ) { [weak self] notification in
+                MainActor.assumeIsolated {
+                    self?.handleAudioSessionInterruption(userInfo: notification.userInfo)
+                }
+            }
+        )
+
+        sessionObservers.append(
+            center.addObserver(
+                forName: UIApplication.didEnterBackgroundNotification,
+                object: nil,
+                queue: .main
+            ) { [weak self] _ in
+                Task { @MainActor [weak self] in
+                    self?.maintainRecordingSessionInBackground()
+                }
+            }
+        )
+    }
+
+    /// Keeps the recorder alive when the screen locks or the app is backgrounded (requires `audio` background mode).
+    private func maintainRecordingSessionInBackground() {
+        guard isRecording else { return }
+        do {
+            try activateRecordingAudioSession()
+        } catch {
+            #if DEBUG
+            print("Failed to keep recording session active in background: \(error)")
+            #endif
+        }
+        refreshRecordingProgressFromFile()
+    }
+
+    private func handleAudioSessionInterruption(userInfo: [AnyHashable: Any]?) {
+        guard let userInfo,
+              let typeValue = userInfo[AVAudioSessionInterruptionTypeKey] as? UInt,
+              let type = AVAudioSession.InterruptionType(rawValue: typeValue) else {
+            return
+        }
+
+        switch type {
+        case .began:
+            refreshRecordingProgressFromFile()
+        case .ended:
+            guard isRecording else { return }
+            let optionsValue = userInfo[AVAudioSessionInterruptionOptionKey] as? UInt ?? 0
+            let options = AVAudioSession.InterruptionOptions(rawValue: optionsValue)
+            if options.contains(.shouldResume) {
+                do {
+                    try activateRecordingAudioSession()
+                    if audioRecorder?.isRecording != true {
+                        _ = audioRecorder?.record()
+                    }
+                    refreshRecordingProgressFromFile()
+                } catch {
+                    #if DEBUG
+                    print("Failed to resume recording after interruption: \(error)")
+                    #endif
+                }
+            }
+        @unknown default:
+            break
+        }
+    }
+
+    private func activateRecordingAudioSession() throws {
+        let session = AVAudioSession.sharedInstance()
+        try session.setCategory(
+            .playAndRecord,
+            mode: .default,
+            options: [.defaultToSpeaker, .allowBluetoothHFP]
+        )
+        try session.setActive(true, options: [])
+    }
+
+    private func refreshRecordingProgressFromFile() {
+        guard isRecording, let recorder = audioRecorder else { return }
+        recordingTime = recorder.currentTime
+    }
+
+    deinit {
+        for observer in sessionObservers {
+            NotificationCenter.default.removeObserver(observer)
+        }
     }
     
     func checkPermissionStatus() -> Bool {
@@ -130,11 +245,8 @@ class AudioRecorder: NSObject, ObservableObject {
             }
         }
         
-        // Setup and activate audio session
         do {
-            let session = AVAudioSession.sharedInstance()
-            try session.setCategory(.playAndRecord, mode: .default, options: [.defaultToSpeaker, .allowBluetoothHFP])
-            try session.setActive(true, options: .notifyOthersOnDeactivation)
+            try activateRecordingAudioSession()
         } catch {
             permissionError = "Failed to setup audio session: \(error.localizedDescription)"
             return
@@ -190,6 +302,7 @@ class AudioRecorder: NSObject, ObservableObject {
             
             isRecording = true
             currentRecordingURL = fileURL
+            recordingStartedAt = Date()
             recordingTime = 0
             waveformLevels = [] // Reset waveform buffer
             
@@ -203,13 +316,14 @@ class AudioRecorder: NSObject, ObservableObject {
                 Task { @MainActor [weak self] in
                     guard let self = self else { return }
                     self.recordingTime = elapsed
-                    if let level {
-                        let normalizedLevel = pow(10, level / 20)
-                        self.audioLevel = max(0, min(1, normalizedLevel))
-                        self.waveformLevels.append(self.audioLevel)
-                        if self.waveformLevels.count > self.maxWaveformLevels {
-                            self.waveformLevels.removeFirst()
-                        }
+                    guard let level else { return }
+                    let normalizedLevel = pow(10, level / 20)
+                    self.audioLevel = max(0, min(1, normalizedLevel))
+                    self.waveformPublishTick += 1
+                    guard self.waveformPublishTick.isMultiple(of: 2) else { return }
+                    self.waveformLevels.append(self.audioLevel)
+                    if self.waveformLevels.count > self.maxWaveformLevels {
+                        self.waveformLevels.removeFirst()
                     }
                 }
             }
@@ -254,6 +368,7 @@ class AudioRecorder: NSObject, ObservableObject {
         }
         
         currentRecordingURL = nil
+        recordingStartedAt = nil
         recordingTime = 0
     }
 
@@ -300,37 +415,27 @@ class AudioRecorder: NSObject, ObservableObject {
         }
     }
     
-    private func loadRecordings() {
-        let documentsPath = iCloudManager.shared.getDocumentsURL()
-        let fileURL = documentsPath.appendingPathComponent("recordings.json")
-        
-        // Try to load from iCloud first
-        do {
-            let data = try iCloudManager.shared.readFile(from: fileURL)
-            if let decoded = try? JSONDecoder().decode([Recording].self, from: data) {
-                recordings = decoded.sorted { $0.createdAt > $1.createdAt }
-                // Update local cache
-                UserDefaults.standard.set(data, forKey: "recordings_cache")
-                return
-            }
-        } catch {
-            // iCloud file doesn't exist or can't be read - try fallback
-        }
-        
-        // Fallback to direct read from iCloud directory
-        if let data = try? Data(contentsOf: fileURL),
-           let decoded = try? JSONDecoder().decode([Recording].self, from: data) {
-            recordings = decoded.sorted { $0.createdAt > $1.createdAt }
-            // Update local cache
-            UserDefaults.standard.set(data, forKey: "recordings_cache")
+    private func loadRecordingsFromCache() {
+        guard let cachedData = UserDefaults.standard.data(forKey: "recordings_cache"),
+              let decoded = try? JSONDecoder().decode([Recording].self, from: cachedData) else {
             return
         }
-        
-        // Last resort: load from local cache (for offline access)
+        recordings = decoded.sorted { $0.createdAt > $1.createdAt }
+    }
+
+    private nonisolated static func readRecordingsFile(at fileURL: URL) -> [Recording]? {
+        if let data = try? Data(contentsOf: fileURL),
+           let decoded = try? JSONDecoder().decode([Recording].self, from: data) {
+            UserDefaults.standard.set(data, forKey: "recordings_cache")
+            return decoded.sorted { $0.createdAt > $1.createdAt }
+        }
+
         if let cachedData = UserDefaults.standard.data(forKey: "recordings_cache"),
            let decoded = try? JSONDecoder().decode([Recording].self, from: cachedData) {
-            recordings = decoded.sorted { $0.createdAt > $1.createdAt }
+            return decoded.sorted { $0.createdAt > $1.createdAt }
         }
+
+        return nil
     }
 }
 

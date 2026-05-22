@@ -7,13 +7,13 @@ import Foundation
 import CoreML
 import UIKit
 
-final class MusicScannerModel {
+final class MusicScannerModel: @unchecked Sendable {
     private let model: MLModel
     private let inputName: String
     private let outputName: String
-    static let inputSize = 640
+    nonisolated static let inputSize = 640
 
-    init() throws {
+    nonisolated init() throws {
         guard let url = Bundle.main.url(forResource: "best", withExtension: "mlpackage")
             ?? Bundle.main.url(forResource: "best", withExtension: "mlmodelc") else {
             throw NSError(domain: "MusicScanner", code: 1, userInfo: [NSLocalizedDescriptionKey: "best.mlpackage not found in bundle"])
@@ -45,7 +45,7 @@ final class MusicScannerModel {
         return try predictWithSlicing(image: image, confidenceThreshold: confidenceThreshold)
     }
 
-    private func predictSingle(image: CGImage, confidenceThreshold: Float) throws -> [OMRBoundingBox] {
+    nonisolated private func predictSingle(image: CGImage, confidenceThreshold: Float) throws -> [OMRBoundingBox] {
         let inputSize = Self.inputSize
         let resized = resizeImage(image, targetSize: CGSize(width: inputSize, height: inputSize))
         guard let pixelBuffer = resized.toCVPixelBuffer(width: inputSize, height: inputSize) else {
@@ -72,7 +72,7 @@ final class MusicScannerModel {
         }
     }
 
-    private func predictWithSlicing(image: CGImage, confidenceThreshold: Float) throws -> [OMRBoundingBox] {
+    nonisolated private func predictWithSlicing(image: CGImage, confidenceThreshold: Float) throws -> [OMRBoundingBox] {
         let sliceSize = Self.inputSize
         let stepH = Int(Float(sliceSize) * 0.8)
         let stepW = Int(Float(sliceSize) * 0.5)
@@ -122,7 +122,7 @@ final class MusicScannerModel {
         return nmmIOS(boxes: nmsFiltered, threshold: 0.1)
     }
 
-    private func cropOrPad(image: CGImage, x: Int, y: Int, width: Int, height: Int, targetSize: Int) -> CGImage {
+    nonisolated private func cropOrPad(image: CGImage, x: Int, y: Int, width: Int, height: Int, targetSize: Int) -> CGImage {
         guard let cropped = image.cropping(to: CGRect(x: x, y: y, width: width, height: height)) else {
             return createBlankImage(width: targetSize, height: targetSize)
         }
@@ -141,7 +141,7 @@ final class MusicScannerModel {
         return context.makeImage() ?? cropped
     }
 
-    private func createBlankImage(width: Int, height: Int) -> CGImage {
+    nonisolated private func createBlankImage(width: Int, height: Int) -> CGImage {
         let colorSpace = CGColorSpaceCreateDeviceRGB()
         let bitmapInfo = CGImageAlphaInfo.premultipliedLast.rawValue
         guard let context = CGContext(data: nil, width: width, height: height, bitsPerComponent: 8,
@@ -153,7 +153,7 @@ final class MusicScannerModel {
         return context.makeImage()!
     }
 
-    private func nmmIOS(boxes: [OMRBoundingBox], threshold: Float) -> [OMRBoundingBox] {
+    nonisolated private func nmmIOS(boxes: [OMRBoundingBox], threshold: Float) -> [OMRBoundingBox] {
         let sorted = boxes.sorted { $0.confidence > $1.confidence }
         var keep: [OMRBoundingBox] = []
         for box in sorted {
@@ -180,7 +180,7 @@ final class MusicScannerModel {
         return keep
     }
 
-    private func parseOutput(_ array: MLMultiArray, confidenceThreshold: Float, applyNMS: Bool = true) -> [OMRBoundingBox] {
+    nonisolated private func parseOutput(_ array: MLMultiArray, confidenceThreshold: Float, applyNMS: Bool = true) -> [OMRBoundingBox] {
         let shape = array.shape
         let numBoxes: Int
         let stride: Int
@@ -212,7 +212,7 @@ final class MusicScannerModel {
         return applyNMS ? nms(boxes, iouThreshold: 0.45) : boxes
     }
 
-    private func nms(_ boxes: [OMRBoundingBox], iouThreshold: Float) -> [OMRBoundingBox] {
+    nonisolated private func nms(_ boxes: [OMRBoundingBox], iouThreshold: Float) -> [OMRBoundingBox] {
         let sorted = boxes.sorted { $0.confidence > $1.confidence }
         var keep: [OMRBoundingBox] = []
         for box in sorted {
@@ -230,7 +230,7 @@ final class MusicScannerModel {
         return keep
     }
 
-    private func iou(_ a: OMRBoundingBox, _ b: OMRBoundingBox) -> Float {
+    nonisolated private func iou(_ a: OMRBoundingBox, _ b: OMRBoundingBox) -> Float {
         let x1 = max(a.x1, b.x1)
         let y1 = max(a.y1, b.y1)
         let x2 = min(a.x2, b.x2)
@@ -241,7 +241,7 @@ final class MusicScannerModel {
         return interArea / (areaA + areaB - interArea)
     }
 
-    private func resizeImage(_ image: CGImage, targetSize: CGSize) -> CGImage {
+    nonisolated private func resizeImage(_ image: CGImage, targetSize: CGSize) -> CGImage {
         let width = Int(targetSize.width)
         let height = Int(targetSize.height)
         let colorSpace = CGColorSpaceCreateDeviceRGB()

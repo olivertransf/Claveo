@@ -14,11 +14,15 @@ struct WaveformView: View {
     let currentTime: TimeInterval
     let duration: TimeInterval
     let onSeek: (TimeInterval) -> Void
-    
+
     @EnvironmentObject var themeManager: ThemeManager
     @State private var waveformData: [Float] = []
     @State private var isLoading = true
-    
+
+    private var playProgress: CGFloat {
+        duration > 0 ? CGFloat(currentTime / duration) : 0
+    }
+
     var body: some View {
         GeometryReader { geometry in
             if isLoading {
@@ -26,39 +30,27 @@ struct WaveformView: View {
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else if waveformData.isEmpty {
                 Text("No waveform data")
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
-                let maxAmplitude = waveformData.map { abs($0) }.max() ?? 1.0
-                let playProgress = duration > 0 ? currentTime / duration : 0
-                
-                ZStack(alignment: .leading) {
-                    // Waveform - Voice Memos style bars
-                    HStack(spacing: 2) {
-                        ForEach(Array(waveformData.enumerated()), id: \.offset) { index, amplitude in
-                            let normalizedAmplitude = CGFloat(abs(amplitude) / maxAmplitude)
-                            let minBarHeight: CGFloat = 2
-                            let maxBarHeight = geometry.size.height - 4
-                            let barHeight = max(minBarHeight, normalizedAmplitude * maxBarHeight)
-                            let barProgress = CGFloat(index) / CGFloat(max(1, waveformData.count - 1))
-                            let isPlayed = barProgress <= playProgress
-                            
-                            RoundedRectangle(cornerRadius: 1.5)
-                                .fill(isPlayed ? themeManager.accentColor : themeManager.accentColor.opacity(0.3))
-                                .frame(width: 2, height: barHeight)
-                                .animation(.linear(duration: 0.033), value: playProgress)
+                Canvas { context, size in
+                    WaveformDrawing.drawBars(
+                        in: context,
+                        size: size,
+                        samples: waveformData,
+                        colorForIndex: { _, progress in
+                            progress <= playProgress
+                                ? themeManager.accentColor
+                                : themeManager.accentColor.opacity(0.3)
                         }
-                    }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
-                    
+                    )
                 }
                 .contentShape(Rectangle())
                 .gesture(
                     DragGesture(minimumDistance: 0)
                         .onChanged { value in
                             let progress = max(0, min(1, value.location.x / geometry.size.width))
-                            let seekTime = progress * duration
-                            onSeek(seekTime)
+                            onSeek(progress * duration)
                         }
                 )
             }
@@ -68,11 +60,11 @@ struct WaveformView: View {
             loadWaveform()
         }
     }
-    
+
     private func loadWaveform() {
         Task {
             do {
-                let samples = try await WaveformExtractor.extractBars(from: recording.fileURL, bars: 220)
+                let samples = try await WaveformExtractor.extractBars(from: recording.fileURL, bars: 100)
                 await MainActor.run {
                     waveformData = samples
                     isLoading = false
@@ -88,4 +80,3 @@ struct WaveformView: View {
         }
     }
 }
-

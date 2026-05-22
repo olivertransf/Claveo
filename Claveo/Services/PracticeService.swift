@@ -40,9 +40,11 @@ class PracticeService: ObservableObject {
     private var saveTask: Task<Void, Never>?
     private var isSyncing = false
 
+    private var hasPerformedInitialCloudSync = false
+
     init() {
-        loadEntries()
-        
+        allEntries = loadFromUserDefaultsReturning()
+
         // Listen for app becoming active to sync entries
         NotificationCenter.default.addObserver(
             forName: UIApplication.willEnterForegroundNotification,
@@ -50,20 +52,31 @@ class PracticeService: ObservableObject {
             queue: .main
         ) { [weak self] _ in
             Task { @MainActor [weak self] in
-                self?.syncFromiCloud()
+                await self?.syncFromiCloudIfReady()
             }
         }
-        
-        // Also listen for when app becomes active (not just foreground)
+
         NotificationCenter.default.addObserver(
             forName: UIApplication.didBecomeActiveNotification,
             object: nil,
             queue: .main
         ) { [weak self] _ in
             Task { @MainActor [weak self] in
-                self?.syncFromiCloud()
+                await self?.syncFromiCloudIfReady()
             }
         }
+    }
+
+    func performInitialCloudSync() async {
+        guard !hasPerformedInitialCloudSync else { return }
+        hasPerformedInitialCloudSync = true
+        await iCloudManager.shared.warmUpIfNeeded()
+        syncFromiCloud()
+    }
+
+    private func syncFromiCloudIfReady() async {
+        await iCloudManager.shared.warmUpIfNeeded()
+        syncFromiCloud()
     }
 
     // MARK: - CRUD Operations
@@ -252,19 +265,6 @@ class PracticeService: ObservableObject {
         }
     }
 
-    private func loadEntries() {
-        let localEntries = loadFromUserDefaultsReturning()
-
-        if let cloudEntries = loadFromiCloud() {
-            // Merge so an empty or stale cloud file cannot wipe local-only data (common iCloud race).
-            allEntries = mergeEntries(local: localEntries, cloud: cloudEntries)
-            saveToUserDefaults()
-            saveToiCloud()
-        } else {
-            allEntries = localEntries
-        }
-    }
-
     /// Last-modified-wins merge (same rules as sync).
     private func mergeEntries(local: [PracticeEntry], cloud: [PracticeEntry]) -> [PracticeEntry] {
         var map: [UUID: PracticeEntry] = [:]
@@ -352,10 +352,7 @@ class PracticeService: ObservableObject {
     }
 
     func refreshFromiCloud() async {
-        // Refresh from iCloud (for pull-to-refresh)
-        await MainActor.run {
-            syncFromiCloud()
-        }
+        await syncFromiCloudIfReady()
     }
     
     // Force a sync and save - useful for debugging

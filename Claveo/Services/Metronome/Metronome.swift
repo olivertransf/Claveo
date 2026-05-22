@@ -43,9 +43,9 @@ class Metronome: ObservableObject {
     @Published var currentBeat: Int = 0
     @Published var soundType: MetronomeSound = .click {
         didSet {
-            // Recreate audio players when sound changes
             if isPlaying {
                 setupAudioPlayer()
+                restartTimer()
             }
         }
     }
@@ -57,7 +57,6 @@ class Metronome: ObservableObject {
     var startTime: TimeInterval = 0
     var beatCount: Int = 0
     var lastBeatTime: TimeInterval = 0
-    var isPlayingBeat: Bool = false
     var scheduledBeatCount: Int = 0 // Track how many beats we've pre-scheduled
     let beatsToScheduleAhead = 4 // Pre-schedule 4 beats ahead
     
@@ -112,6 +111,35 @@ class Metronome: ObservableObject {
         // Prepare haptic generators
         hapticGenerator.prepare()
         hapticGeneratorLight.prepare()
+
+        NotificationCenter.default.addObserver(
+            forName: AVAudioSession.interruptionNotification,
+            object: AVAudioSession.sharedInstance(),
+            queue: .main
+        ) { [weak self] notification in
+            MainActor.assumeIsolated {
+                self?.handleAudioSessionInterruption(userInfo: notification.userInfo)
+            }
+        }
+    }
+
+    private func handleAudioSessionInterruption(userInfo: [AnyHashable: Any]?) {
+        guard let userInfo,
+              let typeValue = userInfo[AVAudioSessionInterruptionTypeKey] as? UInt,
+              let type = AVAudioSession.InterruptionType(rawValue: typeValue) else {
+            return
+        }
+
+        switch type {
+        case .began:
+            if isPlaying {
+                stop()
+            }
+        case .ended:
+            break
+        @unknown default:
+            break
+        }
     }
     
     // Use AVAudioEngine for precise, sample-accurate timing
