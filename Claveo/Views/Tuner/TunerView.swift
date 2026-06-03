@@ -242,6 +242,7 @@ struct TuningMeterView: View {
                         .frame(width: 3, height: 60)
                 }
                 .offset(x: needlePosition(in: width, centerX: centerX, leftEdge: leftEdge, rightEdge: rightEdge, scaleWidth: scaleWidth) - centerX)
+                .animation(.spring(response: 0.4, dampingFraction: 0.8), value: cents)
             }
         }
     }
@@ -353,6 +354,7 @@ struct PreciseTuningMeterView: View {
                         .frame(width: 2, height: 45)
                 }
                 .offset(x: preciseNeedlePosition(in: width, centerX: centerX, leftEdge: leftEdge, rightEdge: rightEdge, scaleWidth: scaleWidth) - centerX)
+                .animation(.spring(response: 0.4, dampingFraction: 0.8), value: cents)
             }
         }
     }

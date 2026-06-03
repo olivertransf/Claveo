@@ -5,8 +5,10 @@
 [build.environment]
   NODE_VERSION = "22"
 
+# SPA fallback only when no static file exists (icon.png, og-image.png, assets/, etc.)
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
+  force = false
 
