@@ -13,70 +13,59 @@ struct TunerView: View {
     @StateObject private var pitchDetector = PitchDetector()
     @StateObject private var settingsManager = SettingsManager.shared
     @State private var showingPermissionAlert = false
-    @State private var manualFrequencyText = ""
-    @FocusState private var isFrequencyFieldFocused: Bool
+    @State private var displayNote = "--"
+    @State private var displayFrequency: Double = 0
+    @State private var displayCents: Double = 0
 
-    private var showFrequencyDisplay: Binding<Bool> {
-        Binding(
-            get: { settingsManager.settings.showFrequencyDisplay },
-            set: { settingsManager.update(\.showFrequencyDisplay, value: $0) }
-        )
+    private var showFrequencyDisplay: Bool {
+        settingsManager.settings.showFrequencyDisplay
     }
 
-
-    private var selectedPreset: FrequencyPreset {
-        FrequencyPreset.preset(for: settingsManager.settings.a4ReferenceFrequency)
+    private var hasLiveSignal: Bool {
+        pitchDetector.isDetecting && pitchDetector.frequency > 0
     }
 
-    private var a4ReferenceFrequency: Binding<Double> {
-        Binding(
-            get: { settingsManager.settings.a4ReferenceFrequency },
-            set: { settingsManager.update(\.a4ReferenceFrequency, value: $0) }
-        )
-    }
-    
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
                 Spacer()
 
                 VStack(spacing: 24) {
-                    Text(pitchDetector.note)
+                    Text(displayNote)
                         .font(.system(size: 96, weight: .light, design: .rounded))
                         .monospacedDigit()
+                        .foregroundStyle(displayNote == "--" ? Color.secondary.opacity(0.45) : .primary)
 
-                    if showFrequencyDisplay.wrappedValue {
-                        Text(String(format: "%.1f Hz", pitchDetector.frequency))
+                    if showFrequencyDisplay {
+                        Text(displayNote == "--" ? "— Hz" : String(format: "%.1f Hz", displayFrequency))
                             .font(.title2)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(.secondary)
                             .monospacedDigit()
                     }
 
                     TuningMeterView(
-                        cents: pitchDetector.cents,
-                        note: pitchDetector.note,
-                        frequency: pitchDetector.frequency
+                        cents: displayCents,
+                        note: displayNote,
+                        frequency: displayFrequency
                     )
                     .environmentObject(themeManager)
                     .frame(height: 200)
                     .padding(.horizontal)
 
                     PreciseTuningMeterView(
-                        cents: pitchDetector.cents,
-                        note: pitchDetector.note
+                        cents: displayCents,
+                        note: displayNote
                     )
                     .environmentObject(themeManager)
                     .frame(height: 120)
                     .padding(.horizontal)
                 }
-                .opacity(pitchDetector.isDetecting && pitchDetector.frequency > 0 ? 1.0 : 0.3)
 
                 Spacer()
             }
             .navigationTitle("Tuner")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-            }
+            .tint(themeManager.accentColor)
             .padding()
             .alert("Microphone Access Required", isPresented: $showingPermissionAlert) {
                 Button("Settings") {
@@ -89,9 +78,6 @@ struct TunerView: View {
                 Text("Microphone access is required to detect pitch.")
             }
             .onAppear {
-                // Initialize frequency text field
-                manualFrequencyText = String(format: "%.1f", settingsManager.settings.a4ReferenceFrequency)
-
                 Task { @MainActor in
                     await pitchDetector.startDetection()
                 }
@@ -99,58 +85,67 @@ struct TunerView: View {
             .onDisappear {
                 pitchDetector.stopDetection()
             }
+            .onChange(of: pitchDetector.frequency) { _, _ in refreshDisplay() }
+            .onChange(of: pitchDetector.note) { _, _ in refreshDisplay() }
+            .onChange(of: pitchDetector.cents) { _, _ in refreshDisplay() }
             .onChange(of: settingsManager.settings.a4ReferenceFrequency) { _, _ in
                 if pitchDetector.frequency > 0 {
                     pitchDetector.recalculateNote()
+                    refreshDisplay()
                 }
             }
         }
+    }
+
+    private func refreshDisplay() {
+        guard hasLiveSignal else { return }
+        displayNote = pitchDetector.note
+        displayFrequency = pitchDetector.frequency
+        displayCents = pitchDetector.cents
     }
 }
 
 struct TuningMeterView: View {
     @EnvironmentObject var themeManager: ThemeManager
-    let cents: Double // Semitone-relative position
+    let cents: Double
     let note: String
     let frequency: Double
-    
+
     private let noteNames = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
-    
-    // Calculate notes one semitone below and above
+
     private var noteBelow: String {
         guard note != "--" else { return "--" }
         let (noteName, octave) = parseNote(note)
         guard let noteIndex = noteNames.firstIndex(of: noteName) else { return "--" }
-        
+
         var newIndex = noteIndex - 1
         var newOctave = octave
-        
+
         if newIndex < 0 {
             newIndex = 11
             newOctave -= 1
         }
-        
+
         return "\(noteNames[newIndex])\(newOctave)"
     }
-    
+
     private var noteAbove: String {
         guard note != "--" else { return "--" }
         let (noteName, octave) = parseNote(note)
         guard let noteIndex = noteNames.firstIndex(of: noteName) else { return "--" }
-        
+
         var newIndex = noteIndex + 1
         var newOctave = octave
-        
+
         if newIndex >= 12 {
             newIndex = 0
             newOctave += 1
         }
-        
+
         return "\(noteNames[newIndex])\(newOctave)"
     }
-    
+
     private func parseNote(_ noteWithOctave: String) -> (String, Int) {
-        // Find the first digit to separate note name from octave
         if let firstDigitIndex = noteWithOctave.firstIndex(where: { $0.isNumber }) {
             let noteName = String(noteWithOctave[..<firstDigitIndex])
             let octaveString = String(noteWithOctave[firstDigitIndex...])
@@ -160,239 +155,196 @@ struct TuningMeterView: View {
         }
         return ("--", 0)
     }
-    
+
     var body: some View {
         GeometryReader { geometry in
             let width = geometry.size.width
-            let _ = geometry.size.height
-            
+            let margin: CGFloat = 40
+            let scaleWidth = width - (margin * 2)
+            let centerX = width / 2
+            let leftEdge = margin
+            let rightEdge = width - margin
+
             ZStack {
-                // Background scale with gradient
-                let margin: CGFloat = 40
-                let scaleWidth = width - (margin * 2)
-                let centerX = width / 2
-                let leftEdge = margin
-                let rightEdge = width - margin
-                
-                RoundedRectangle(cornerRadius: 12)
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
                     .fill(
                         LinearGradient(
-                            colors: [
-                                Color.red.opacity(0.3),
-                                Color.orange.opacity(0.2),
-                                Color.green.opacity(0.3),
-                                Color.orange.opacity(0.2),
-                                Color.red.opacity(0.3)
-                            ],
+                            colors: TunerPalette.coarseGradient,
                             startPoint: .leading,
                             endPoint: .trailing
                         )
                     )
                     .frame(height: 60)
-                    .offset(x: 0, y: 0)
-                
-                // Scale marks - range -100 to +100 cents (one semitone below to one above)
-                // Show marks at: -100, -50, 0, +50, +100 cents
+
                 ForEach([-2, -1, 0, 1, 2], id: \.self) { mark in
-                    // Position: leftEdge + (mark + 2) / 4 * scaleWidth
-                    // This maps -2 to leftEdge, 0 to center, +2 to rightEdge
                     let position = leftEdge + (CGFloat(mark + 2) / 4.0) * scaleWidth
-                    
-                    // Major marks (every 50 cents) - skip center (0) as it has its own line
-                    if mark != 0 {
-                        Rectangle()
-                            .fill(Color.themeLabel.opacity(0.2))
-                            .frame(width: 1, height: 50)
-                            .offset(x: position - centerX - 0.5)
-                    }
+
+                    Rectangle()
+                        .fill(Color.themeLabel.opacity(mark == 0 ? 0.35 : 0.2))
+                        .frame(width: mark == 0 ? 1.5 : 1, height: mark == 0 ? 52 : 50)
+                        .offset(x: position - centerX - (mark == 0 ? 0.75 : 0.5))
                 }
-                
-                // Note labels at bottom - show note below, current note, note above
+
                 if note != "--" {
-                    // Note below (left edge)
                     Text(noteBelow)
                         .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(.themeSecondaryLabel)
+                        .foregroundStyle(Color.themeSecondaryLabel)
                         .offset(x: leftEdge - centerX, y: 50)
-                    
-                    // Current note (center)
+
                     Text(note)
                         .font(.system(size: 14, weight: .bold))
-                        .foregroundColor(themeManager.accentColor)
+                        .foregroundStyle(themeManager.accentColor)
                         .offset(y: 50)
-                    
-                    // Note above (right edge)
+
                     Text(noteAbove)
                         .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(.themeSecondaryLabel)
+                        .foregroundStyle(Color.themeSecondaryLabel)
                         .offset(x: rightEdge - centerX, y: 50)
                 }
-                
-                // Needle/indicator - shows actual pitch position
-                VStack(spacing: 0) {
-                    // Needle point
-                    Triangle()
-                        .fill(needleColor)
-                        .frame(width: 20, height: 20)
-                        .rotationEffect(.degrees(180))
-                    
-                    // Needle line
-                    Rectangle()
-                        .fill(needleColor)
-                        .frame(width: 3, height: 60)
-                }
-                .offset(x: needlePosition(in: width, centerX: centerX, leftEdge: leftEdge, rightEdge: rightEdge, scaleWidth: scaleWidth) - centerX)
-                .animation(.spring(response: 0.4, dampingFraction: 0.8), value: cents)
+
+                TunerNeedle(color: needleColor, lineHeight: 58, lineWidth: 3, headSize: 13)
+                    .offset(x: needlePosition(centerX: centerX, leftEdge: leftEdge, rightEdge: rightEdge, scaleWidth: scaleWidth) - centerX)
+                    .animation(.interactiveSpring(response: 0.42, dampingFraction: 0.9), value: cents)
             }
         }
     }
-    
+
     private var needleColor: Color {
-        let absCents = abs(cents)
-        if absCents < 10 {
-            return .green
-        } else if absCents < 30 {
-            return .orange
-        } else {
-            return .red
-        }
+        TunerPalette.needleColor(cents: cents, fine: false)
     }
-    
-    private func needlePosition(in width: Double, centerX: CGFloat, leftEdge: CGFloat, rightEdge: CGFloat, scaleWidth: CGFloat) -> Double {
-        // Map cents (-50 to +50 relative to current note) to position
-        // The display shows one semitone below to one above:
-        // - leftEdge = note below (cents = -50 relative to current note)
-        // - centerX = current note (cents = 0)
-        // - rightEdge = note above (cents = +50 relative to current note)
-        
-        // Clamp cents to -50 to +50 for main meter display
+
+    private func needlePosition(centerX: CGFloat, leftEdge: CGFloat, rightEdge: CGFloat, scaleWidth: CGFloat) -> CGFloat {
         let clampedCents = max(-50, min(50, cents))
         let position = centerX + (clampedCents / 50.0) * (scaleWidth / 2)
-        
-        // Clamp to stay within bounds
         return max(leftEdge, min(rightEdge, position))
     }
 }
 
-// Precise tuning meter - shows -15 to +15 cents range for fine-tuning
 struct PreciseTuningMeterView: View {
     @EnvironmentObject var themeManager: ThemeManager
-    let cents: Double // Cents deviation from target note
+    let cents: Double
     let note: String
-    
+
+    private static let fineMarks = [-15, -12, -9, -6, -3, 0, 3, 6, 9, 12, 15]
+
     var body: some View {
         GeometryReader { geometry in
             let width = geometry.size.width
-            let _ = geometry.size.height
-            
+            let margin: CGFloat = 40
+            let scaleWidth = width - (margin * 2)
+            let centerX = width / 2
+            let leftEdge = margin
+            let rightEdge = width - margin
+
             ZStack {
-                // Background scale with gradient (more green in center for precision)
-                let margin: CGFloat = 40
-                let scaleWidth = width - (margin * 2)
-                let centerX = width / 2
-                let leftEdge = margin
-                let rightEdge = width - margin
-                
-                RoundedRectangle(cornerRadius: 8)
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
                     .fill(
                         LinearGradient(
-                            colors: [
-                                Color.orange.opacity(0.3),
-                                Color.green.opacity(0.4),
-                                Color.green.opacity(0.5),
-                                Color.green.opacity(0.4),
-                                Color.orange.opacity(0.3)
-                            ],
+                            colors: TunerPalette.fineGradient,
                             startPoint: .leading,
                             endPoint: .trailing
                         )
                     )
                     .frame(height: 50)
-                
-                // Scale marks - centered around 0, range -15 to +15 cents
-                ForEach([-15, -12, -9, -6, -3, 0, 3, 6, 9, 12, 15], id: \.self) { mark in
-                    // Position: center + (mark / 15) * half of scale width
+
+                ForEach(Self.fineMarks, id: \.self) { mark in
                     let position = centerX + (CGFloat(mark) / 15.0) * (scaleWidth / 2)
-                    
-                    // Major marks (every 3 cents)
+
                     Rectangle()
                         .fill(Color.themeLabel.opacity(mark == 0 ? 0.6 : 0.3))
-                        .frame(width: mark == 0 ? 1.5 : 0.5, height: mark % 3 == 0 ? 40 : 25)
+                        .frame(width: mark == 0 ? 1.5 : 0.5, height: mark.isMultiple(of: 3) ? 40.0 : 25.0)
                         .offset(x: position - centerX - (mark == 0 ? 0.75 : 0.25))
-                    
-                    // Labels for major marks (every 3 cents)
-                    if mark % 3 == 0 && mark != 0 {
+
+                    if mark.isMultiple(of: 3) && mark != 0 {
                         Text("\(mark > 0 ? "+" : "")\(mark)")
                             .font(.system(size: 10, weight: .medium))
-                            .foregroundColor(.themeSecondaryLabel)
+                            .foregroundStyle(Color.themeSecondaryLabel)
                             .offset(x: position - centerX, y: 35)
                     } else if mark == 0 {
                         Text("0")
                             .font(.system(size: 9, weight: .bold))
-                            .foregroundColor(.green)
+                            .foregroundStyle(.green)
                             .offset(x: position - centerX, y: 28)
                     }
                 }
-                
-                // Note label at bottom
+
                 Text(note)
                     .font(.system(size: 12, weight: .medium))
-                    .foregroundColor(themeManager.accentColor)
+                    .foregroundStyle(themeManager.accentColor)
                     .offset(y: 40)
-                
-                // Needle/indicator - shows actual pitch position
-                VStack(spacing: 0) {
-                    // Needle point
-                    Triangle()
-                        .fill(preciseNeedleColor)
-                        .frame(width: 16, height: 16)
-                        .rotationEffect(.degrees(180))
-                    
-                    // Needle line
-                    Rectangle()
-                        .fill(preciseNeedleColor)
-                        .frame(width: 2, height: 45)
-                }
-                .offset(x: preciseNeedlePosition(in: width, centerX: centerX, leftEdge: leftEdge, rightEdge: rightEdge, scaleWidth: scaleWidth) - centerX)
-                .animation(.spring(response: 0.4, dampingFraction: 0.8), value: cents)
+
+                TunerNeedle(color: preciseNeedleColor, lineHeight: 44, lineWidth: 2.5, headSize: 11)
+                    .offset(x: preciseNeedlePosition(centerX: centerX, leftEdge: leftEdge, rightEdge: rightEdge, scaleWidth: scaleWidth) - centerX)
+                    .animation(.interactiveSpring(response: 0.42, dampingFraction: 0.9), value: cents)
             }
         }
     }
-    
+
     private var preciseNeedleColor: Color {
-        let absCents = abs(cents)
-        if absCents < 2 {
-            return .green
-        } else if absCents < 8 {
-            return .orange
-        } else {
-            return .red
-        }
+        TunerPalette.needleColor(cents: cents, fine: true)
     }
-    
-    private func preciseNeedlePosition(in width: Double, centerX: CGFloat, leftEdge: CGFloat, rightEdge: CGFloat, scaleWidth: CGFloat) -> Double {
-        // Clamp cents to -15 to +15 for precise view
+
+    private func preciseNeedlePosition(centerX: CGFloat, leftEdge: CGFloat, rightEdge: CGFloat, scaleWidth: CGFloat) -> CGFloat {
         let clampedCents = max(-15, min(15, cents))
-        
-        // Map cents (-15 to +15) to position
-        // Center (0 cents) should be at centerX
-        // -15 cents maps to leftEdge, +15 cents maps to rightEdge
         let position = centerX + (clampedCents / 15.0) * (scaleWidth / 2)
-        
-        // Clamp to stay within bounds
         return max(leftEdge, min(rightEdge, position))
     }
 }
 
-// Triangle shape for needle point
-struct Triangle: Shape {
-    func path(in rect: CGRect) -> Path {
-        var path = Path()
-        path.move(to: CGPoint(x: rect.midX, y: rect.minY))
-        path.addLine(to: CGPoint(x: rect.minX, y: rect.maxY))
-        path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY))
-        path.closeSubpath()
-        return path
+// MARK: - Needle & palette
+
+private struct TunerNeedle: View {
+    let color: Color
+    var lineHeight: CGFloat
+    var lineWidth: CGFloat
+    var headSize: CGFloat
+
+    var body: some View {
+        VStack(spacing: 3) {
+            Circle()
+                .fill(color)
+                .frame(width: headSize, height: headSize)
+                .overlay {
+                    Circle()
+                        .strokeBorder(Color.white.opacity(0.45), lineWidth: 1.5)
+                }
+                .shadow(color: color.opacity(0.45), radius: 5, y: 2)
+
+            Capsule(style: .continuous)
+                .fill(color)
+                .frame(width: lineWidth, height: lineHeight)
+                .shadow(color: color.opacity(0.25), radius: 2, y: 1)
+        }
+    }
+}
+
+private enum TunerPalette {
+    static let coarseGradient: [Color] = [
+        Color(red: 0.94, green: 0.32, blue: 0.36).opacity(0.45),
+        Color(red: 0.98, green: 0.62, blue: 0.22).opacity(0.35),
+        Color(red: 0.18, green: 0.76, blue: 0.48).opacity(0.55),
+        Color(red: 0.98, green: 0.62, blue: 0.22).opacity(0.35),
+        Color(red: 0.94, green: 0.32, blue: 0.36).opacity(0.45)
+    ]
+
+    static let fineGradient: [Color] = [
+        Color(red: 0.98, green: 0.58, blue: 0.18).opacity(0.4),
+        Color(red: 0.22, green: 0.74, blue: 0.46).opacity(0.55),
+        Color(red: 0.16, green: 0.68, blue: 0.42).opacity(0.62),
+        Color(red: 0.22, green: 0.74, blue: 0.46).opacity(0.55),
+        Color(red: 0.98, green: 0.58, blue: 0.18).opacity(0.4)
+    ]
+
+    static func needleColor(cents: Double, fine: Bool) -> Color {
+        let absCents = abs(cents)
+        if fine {
+            if absCents < 2 { return Color(red: 0.14, green: 0.72, blue: 0.44) }
+            if absCents < 8 { return Color(red: 0.96, green: 0.58, blue: 0.14) }
+            return Color(red: 0.92, green: 0.30, blue: 0.34)
+        }
+        if absCents < 10 { return Color(red: 0.14, green: 0.72, blue: 0.44) }
+        if absCents < 30 { return Color(red: 0.96, green: 0.58, blue: 0.14) }
+        return Color(red: 0.92, green: 0.30, blue: 0.34)
     }
 }
 

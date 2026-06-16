@@ -76,7 +76,7 @@ extension RecordingListView {
                 recordingRow(for: recording)
             }
         }
-        .listStyle(.automatic)
+        .listStyle(.insetGrouped)
     }
     
     @ViewBuilder
@@ -103,6 +103,7 @@ extension RecordingListView {
                         player.play(recording)
                     }
                 } else {
+                    expandedRecordingId = recording.id
                     player.play(recording)
                 }
             },

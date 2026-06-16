@@ -51,6 +51,22 @@ import SwiftUI
         .environmentObject(ThemeManager.shared)
 }
 
+#Preview("Expanded Player") {
+    let sampleRecordings = [
+        Recording(
+            fileName: "grieg-run-through.m4a",
+            createdAt: Date(),
+            duration: 185.0,
+            name: "Grieg whole section",
+            tags: ["Practice"],
+            piece: "Grieg Concerto"
+        )
+    ]
+
+    PreviewRecordingListView(recordings: sampleRecordings, expandFirstRecording: true)
+        .environmentObject(ThemeManager.shared)
+}
+
 #Preview("Active Recording") {
     PreviewRecordingListView(isRecording: true, recordingTime: 45.3)
         .environmentObject(ThemeManager.shared)

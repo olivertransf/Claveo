@@ -18,6 +18,10 @@ struct SettingsView: View {
         let opts = SettingsManager.shared.settings.practiceDurationOptions.filter { $0 >= 5 && $0 <= 480 }.sorted()
         return opts.isEmpty ? [15, 30, 45, 60] : opts
     }()
+    @State private var showingResetSettingsAlert = false
+    @State private var storageLocationText = iCloudManager.shared.getStorageLocation()
+    @State private var storagePathText = iCloudManager.shared.getStoragePath()
+    @State private var storageUsesiCloud = iCloudManager.shared.isAvailable
 
     private var selectedPreset: FrequencyPreset {
         FrequencyPreset.preset(for: settingsManager.settings.a4ReferenceFrequency)
@@ -39,6 +43,7 @@ struct SettingsView: View {
                 tunerSection
                 practiceSection
                 storageSection
+                resetSection
                 aboutSection
                 contactSection
             }
@@ -52,6 +57,10 @@ struct SettingsView: View {
             practiceDefaultTime = settingsManager.settings.defaultPracticeTime
             let opts = settingsManager.settings.practiceDurationOptions.filter { $0 >= 5 && $0 <= 480 }.sorted()
             practiceDurationOptions = opts.isEmpty ? [15, 30, 45, 60] : opts
+            refreshStorageDisplay()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .claveoStorageLocationDidChange)) { _ in
+            refreshStorageDisplay()
         }
         .onChange(of: practiceDefaultTime) { _, newValue in
             settingsManager.update(\.defaultPracticeTime, value: newValue)
@@ -59,6 +68,14 @@ struct SettingsView: View {
         .onChange(of: practiceDurationOptions) { _, newValue in
             let cleaned = newValue.filter { $0 >= 5 && $0 <= 480 }.sorted()
             settingsManager.update(\.practiceDurationOptions, value: cleaned.isEmpty ? [15, 30, 45, 60] : cleaned)
+        }
+        .alert("Reset Settings?", isPresented: $showingResetSettingsAlert) {
+            Button("Cancel", role: .cancel) { }
+            Button("Reset", role: .destructive) {
+                resetSettings()
+            }
+        } message: {
+            Text("This restores app preferences to their defaults. Your recordings, pieces, and practice history will not be deleted.")
         }
     }
 
@@ -108,64 +125,7 @@ struct SettingsView: View {
     // MARK: - Metronome
 
     var metronomeSection: some View {
-        Section("Metronome") {
-            Picker("Emphasized Sound", selection: Binding(
-                get: { settingsManager.metronomeEmphasizedSoundEnum },
-                set: { settingsManager.setMetronomeEmphasizedSound($0) }
-            )) {
-                ForEach(MetronomeSound.allCases, id: \.self) { sound in
-                    Text(sound.rawValue).tag(sound)
-                }
-            }
-
-            Picker("Non-Emphasized Sound", selection: Binding(
-                get: { settingsManager.metronomeNonEmphasizedSoundEnum },
-                set: { settingsManager.setMetronomeNonEmphasizedSound($0) }
-            )) {
-                ForEach(MetronomeSound.allCases, id: \.self) { sound in
-                    Text(sound.rawValue).tag(sound)
-                }
-            }
-
-            VStack(alignment: .leading, spacing: 8) {
-                HStack {
-                    Text("Volume")
-                    Spacer()
-                    Text("\(Int(settingsManager.settings.metronomeVolume * 100))%")
-                        .foregroundColor(.secondary)
-                        .font(.caption)
-                }
-                Slider(
-                    value: Binding(
-                        get: { settingsManager.settings.metronomeVolume },
-                        set: { settingsManager.update(\.metronomeVolume, value: $0) }
-                    ),
-                    in: 0.0...1.0,
-                    step: 0.05
-                )
-                HStack {
-                    Text("Quiet").font(.caption2).foregroundColor(.secondary)
-                    Spacer()
-                    Text("Loud").font(.caption2).foregroundColor(.secondary)
-                }
-            }
-            .padding(.vertical, 4)
-
-            Toggle("Haptic Feedback", isOn: Binding(
-                get: { settingsManager.settings.metronomeHapticEnabled },
-                set: { settingsManager.update(\.metronomeHapticEnabled, value: $0) }
-            ))
-
-            Toggle("Auto-stop when switching tabs", isOn: Binding(
-                get: { settingsManager.settings.metronomeAutoStopOnTabSwitch },
-                set: { settingsManager.update(\.metronomeAutoStopOnTabSwitch, value: $0) }
-            ))
-
-            Toggle("Stop tone when leaving Metronome", isOn: Binding(
-                get: { settingsManager.settings.stopToneWhenLeavingMetronomeTab },
-                set: { settingsManager.update(\.stopToneWhenLeavingMetronomeTab, value: $0) }
-            ))
-        }
+        MetronomeSettingsSection()
     }
 
     // MARK: - Tuner
@@ -182,8 +142,8 @@ struct SettingsView: View {
                     TextField("Hz", text: $manualFrequencyText)
                         .keyboardType(.decimalPad)
                         .multilineTextAlignment(.trailing)
-                        .frame(width: 70)
-                        .textFieldStyle(.roundedBorder)
+                        .frame(width: 76)
+                        .textFieldStyle(.claveoCompact)
                         .focused($isFrequencyFieldFocused)
                         .onSubmit {
                             if let value = Double(manualFrequencyText), value >= 400 && value <= 480 {
@@ -259,7 +219,6 @@ struct SettingsView: View {
                                 .background(practiceDefaultTime == mins ? themeManager.accentColor : themeManager.accentColor.opacity(0.1))
                                 .cornerRadius(8)
                         }
-                        .buttonStyle(.plain)
                     }
                 }
             }
@@ -288,7 +247,6 @@ struct SettingsView: View {
                             .background(themeManager.accentColor.opacity(0.1))
                             .cornerRadius(8)
                         }
-                        .buttonStyle(.plain)
                     }
                 }
                 if practiceDurationOptions.count < 6 {
@@ -309,7 +267,6 @@ struct SettingsView: View {
                                         .background(Color.secondary.opacity(0.1))
                                         .cornerRadius(8)
                                 }
-                                .buttonStyle(.plain)
                             }
                         }
                     }
@@ -322,16 +279,34 @@ struct SettingsView: View {
     // MARK: - Storage
 
     var storageSection: some View {
-        Section("Storage") {
+        Section {
+            Toggle("Use iCloud Drive", isOn: Binding(
+                get: { !settingsManager.settings.storeFilesOnDeviceOnly },
+                set: { useiCloud in
+                    settingsManager.update(\.storeFilesOnDeviceOnly, value: !useiCloud)
+                    Task {
+                        await iCloudManager.shared.warmUpIfNeeded()
+                        await MainActor.run {
+                            refreshStorageDisplay()
+                        }
+                        await AudioRecorder.shared.reloadRecordingsFromDisk(force: true)
+                        await PracticeService.shared.refreshFromiCloud()
+                    }
+                }
+            ))
+
             HStack {
                 Text("Storage Location")
                 Spacer()
-                Text(iCloudManager.shared.getStorageLocation())
+                Text(storageLocationText)
                     .foregroundColor(.secondary)
                     .font(.caption)
             }
 
-            if iCloudManager.shared.isAvailable {
+            if settingsManager.settings.storeFilesOnDeviceOnly {
+                Label("Files stay on this device", systemImage: "iphone")
+                    .foregroundColor(.themeSecondaryLabel)
+            } else if storageUsesiCloud {
                 Label("iCloud Drive Enabled", systemImage: "icloud.fill")
                     .foregroundColor(themeManager.accentColor)
             } else {
@@ -339,9 +314,52 @@ struct SettingsView: View {
                     .foregroundColor(.themeSecondaryLabel)
             }
 
-            Text(iCloudManager.shared.getStoragePath())
+            Text(storagePathText)
                 .font(.system(.caption, design: .monospaced))
                 .foregroundColor(.secondary)
+        } header: {
+            Text("Storage")
+        } footer: {
+            Text("iCloud Drive is the default when available. Turn it off to keep recordings and app data on this iPhone only without syncing. Changing this affects where new files are saved; existing files stay where they were created.")
+        }
+    }
+
+    // MARK: - Reset
+
+    var resetSection: some View {
+        Section {
+            Button(role: .destructive) {
+                showingResetSettingsAlert = true
+            } label: {
+                Label {
+                    Text("Reset Settings")
+                } icon: {
+                    Image(systemName: "arrow.counterclockwise")
+                        .foregroundStyle(.red)
+                }
+                .foregroundStyle(.red)
+            }
+        } footer: {
+            Text("Restores app preferences only. Recordings and saved music data stay untouched.")
+        }
+    }
+
+    private func refreshStorageDisplay() {
+        storageLocationText = iCloudManager.shared.getStorageLocation()
+        storagePathText = iCloudManager.shared.getStoragePath()
+        storageUsesiCloud = !settingsManager.settings.storeFilesOnDeviceOnly && iCloudManager.shared.isAvailable
+    }
+
+    private func resetSettings() {
+        settingsManager.resetSettings()
+        manualFrequencyText = String(format: "%.1f", settingsManager.settings.a4ReferenceFrequency)
+        practiceDefaultTime = settingsManager.settings.defaultPracticeTime
+        practiceDurationOptions = settingsManager.settings.practiceDurationOptions
+        Task {
+            await iCloudManager.shared.warmUpIfNeeded()
+            await MainActor.run {
+                refreshStorageDisplay()
+            }
         }
     }
 
@@ -359,7 +377,7 @@ struct SettingsView: View {
     }
 
     /// Marketing site (contact, privacy, support). Update if the canonical URL changes.
-    private static let claveoWebsiteURL = URL(string: "https://claveo.app")!
+    private static let claveoWebsiteURL = URL(string: "https://claveo.netlify.app")!
 
     var contactSection: some View {
         Section {
@@ -367,7 +385,7 @@ struct SettingsView: View {
                 Label("Website & contact", systemImage: "safari")
             }
         } footer: {
-            Text("Visit claveo.app for help, feedback, and product updates.")
+            Text("Visit claveo.netlify.app for help, feedback, and product updates.")
         }
     }
 }

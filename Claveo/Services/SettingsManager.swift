@@ -17,10 +17,9 @@ class SettingsManager: ObservableObject {
     @Published var settings = AppSettings()
     
     private let settingsFileName = "settings.json"
-    /// Cached URL — `getDocumentsURL()` calls `NSFileCoordinator` internally, so we only compute this once.
-    private lazy var settingsURL: URL = {
+    private var settingsURL: URL {
         iCloudManager.shared.getDocumentsURL().appendingPathComponent(settingsFileName)
-    }()
+    }
 
     private init() {
         loadSettings()
@@ -50,6 +49,20 @@ class SettingsManager: ObservableObject {
             loadFromUserDefaults()
         }
         migrateTabIndicesForExercisesTabIfNeeded()
+        migrateStorageToiCloudDefaultIfNeeded()
+        iCloudManager.shared.setStoreFilesOnDeviceOnly(settings.storeFilesOnDeviceOnly)
+    }
+
+    /// iCloud Drive is the default; ensure installs without an explicit choice use it.
+    private func migrateStorageToiCloudDefaultIfNeeded() {
+        let migrationKey = "claveoStorageiCloudDefaultMigrated_v1"
+        guard !UserDefaults.standard.bool(forKey: migrationKey) else { return }
+
+        if UserDefaults.standard.object(forKey: "storeFilesOnDeviceOnly") == nil {
+            settings.storeFilesOnDeviceOnly = false
+        }
+
+        UserDefaults.standard.set(true, forKey: migrationKey)
     }
 
     /// One-time remap after adding Exercises at index 4: old 4/5/6 (Dictionary/Settings/Chords) → 5/6/7.
@@ -86,6 +99,9 @@ class SettingsManager: ObservableObject {
         // Metronome
         settings.lastMetronomeTempo = defaults.integer(forKey: "lastMetronomeTempo") == 0 ? 120 : defaults.integer(forKey: "lastMetronomeTempo")
         settings.metronomeSound = defaults.string(forKey: "metronomeSound") ?? MetronomeSound.click.rawValue
+        settings.metronomeEmphasizedSound = defaults.string(forKey: "metronomeEmphasizedSound") ?? MetronomeSound.tick.rawValue
+        settings.metronomeNonEmphasizedSound = defaults.string(forKey: "metronomeNonEmphasizedSound") ?? MetronomeSound.click.rawValue
+        settings.metronomeVolume = defaults.object(forKey: "metronomeVolume") as? Double ?? 0.7
         settings.metronomeHapticEnabled = defaults.object(forKey: "metronomeHapticEnabled") as? Bool ?? true
         settings.metronomeAutoStopOnTabSwitch = defaults.bool(forKey: "metronomeAutoStopOnTabSwitch")
         settings.stopToneWhenLeavingMetronomeTab = defaults.object(forKey: "stopToneWhenLeavingMetronomeTab") as? Bool ?? false
@@ -113,6 +129,13 @@ class SettingsManager: ObservableObject {
            let decoded = try? JSONDecoder().decode([Int].self, from: data) {
             settings.practiceDurationOptions = decoded
         }
+        settings.practiceReminderEnabled = defaults.bool(forKey: "practiceReminderEnabled")
+        if defaults.object(forKey: "practiceReminderHour") != nil {
+            settings.practiceReminderHour = defaults.integer(forKey: "practiceReminderHour")
+        }
+        if defaults.object(forKey: "practiceReminderMinute") != nil {
+            settings.practiceReminderMinute = defaults.integer(forKey: "practiceReminderMinute")
+        }
         
         // Theme
         settings.accentColor = defaults.string(forKey: "accentColor") ?? AccentColorOption.blue.rawValue
@@ -124,6 +147,8 @@ class SettingsManager: ObservableObject {
             // First launch: default based on device type
             settings.showTabBarText = UIDevice.current.userInterfaceIdiom == .pad
         }
+
+        settings.storeFilesOnDeviceOnly = defaults.object(forKey: "storeFilesOnDeviceOnly") as? Bool ?? false
 
         // Navigation
         settings.lastSelectedTab = defaults.integer(forKey: "lastSelectedTab")
@@ -155,6 +180,7 @@ class SettingsManager: ObservableObject {
     func saveSettings() {
         // UserDefaults is memory-mapped — fast, keep on main thread.
         saveToUserDefaults()
+        iCloudManager.shared.setStoreFilesOnDeviceOnly(settings.storeFilesOnDeviceOnly)
         // iCloud uses NSFileCoordinator (blocking I/O) — always run off the main thread.
         let snapshot = settings
         let url = settingsURL
@@ -178,6 +204,9 @@ class SettingsManager: ObservableObject {
         // Metronome
         defaults.set(settings.lastMetronomeTempo, forKey: "lastMetronomeTempo")
         defaults.set(settings.metronomeSound, forKey: "metronomeSound")
+        defaults.set(settings.metronomeEmphasizedSound, forKey: "metronomeEmphasizedSound")
+        defaults.set(settings.metronomeNonEmphasizedSound, forKey: "metronomeNonEmphasizedSound")
+        defaults.set(settings.metronomeVolume, forKey: "metronomeVolume")
         defaults.set(settings.metronomeHapticEnabled, forKey: "metronomeHapticEnabled")
         defaults.set(settings.metronomeAutoStopOnTabSwitch, forKey: "metronomeAutoStopOnTabSwitch")
         defaults.set(settings.stopToneWhenLeavingMetronomeTab, forKey: "stopToneWhenLeavingMetronomeTab")
@@ -201,11 +230,15 @@ class SettingsManager: ObservableObject {
         if let encoded = try? JSONEncoder().encode(settings.practiceDurationOptions) {
             defaults.set(encoded, forKey: "practiceDurationOptions")
         }
+        defaults.set(settings.practiceReminderEnabled, forKey: "practiceReminderEnabled")
+        defaults.set(settings.practiceReminderHour, forKey: "practiceReminderHour")
+        defaults.set(settings.practiceReminderMinute, forKey: "practiceReminderMinute")
         
         // Theme
         defaults.set(settings.accentColor, forKey: "accentColor")
         defaults.set(settings.colorScheme, forKey: "colorScheme")
         defaults.set(settings.showTabBarText, forKey: "showTabBarText")
+        defaults.set(settings.storeFilesOnDeviceOnly, forKey: "storeFilesOnDeviceOnly")
 
         // Note: lastSelectedTab is written directly by ContentView to avoid @Published re-renders.
 
@@ -256,6 +289,49 @@ class SettingsManager: ObservableObject {
         settings[keyPath: keyPath] = value
         saveSettings()
     }
+
+    func resetSettings() {
+        let defaultShowTabBarText = UIDevice.current.userInterfaceIdiom == .pad
+        var defaults = AppSettings()
+        defaults.showTabBarText = defaultShowTabBarText
+        settings = defaults
+        removePersistedSettings()
+        saveSettings()
+    }
+
+    private func removePersistedSettings() {
+        let defaults = UserDefaults.standard
+        [
+            "a4ReferenceFrequency",
+            "showFrequencyDisplay",
+            "lastMetronomeTempo",
+            "metronomeSound",
+            "metronomeEmphasizedSound",
+            "metronomeNonEmphasizedSound",
+            "metronomeVolume",
+            "metronomeHapticEnabled",
+            "metronomeAutoStopOnTabSwitch",
+            "stopToneWhenLeavingMetronomeTab",
+            "customTimeSignatureTop",
+            "customTimeSignatureBottom",
+            "favoriteTempos",
+            "defaultPracticeTime",
+            "practiceDurationOptions",
+            "practiceReminderEnabled",
+            "practiceReminderHour",
+            "practiceReminderMinute",
+            "accentColor",
+            "colorScheme",
+            "showTabBarText",
+            "storeFilesOnDeviceOnly",
+            "lastSelectedTab",
+            "tabBarCustomizationOrder",
+            "metronomeTimeSignature",
+            "metronomeBeatPattern",
+            "noteIdentificationEnabledClefRawValues",
+            "keySignatureIdentificationEnabledModeRawValues"
+        ].forEach { defaults.removeObject(forKey: $0) }
+    }
     
     // MARK: - Computed Properties for Convenience
     
@@ -264,11 +340,11 @@ class SettingsManager: ObservableObject {
     }
 
     var metronomeEmphasizedSoundEnum: MetronomeSound {
-        MetronomeSound(rawValue: settings.metronomeEmphasizedSound) ?? .click
+        MetronomeSound(rawValue: settings.metronomeEmphasizedSound) ?? .tick
     }
 
     var metronomeNonEmphasizedSoundEnum: MetronomeSound {
-        MetronomeSound(rawValue: settings.metronomeNonEmphasizedSound) ?? .tick
+        MetronomeSound(rawValue: settings.metronomeNonEmphasizedSound) ?? .click
     }
     
     var accentColorOption: AccentColorOption {

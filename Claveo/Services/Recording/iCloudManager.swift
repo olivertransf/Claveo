@@ -8,26 +8,83 @@
 
 import Foundation
 
+extension Notification.Name {
+    static let claveoStorageLocationDidChange = Notification.Name("claveoStorageLocationDidChange")
+}
+
+private let storeFilesOnDeviceOnlyUserDefaultsKey = "storeFilesOnDeviceOnly"
+
 /// Manages iCloud Drive sync for recordings and metadata.
 /// Returns local Documents immediately; resolves the ubiquity container on a background task.
 final class iCloudManager: @unchecked Sendable {
     nonisolated static let shared = iCloudManager()
 
-    private nonisolated(unsafe) let containerIdentifier = "iCloud.com.olivertran.Claveo"
+    private let containerIdentifier = "iCloud.com.olivertran.Claveo"
     private nonisolated(unsafe) let fileCoordinator = NSFileCoordinator()
-    private nonisolated(unsafe) let localDocumentsURL: URL
+    private let localDocumentsURL: URL
     private nonisolated(unsafe) var resolvedDocumentsURL: URL?
     private nonisolated(unsafe) var warmUpTask: Task<Void, Never>?
-    private nonisolated(unsafe) let lock = NSLock()
+    private let lock = NSLock()
 
     nonisolated private init() {
         localDocumentsURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        if prefersDeviceOnlyStorage {
+            resolvedDocumentsURL = localDocumentsURL
+        }
+    }
+
+    nonisolated var prefersDeviceOnlyStorage: Bool {
+        UserDefaults.standard.bool(forKey: storeFilesOnDeviceOnlyUserDefaultsKey)
+    }
+
+    nonisolated func setStoreFilesOnDeviceOnly(_ enabled: Bool) {
+        let current = UserDefaults.standard.bool(forKey: storeFilesOnDeviceOnlyUserDefaultsKey)
+        UserDefaults.standard.set(enabled, forKey: storeFilesOnDeviceOnlyUserDefaultsKey)
+
+        if enabled {
+            lock.lock()
+            resolvedDocumentsURL = localDocumentsURL
+            warmUpTask = nil
+            lock.unlock()
+            notifyStorageLocationDidChange()
+            return
+        }
+
+        lock.lock()
+        let stuckOnLocal = resolvedDocumentsURL == nil || resolvedDocumentsURL == localDocumentsURL
+        let preferenceChanged = current != enabled
+        lock.unlock()
+
+        if preferenceChanged {
+            lock.lock()
+            resolvedDocumentsURL = nil
+            warmUpTask = nil
+            lock.unlock()
+            warmUp()
+            return
+        }
+
+        if stuckOnLocal {
+            lock.lock()
+            warmUpTask = nil
+            lock.unlock()
+            warmUp()
+        }
     }
 
     /// Non-blocking. Starts background ubiquity resolution if needed.
     nonisolated func warmUp() {
         lock.lock()
         if warmUpTask != nil {
+            lock.unlock()
+            return
+        }
+        if prefersDeviceOnlyStorage {
+            resolvedDocumentsURL = localDocumentsURL
+            let localURL = localDocumentsURL
+            warmUpTask = Task.detached(priority: .utility) {
+                iCloudManager.shared.storeResolvedURL(localURL, iCloudActive: false)
+            }
             lock.unlock()
             return
         }
@@ -40,7 +97,7 @@ final class iCloudManager: @unchecked Sendable {
                 fileCoordinator: coordinator
             )
             let resolved = iCloudURL ?? localURL
-            iCloudManager.shared.storeResolvedURL(resolved, iCloudActive: iCloudURL != nil)
+             iCloudManager.shared.storeResolvedURL(resolved, iCloudActive: iCloudURL != nil)
         }
         lock.unlock()
     }
@@ -60,23 +117,39 @@ final class iCloudManager: @unchecked Sendable {
 
     nonisolated private func storeResolvedURL(_ url: URL, iCloudActive: Bool) {
         lock.lock()
-        resolvedDocumentsURL = url
+        if prefersDeviceOnlyStorage {
+            resolvedDocumentsURL = localDocumentsURL
+        } else {
+            resolvedDocumentsURL = iCloudActive ? url : localDocumentsURL
+        }
         lock.unlock()
         #if DEBUG
-        print("📁 Documents ready: \(iCloudActive ? "iCloud Drive" : "Local") — \(url.path)")
+        let usingiCloud = iCloudActive && !prefersDeviceOnlyStorage
+        print("📁 Documents ready: \(usingiCloud ? "iCloud Drive" : "Local") — \(url.path)")
         #endif
+        notifyStorageLocationDidChange()
+    }
+
+    nonisolated private func notifyStorageLocationDidChange() {
+        DispatchQueue.main.async {
+            NotificationCenter.default.post(name: .claveoStorageLocationDidChange, object: nil)
+        }
     }
 
     /// Immediate URL for reads/writes (local until iCloud path is resolved).
     nonisolated func getDocumentsURL() -> URL {
         lock.lock()
         defer { lock.unlock() }
+        if prefersDeviceOnlyStorage {
+            return localDocumentsURL
+        }
         return resolvedDocumentsURL ?? localDocumentsURL
     }
 
     nonisolated var isAvailable: Bool {
         lock.lock()
         defer { lock.unlock() }
+        if prefersDeviceOnlyStorage { return false }
         guard let resolved = resolvedDocumentsURL else { return false }
         return resolved != localDocumentsURL
     }
@@ -129,7 +202,10 @@ final class iCloudManager: @unchecked Sendable {
     }
 
     nonisolated func getStorageLocation() -> String {
-        isAvailable ? "iCloud Drive" : "Local Storage"
+        if prefersDeviceOnlyStorage {
+            return "On This iPhone"
+        }
+        return isAvailable ? "iCloud Drive" : "Local Storage"
     }
 
     nonisolated func getStoragePath() -> String {

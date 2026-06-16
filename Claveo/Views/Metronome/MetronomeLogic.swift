@@ -22,8 +22,10 @@ extension MetronomeView {
     }
     
     func toggleBeat(_ index: Int) {
-        metronome.beatPattern[index].toggle()
-        settingsManager.update(\.metronomeBeatPattern, value: metronome.beatPattern)
+        HapticFeedback.lightImpact()
+        withAnimation(.easeOut(duration: 0.15)) {
+            metronome.toggleBeatAccent(at: index)
+        }
     }
 
     /// Derives selectedNoteIndex and selectedToneOctave from the current tone generator frequency.
@@ -43,6 +45,7 @@ extension MetronomeView {
     }
     
     func tapTempo() {
+        HapticFeedback.lightImpact()
         let now = Date()
         tapTimes.append(now)
         
@@ -71,6 +74,7 @@ extension MetronomeView {
     }
     
     func saveCustomTimeSignature() {
+        HapticFeedback.lightImpact()
         metronome.setCustomTimeSignature(top: customTop, bottom: customBottom)
         showingCustomTimeSignatureSheet = false
     }

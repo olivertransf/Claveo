@@ -75,7 +75,6 @@ struct QuickPracticeEntryView: View {
                                                     .fill(duration == mins ? themeManager.accentColor : themeManager.accentColor.opacity(0.1))
                                             )
                                     }
-                                    .buttonStyle(.plain)
                                 }
                             }
                         }
@@ -108,7 +107,6 @@ struct QuickPracticeEntryView: View {
                                         .contentShape(Rectangle())
                                         .scaleEffect(star <= (rating ?? 0) ? 1.1 : 1.0)
                                 }
-                                .buttonStyle(.plain)
                             }
                         }
                     }
@@ -122,19 +120,11 @@ struct QuickPracticeEntryView: View {
                             .font(.subheadline.weight(.semibold))
                             .foregroundStyle(.secondary)
 
-                        ZStack(alignment: .topLeading) {
-                            if notes.isEmpty {
-                                Text("What did you practice today?")
-                                    .font(.body)
-                                    .foregroundStyle(.tertiary)
-                                    .padding(.top, 2)
-                                    .allowsHitTesting(false)
-                            }
-                            TextEditor(text: $notes)
-                                .font(.body)
-                                .frame(minHeight: 90)
-                                .scrollContentBackground(.hidden)
-                        }
+                        ClaveoMultilineTextInput(
+                            text: $notes,
+                            placeholder: "What did you practice today?",
+                            minHeight: 90
+                        )
                     }
                     .padding(18)
                     .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(Color(.secondarySystemGroupedBackground)))
@@ -162,7 +152,6 @@ struct QuickPracticeEntryView: View {
                             .padding(18)
                             .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(Color(.secondarySystemGroupedBackground)))
                         }
-                        .buttonStyle(.plain)
                         .padding(.horizontal, 20)
                     }
 
@@ -179,7 +168,6 @@ struct QuickPracticeEntryView: View {
                                 .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(Color.red.opacity(0.1)))
                                 .foregroundStyle(.red)
                         }
-                        .buttonStyle(.plain)
                         .padding(.horizontal, 20)
                     }
                 }

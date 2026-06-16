@@ -300,7 +300,6 @@ struct PracticeView: View {
                     .foregroundStyle(.white)
                     .clipShape(Capsule(style: .continuous))
             }
-            .buttonStyle(.plain)
             .padding(.bottom, 20)
         }
         .frame(maxWidth: .infinity)
@@ -410,7 +409,6 @@ private struct WeekDayCell: View {
                 }
             }
         }
-        .buttonStyle(.plain)
         .frame(maxWidth: .infinity)
         .opacity(isFuture ? 0.35 : 1)
         .disabled(isFuture)
@@ -453,24 +451,8 @@ private struct SessionCard: View {
         return f.string(from: entry.date).uppercased()
     }
 
-    private var accentBarColor: Color {
-        guard let rating = entry.rating else { return accentColor.opacity(0.4) }
-        switch rating {
-        case 5: return .orange
-        case 4: return accentColor
-        case 3: return accentColor.opacity(0.7)
-        default: return .secondary.opacity(0.4)
-        }
-    }
-
     var body: some View {
         HStack(spacing: 0) {
-            // Accent bar
-            RoundedRectangle(cornerRadius: 2, style: .continuous)
-                .fill(accentBarColor)
-                .frame(width: 4)
-                .padding(.vertical, 12)
-
             // Date block
             VStack(spacing: 1) {
                 Text(dayNumber)
@@ -486,6 +468,7 @@ private struct SessionCard: View {
             }
             .frame(width: 52)
             .padding(.vertical, 14)
+            .padding(.leading, 14)
 
             // Separator
             Rectangle()
@@ -550,13 +533,27 @@ struct PracticeSettingsView: View {
     @StateObject private var settingsManager = SettingsManager.shared
     @State private var defaultTime: Int
     @State private var durationOptions: [Int]
+    @State private var reminderEnabled: Bool
+    @State private var reminderTime: Date
+    @State private var reminderPermissionDenied = false
 
     init() {
-        _defaultTime = State(initialValue: SettingsManager.shared.settings.defaultPracticeTime)
-        var options = SettingsManager.shared.settings.practiceDurationOptions
+        let settings = SettingsManager.shared.settings
+        _defaultTime = State(initialValue: settings.defaultPracticeTime)
+        var options = settings.practiceDurationOptions
         options = options.filter { $0 >= 5 && $0 <= 480 }.sorted()
         if options.isEmpty { options = [15, 30, 45, 60] }
         _durationOptions = State(initialValue: options)
+        _reminderEnabled = State(initialValue: settings.practiceReminderEnabled)
+
+        var components = DateComponents()
+        components.hour = settings.practiceReminderHour
+        components.minute = settings.practiceReminderMinute
+        let calendar = Calendar.current
+        let defaultReminderTime = calendar.date(from: components)
+            ?? calendar.date(bySettingHour: 18, minute: 0, second: 0, of: Date())
+            ?? Date()
+        _reminderTime = State(initialValue: defaultReminderTime)
     }
 
     var body: some View {
@@ -579,7 +576,6 @@ struct PracticeSettingsView: View {
                                         .background(defaultTime == mins ? themeManager.accentColor : themeManager.accentColor.opacity(0.1))
                                         .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                                 }
-                                .buttonStyle(.plain)
                             }
                         }
                         Slider(value: .init(get: { Double(defaultTime) }, set: { defaultTime = Int($0) }), in: 5...180, step: 5)
@@ -610,7 +606,6 @@ struct PracticeSettingsView: View {
                                     .background(themeManager.accentColor.opacity(0.1))
                                     .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                                 }
-                                .buttonStyle(.plain)
                             }
                         }
                         if durationOptions.count < 6 {
@@ -628,27 +623,86 @@ struct PracticeSettingsView: View {
                                             .background(Color(.tertiarySystemFill))
                                             .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                                     }
-                                    .buttonStyle(.plain)
                                 }
                             }
                         }
                     }
                     .padding(.vertical, 4)
                 }
-            }
-            .navigationTitle("Practice Settings")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Done") {
-                        var cleaned = durationOptions.filter { $0 >= 5 && $0 <= 480 }.sorted()
-                        if cleaned.isEmpty { cleaned = [15, 30, 45, 60] }
-                        settingsManager.update(\.defaultPracticeTime, value: defaultTime)
-                        settingsManager.update(\.practiceDurationOptions, value: cleaned)
-                        dismiss()
+
+                Section {
+                    Toggle("Daily practice reminder", isOn: $reminderEnabled)
+
+                    if reminderEnabled {
+                        DatePicker(
+                            "Reminder time",
+                            selection: $reminderTime,
+                            displayedComponents: .hourAndMinute
+                        )
+
+                        if reminderPermissionDenied {
+                            Button("Open Notification Settings") {
+                                if let url = URL(string: UIApplication.openSettingsURLString) {
+                                    UIApplication.shared.open(url)
+                                }
+                            }
+                            .font(.subheadline)
+                        }
+                    }
+                } footer: {
+                    if reminderEnabled {
+                        if reminderPermissionDenied {
+                            Text("Notifications are turned off for Claveo. Enable them in Settings to receive your daily reminder.")
+                        } else {
+                            Text("You'll get a notification every day at this time.")
+                        }
+                    } else {
+                        Text("Set a daily reminder to help build a consistent practice habit.")
                     }
                 }
             }
+            .navigationTitle("Practice Settings")
+            .navigationBarTitleDisplayMode(.inline)
+            .tint(themeManager.accentColor)
+            .task(id: reminderEnabled) {
+                guard reminderEnabled else {
+                    reminderPermissionDenied = false
+                    return
+                }
+                let status = await PracticeReminderNotificationService.authorizationStatus()
+                reminderPermissionDenied = status == .denied
+            }
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") {
+                        savePracticeSettings()
+                    }
+                }
+            }
+        }
+    }
+
+    private func savePracticeSettings() {
+        var cleaned = durationOptions.filter { $0 >= 5 && $0 <= 480 }.sorted()
+        if cleaned.isEmpty { cleaned = [15, 30, 45, 60] }
+
+        let timeParts = Calendar.current.dateComponents([.hour, .minute], from: reminderTime)
+        settingsManager.update(\.defaultPracticeTime, value: defaultTime)
+        settingsManager.update(\.practiceDurationOptions, value: cleaned)
+        settingsManager.update(\.practiceReminderEnabled, value: reminderEnabled)
+        settingsManager.update(\.practiceReminderHour, value: timeParts.hour ?? 18)
+        settingsManager.update(\.practiceReminderMinute, value: timeParts.minute ?? 0)
+
+        Task {
+            await PracticeReminderNotificationService.sync(with: settingsManager.settings)
+            if reminderEnabled {
+                let status = await PracticeReminderNotificationService.authorizationStatus()
+                reminderPermissionDenied = status == .denied
+                if reminderPermissionDenied {
+                    return
+                }
+            }
+            dismiss()
         }
     }
 }

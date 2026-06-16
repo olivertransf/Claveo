@@ -33,10 +33,13 @@ struct PieceManagementView: View {
                 Section {
                     VStack(alignment: .leading, spacing: 14) {
                         TextField("Piece title", text: $newPieceName)
+                            .textFieldStyle(.claveoInset)
                             .textInputAutocapitalization(.words)
                         TextField("Composer (optional)", text: $newPieceComposer)
+                            .textFieldStyle(.claveoInset)
                             .textInputAutocapitalization(.words)
                         Button {
+                            HapticFeedback.lightImpact()
                             let piece = Piece(
                                 name: newPieceName,
                                 composer: newPieceComposer.isEmpty ? nil : newPieceComposer
@@ -84,7 +87,6 @@ struct PieceManagementView: View {
                             } label: {
                                 pieceRow(piece)
                             }
-                            .buttonStyle(.plain)
                             .swipeActions(edge: .trailing, allowsFullSwipe: true) {
                                 Button(role: .destructive) {
                                     deletePiece(id: piece.id)

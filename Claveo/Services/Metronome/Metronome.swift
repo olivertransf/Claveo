@@ -59,6 +59,8 @@ class Metronome: ObservableObject {
     var lastBeatTime: TimeInterval = 0
     var scheduledBeatCount: Int = 0 // Track how many beats we've pre-scheduled
     let beatsToScheduleAhead = 4 // Pre-schedule 4 beats ahead
+    var displayLink: CADisplayLink?
+    var displayLinkTarget: MetronomeDisplayLinkTarget?
     
     let hapticGenerator = UIImpactFeedbackGenerator(style: .medium)
     let hapticGeneratorLight = UIImpactFeedbackGenerator(style: .light)
@@ -149,6 +151,33 @@ class Metronome: ObservableObject {
     var normalBuffer: AVAudioPCMBuffer?
     var accentBufferConverted: AVAudioPCMBuffer? // Pre-converted buffers
     var normalBufferConverted: AVAudioPCMBuffer? // Pre-converted buffers
+
+    /// Estimated delay from scheduled host time until the user hears output.
+    var audioOutputLatency: TimeInterval {
+        let session = AVAudioSession.sharedInstance()
+        let nodeLatency = audioEngine?.outputNode.presentationLatency ?? 0
+        return nodeLatency + session.outputLatency + session.ioBufferDuration
+    }
+}
+
+/// Holds a weak reference so CADisplayLink does not retain the metronome.
+final class MetronomeDisplayLinkTarget: NSObject {
+    private weak var metronome: Metronome?
+
+    init(metronome: Metronome) {
+        self.metronome = metronome
+    }
+
+    @objc func tick(_ link: CADisplayLink) {
+        guard let metronome else {
+            link.invalidate()
+            return
+        }
+        Task { @MainActor in
+            guard metronome.isPlaying else { return }
+            metronome.checkAndPlayBeat()
+        }
+    }
 }
 
 enum TimeSignature: String, CaseIterable {

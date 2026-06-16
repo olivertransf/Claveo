@@ -21,6 +21,8 @@ enum AppStartupCoordinator {
         async let practice = PracticeService.shared.performInitialCloudSync()
         _ = await (recordings, practice)
 
+        await PracticeReminderNotificationService.sync(with: SettingsManager.shared.settings)
+
         Task.detached(priority: .utility) {
             await MainActor.run {
                 _ = FontHelper.shared

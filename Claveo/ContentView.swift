@@ -249,6 +249,7 @@ struct ContentView: View {
     // MARK: - Helpers
 
     private func handleTabChange(newIndex: Int) {
+        HapticFeedback.selection()
         if newIndex != 1, settingsManager.settings.stopToneWhenLeavingMetronomeTab {
             toneGenerator.stop()
         }
@@ -383,7 +384,6 @@ private struct MoreMenuView: View {
                     .padding(.vertical, 7)
                     .contentShape(Rectangle())
                 }
-                .buttonStyle(.plain)
             }
         }
         .background(.ultraThinMaterial)

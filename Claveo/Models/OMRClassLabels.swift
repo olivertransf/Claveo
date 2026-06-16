@@ -6,7 +6,7 @@
 import Foundation
 
 enum OMRClassLabels {
-    static let names: [String] = [
+    nonisolated static let names: [String] = [
         "brace", "ledgerLine", "repeatDot", "segno", "coda",
         "clefG", "clefCAlto", "clefCTenor", "clefF", "clefUnpitchedPercussion", "clef8", "clef15",
         "timeSig0", "timeSig1", "timeSig2", "timeSig3", "timeSig4", "timeSig5", "timeSig6", "timeSig7", "timeSig8", "timeSig9",

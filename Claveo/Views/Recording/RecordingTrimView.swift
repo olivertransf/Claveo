@@ -108,96 +108,24 @@ struct RecordingTrimView: View {
 
     var body: some View {
         NavigationStack {
-            VStack(spacing: 18) {
-                VStack(spacing: 10) {
-                    if !FileManager.default.fileExists(atPath: recording.fileURL.path) {
-                        Label("File not found", systemImage: "exclamationmark.triangle")
-                            .foregroundColor(.secondary)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding(.horizontal, 16)
-                    } else if isLoadingWaveform {
-                        ProgressView()
-                            .frame(height: 160)
-                            .frame(maxWidth: .infinity)
-                    } else {
-                        TrimWaveformView(
-                            bars: waveformBars,
-                            duration: effectiveDuration,
-                            currentTime: previewPlayer.currentTime,
-                            selectionStart: $startTime,
-                            selectionEnd: $endTime,
-                            accentColor: themeManager.accentColor,
-                            onSeek: { t in
-                                previewPlayer.seek(to: t)
-                            }
-                        )
-                        .frame(height: 160)
-                        .padding(.horizontal, 16)
-                    }
+            VStack(spacing: 0) {
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 20) {
+                        trimHeader
 
-                    HStack {
-                        Text(formatTime(startTime))
-                            .font(.system(.subheadline, design: .monospaced))
-                            .foregroundColor(.secondary)
-                        Spacer()
-                        Text(formatTime(max(0, endTime - startTime)))
-                            .font(.system(.subheadline, design: .monospaced))
-                            .foregroundColor(.secondary)
-                        Spacer()
-                        Text(formatTime(endTime))
-                            .font(.system(.subheadline, design: .monospaced))
-                            .foregroundColor(.secondary)
+                        waveformSection
+
+                        timeSummary
                     }
                     .padding(.horizontal, 20)
+                    .padding(.top, 8)
+                    .padding(.bottom, 24)
                 }
 
-                Spacer()
-
-                HStack(spacing: 18) {
-                    Button {
-                        if previewPlayer.isPlaying {
-                            previewPlayer.pause()
-                        } else {
-                            previewPlayer.play(from: startTime, to: endTime)
-                        }
-                    } label: {
-                        ZStack {
-                            Circle()
-                                .fill(themeManager.accentColor)
-                                .frame(width: 64, height: 64)
-                            Image(systemName: previewPlayer.isPlaying ? "pause.fill" : "play.fill")
-                                .font(.system(size: 22, weight: .semibold))
-                                .foregroundColor(.white)
-                        }
-                    }
-                    .buttonStyle(.plain)
-                    .disabled(isTrimming || !FileManager.default.fileExists(atPath: recording.fileURL.path) || !canApply)
-
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text("Trim")
-                            .font(.headline)
-                        Text("Drag the handles to keep a section.")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                            .lineLimit(2)
-                    }
-
-                    Spacer()
-
-                    Button(role: .destructive) {
-                        previewPlayer.pause()
-                        startTime = 0
-                        endTime = effectiveDuration
-                        previewPlayer.seek(to: 0)
-                    } label: {
-                        Text("Reset")
-                    }
-                    .disabled(isTrimming)
-                }
-                .padding(.horizontal, 16)
-                .padding(.bottom, 20)
+                playbackControls
             }
-            .navigationTitle("Trim Recording")
+            .background(Color(.systemGroupedBackground))
+            .navigationTitle("Trim")
             .navigationBarTitleDisplayMode(.inline)
             .tint(themeManager.accentColor)
             .toolbar {
@@ -215,7 +143,7 @@ struct RecordingTrimView: View {
                         if isTrimming {
                             ProgressView()
                         } else {
-                            Text("Trim")
+                            Text("Save")
                                 .fontWeight(.semibold)
                         }
                     }
@@ -236,6 +164,135 @@ struct RecordingTrimView: View {
             } message: {
                 Text(errorMessage ?? "Something went wrong.")
             }
+        }
+    }
+
+    private var trimHeader: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(recording.displayName)
+                .font(.title3.weight(.semibold))
+                .lineLimit(2)
+
+            Text("Drag the handles to choose what to keep.")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    @ViewBuilder
+    private var waveformSection: some View {
+        VStack(spacing: 0) {
+            if !FileManager.default.fileExists(atPath: recording.fileURL.path) {
+                Label("File not found", systemImage: "exclamationmark.triangle")
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, minHeight: 180, alignment: .center)
+            } else if isLoadingWaveform {
+                VStack(spacing: 12) {
+                    ProgressView()
+                    Text("Loading waveform…")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+                .frame(maxWidth: .infinity, minHeight: 180)
+            } else {
+                TrimWaveformView(
+                    bars: waveformBars,
+                    duration: effectiveDuration,
+                    currentTime: previewPlayer.currentTime,
+                    selectionStart: $startTime,
+                    selectionEnd: $endTime,
+                    accentColor: themeManager.accentColor,
+                    onSeek: { t in
+                        previewPlayer.seek(to: t)
+                    }
+                )
+                .frame(height: 180)
+            }
+        }
+        .padding(14)
+        .background(Color(.secondarySystemGroupedBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .strokeBorder(Color.primary.opacity(0.06), lineWidth: 1)
+        }
+    }
+
+    private var timeSummary: some View {
+        HStack(spacing: 0) {
+            trimTimeColumn(title: "Start", time: startTime, emphasized: false)
+            Spacer(minLength: 12)
+            trimTimeColumn(title: "Selected", time: max(0, endTime - startTime), emphasized: true)
+            Spacer(minLength: 12)
+            trimTimeColumn(title: "End", time: endTime, emphasized: false)
+        }
+        .padding(.horizontal, 4)
+    }
+
+    private func trimTimeColumn(title: String, time: TimeInterval, emphasized: Bool) -> some View {
+        VStack(spacing: 4) {
+            Text(title)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+
+            Text(formatTime(time))
+                .font(.system(emphasized ? .body : .subheadline, design: .monospaced))
+                .fontWeight(emphasized ? .semibold : .regular)
+                .foregroundStyle(emphasized ? themeManager.accentColor : .primary)
+        }
+        .frame(maxWidth: .infinity)
+    }
+
+    private var playbackControls: some View {
+        HStack(spacing: 16) {
+            Button {
+                HapticFeedback.lightImpact()
+                previewPlayer.pause()
+                startTime = 0
+                endTime = effectiveDuration
+                previewPlayer.seek(to: 0)
+            } label: {
+                Label("Reset", systemImage: "arrow.counterclockwise")
+                    .font(.subheadline.weight(.medium))
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.bordered)
+            .disabled(isTrimming)
+
+            Button {
+                HapticFeedback.lightImpact()
+                if previewPlayer.isPlaying {
+                    previewPlayer.pause()
+                } else {
+                    previewPlayer.play(from: startTime, to: endTime)
+                }
+            } label: {
+                ZStack {
+                    Circle()
+                        .fill(themeManager.accentColor)
+                        .frame(width: 56, height: 56)
+                        .shadow(color: themeManager.accentColor.opacity(0.28), radius: 10, y: 4)
+
+                    Image(systemName: previewPlayer.isPlaying ? "pause.fill" : "play.fill")
+                        .font(.system(size: 20, weight: .semibold))
+                        .foregroundStyle(.white)
+                        .offset(x: previewPlayer.isPlaying ? 0 : 2)
+                }
+            }
+            .buttonStyle(.plain)
+            .disabled(isTrimming || !FileManager.default.fileExists(atPath: recording.fileURL.path) || !canApply)
+            .accessibilityLabel(previewPlayer.isPlaying ? "Pause preview" : "Play selection")
+        }
+        .padding(.horizontal, 20)
+        .padding(.top, 14)
+        .padding(.bottom, 20)
+        .background {
+            Color(.secondarySystemGroupedBackground)
+                .ignoresSafeArea(edges: .bottom)
+                .overlay(alignment: .top) {
+                    Divider()
+                }
         }
     }
 
@@ -331,6 +388,7 @@ private struct TrimWaveformView: View {
     @State private var dragStartX: CGFloat = 0
     @State private var dragInitialSelectionStart: TimeInterval = 0
     @State private var dragInitialSelectionEnd: TimeInterval = 0
+    @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
         GeometryReader { geometry in
@@ -355,28 +413,36 @@ private struct TrimWaveformView: View {
 
                 // Dim outside selection
                 Rectangle()
-                    .fill(Color.black.opacity(0.12))
+                    .fill(Color.black.opacity(colorScheme == .dark ? 0.35 : 0.18))
                     .frame(width: max(0, startX), height: h)
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
                     .allowsHitTesting(false)
-                
+
                 Rectangle()
-                    .fill(Color.black.opacity(0.12))
+                    .fill(Color.black.opacity(colorScheme == .dark ? 0.35 : 0.18))
                     .frame(width: max(0, w - endX), height: h)
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .trailing)
                     .allowsHitTesting(false)
 
+                // Selection fill
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .fill(accentColor.opacity(colorScheme == .dark ? 0.14 : 0.08))
+                    .frame(width: max(10, endX - startX), height: h - 8)
+                    .position(x: (startX + endX) / 2, y: h / 2)
+                    .allowsHitTesting(false)
+
                 // Selection outline
-                RoundedRectangle(cornerRadius: 10)
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
                     .stroke(accentColor, lineWidth: 2)
-                    .frame(width: max(10, endX - startX), height: h)
+                    .frame(width: max(10, endX - startX), height: h - 8)
                     .position(x: (startX + endX) / 2, y: h / 2)
                     .allowsHitTesting(false)
 
                 // Playhead
-                Rectangle()
-                    .fill(Color.primary.opacity(0.85))
-                    .frame(width: 2, height: h)
+                Capsule()
+                    .fill(Color.primary)
+                    .frame(width: 3, height: h - 12)
+                    .shadow(color: .black.opacity(0.18), radius: 2, y: 1)
                     .position(x: x(for: currentTime, width: w), y: h / 2)
                     .allowsHitTesting(false)
 
@@ -444,8 +510,8 @@ private struct TrimWaveformView: View {
                     }
             )
         }
-        .background(Color(.secondarySystemGroupedBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .background(Color(.tertiarySystemGroupedBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         .onChange(of: duration) { _, _ in
             clampSelection()
         }
@@ -489,17 +555,21 @@ private struct TrimWaveformView: View {
 
     private func handle(x: CGFloat, height: CGFloat) -> some View {
         ZStack {
-            RoundedRectangle(cornerRadius: 7)
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
                 .fill(Color(.systemBackground))
-                .frame(width: 22, height: height)
-                .shadow(color: Color.black.opacity(0.12), radius: 6, x: 0, y: 2)
+                .overlay {
+                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        .strokeBorder(Color.primary.opacity(0.08), lineWidth: 1)
+                }
+                .frame(width: 24, height: height - 10)
+                .shadow(color: Color.black.opacity(0.14), radius: 8, x: 0, y: 2)
 
-            VStack(spacing: 3) {
-                Capsule().fill(Color.secondary.opacity(0.6)).frame(width: 4, height: 18)
-            }
+            Capsule()
+                .fill(accentColor.opacity(0.85))
+                .frame(width: 4, height: 22)
         }
         .position(x: x, y: height / 2)
-        .contentShape(Rectangle().inset(by: -10))
+        .contentShape(Rectangle().inset(by: -12))
     }
 }
 

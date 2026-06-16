@@ -24,11 +24,18 @@ struct PreviewRecordingListView: View {
     let previewRecordings: [Recording]?
     let previewIsRecording: Bool?
     let previewRecordingTime: TimeInterval?
-    
-    init(recordings: [Recording]? = nil, isRecording: Bool? = nil, recordingTime: TimeInterval? = nil) {
+    let expandFirstRecording: Bool
+
+    init(
+        recordings: [Recording]? = nil,
+        isRecording: Bool? = nil,
+        recordingTime: TimeInterval? = nil,
+        expandFirstRecording: Bool = false
+    ) {
         previewRecordings = recordings
         previewIsRecording = isRecording
         previewRecordingTime = recordingTime
+        self.expandFirstRecording = expandFirstRecording
     }
     
     var sortedRecordings: [Recording] {
@@ -130,7 +137,7 @@ struct PreviewRecordingListView: View {
                             }
                         }
                     }
-                    .listStyle(.automatic)
+                    .listStyle(.insetGrouped)
                 }
             }
             .onAppear {
@@ -142,6 +149,9 @@ struct PreviewRecordingListView: View {
                 }
                 if let recordingTime = previewRecordingTime {
                     recorder.recordingTime = recordingTime
+                }
+                if expandFirstRecording, expandedRecordingId == nil {
+                    expandedRecordingId = sortedRecordings.first?.id
                 }
             }
         }

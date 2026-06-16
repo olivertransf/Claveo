@@ -6,6 +6,7 @@
 //
 //  Copyright (c) 2025 Oliver Tran
 
+import ActivityKit
 import AVFoundation
 import Foundation
 import Combine
@@ -29,7 +30,7 @@ class AudioRecorder: NSObject, ObservableObject {
     private var levelTimer: Timer?
     private var currentRecordingURL: URL?
     private var recordingStartedAt: Date?
-    private let maxWaveformLevels = 60
+    private let maxWaveformLevels = 140
     private var waveformPublishTick = 0
     private var sessionObservers: [NSObjectProtocol] = []
     
@@ -305,6 +306,9 @@ class AudioRecorder: NSObject, ObservableObject {
             recordingStartedAt = Date()
             recordingTime = 0
             waveformLevels = [] // Reset waveform buffer
+            if let recordingStartedAt {
+                RecordingLiveActivityManager.shared.startRecordingActivity(startedAt: recordingStartedAt)
+            }
             
             let recorderRef = audioRecorder
             // Single timer on .common so it keeps firing while scrolling (default-mode timers pause in .tracking).
@@ -312,12 +316,13 @@ class AudioRecorder: NSObject, ObservableObject {
             let timer = Timer(timeInterval: 0.1, repeats: true) { [weak self] _ in
                 recorderRef?.updateMeters()
                 let elapsed = recorderRef?.currentTime ?? 0
-                let level = recorderRef?.averagePower(forChannel: 0)
+                let averageDB = recorderRef?.averagePower(forChannel: 0)
+                let peakDB = recorderRef?.peakPower(forChannel: 0)
                 Task { @MainActor [weak self] in
                     guard let self = self else { return }
                     self.recordingTime = elapsed
-                    guard let level else { return }
-                    let normalizedLevel = pow(10, level / 20)
+                    guard let averageDB, let peakDB else { return }
+                    let normalizedLevel = Self.normalizedMeterLevel(averageDB: averageDB, peakDB: peakDB)
                     self.audioLevel = max(0, min(1, normalizedLevel))
                     self.waveformPublishTick += 1
                     guard self.waveformPublishTick.isMultiple(of: 2) else { return }
@@ -346,6 +351,7 @@ class AudioRecorder: NSObject, ObservableObject {
 
         audioRecorder?.stop()
         isRecording = false
+        RecordingLiveActivityManager.shared.endRecordingActivity(finalDuration: elapsedBeforeStop)
 
         levelTimer?.invalidate()
         levelTimer = nil
@@ -437,6 +443,18 @@ class AudioRecorder: NSObject, ObservableObject {
 
         return nil
     }
+
+    private nonisolated static func normalizedMeterLevel(averageDB: Float, peakDB: Float) -> Float {
+        let average = max(-80, min(0, averageDB))
+        let peak = max(-80, min(0, peakDB))
+        let meterDB = max(average, peak - 8)
+
+        // Fixed dB range so silence stays near zero instead of scaling to the window peak.
+        let silenceDB: Float = -55
+        let loudDB: Float = -8
+        let normalized = (meterDB - silenceDB) / (loudDB - silenceDB)
+        return max(0, min(1, normalized))
+    }
 }
 
 extension AudioRecorder: AVAudioRecorderDelegate {
@@ -447,6 +465,7 @@ extension AudioRecorder: AVAudioRecorderDelegate {
                     try? FileManager.default.removeItem(at: url)
                 }
                 isRecording = false
+                RecordingLiveActivityManager.shared.endRecordingActivity(finalDuration: recordingTime, dismissalPolicy: .immediate)
                 levelTimer?.invalidate()
                 audioLevel = 0.0
                 waveformLevels = []

@@ -233,7 +233,6 @@ struct PracticeRecordingPlayer: View {
                             Image(systemName: "gobackward.15")
                                 .font(.system(size: 20))
                         }
-                        .buttonStyle(.plain)
                         .frame(maxWidth: .infinity, minHeight: 56)
                         
                         Button(action: {
@@ -246,14 +245,12 @@ struct PracticeRecordingPlayer: View {
                             Image(systemName: isPlaying ? "pause.fill" : "play.fill")
                                 .font(.system(size: 24))
                         }
-                        .buttonStyle(.plain)
                         .frame(maxWidth: .infinity, minHeight: 56)
                         
                         Button(action: { player.skipForward(seconds: 15) }) {
                             Image(systemName: "goforward.15")
                                 .font(.system(size: 20))
                         }
-                        .buttonStyle(.plain)
                         .frame(maxWidth: .infinity, minHeight: 56)
                     }
                 }
@@ -359,8 +356,7 @@ struct EditPracticeView: View {
                 // Notes
                 Section("Journal Entry") {
                     TextEditor(text: $notes)
-                        .frame(minHeight: 120)
-                        .scrollContentBackground(.hidden)
+                        .claveoFormTextEditor(minHeight: 120)
                         .overlay(
                             Group {
                                 if notes.isEmpty {
@@ -440,7 +436,6 @@ struct EditPracticeView: View {
                                         .frame(width: 44, height: 44)
                                         .contentShape(Rectangle())
                                 }
-                                .buttonStyle(.plain)
                             }
                         }
 

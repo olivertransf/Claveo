@@ -17,9 +17,27 @@ struct MusicDictionaryView: View {
     @StateObject private var settingsManager = SettingsManager.shared
     @State private var searchText = ""
     @State private var isSearchPresented = false
+    @State private var selectedCategory: String?
     
-    var filteredTerms: [MusicTerm] {
-        return dictionaryService.searchAllTerms(query: searchText)
+    private var filteredTerms: [MusicTerm] {
+        if !searchText.isEmpty {
+            return dictionaryService.searchAllTerms(query: searchText)
+        }
+        if let selectedCategory {
+            if selectedCategory == MusicDictionaryService.allCategoryToken {
+                return dictionaryService.allTerms()
+            }
+            return dictionaryService.terms(inCategory: selectedCategory)
+        }
+        return []
+    }
+
+    private var categoryTitle: String? {
+        guard let selectedCategory else { return nil }
+        if selectedCategory == MusicDictionaryService.allCategoryToken {
+            return "All"
+        }
+        return MusicDictionaryService.browseCategories.first { $0.category == selectedCategory }?.title
     }
     
     var body: some View {
@@ -46,57 +64,121 @@ struct MusicDictionaryView: View {
                                 .multilineTextAlignment(.center)
                                 .padding(.horizontal)
                             Button("Retry") {
+                                HapticFeedback.lightImpact()
                                 dictionaryService.loadDictionary()
                             }
                             .buttonStyle(.borderedProminent)
                         }
                         Spacer()
                     }
+                } else if searchText.isEmpty, selectedCategory == nil {
+                    DictionaryHomeView(onSelectCategory: { selectedCategory = $0 })
+                        .environmentObject(themeManager)
                 } else {
-                    TermsListView(terms: filteredTerms, searchText: searchText)
+                    TermsListView(
+                        terms: filteredTerms,
+                        searchText: searchText,
+                        categoryTitle: categoryTitle
+                    )
                 }
             }
-            .navigationTitle("Dictionary")
+            .navigationTitle(selectedCategory == nil ? "Dictionary" : (categoryTitle ?? "Dictionary"))
             .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                if selectedCategory != nil, searchText.isEmpty {
+                    ToolbarItem(placement: .navigationBarLeading) {
+                        Button("Back") {
+                            selectedCategory = nil
+                        }
+                    }
+                }
+            }
             .searchable(text: $searchText, prompt: "Search dictionary")
             .autocorrectionDisabled()
             .textInputAutocapitalization(.never)
+            .onChange(of: searchText) { _, newValue in
+                if !newValue.isEmpty {
+                    selectedCategory = nil
+                }
+            }
             .task(id: isTabSelected) {
                 guard isTabSelected else { return }
                 dictionaryService.loadDictionaryIfNeeded()
             }
         }
     }
-    
-    struct SearchBar: View {
-        @Binding var text: String
-        
+
+    struct DictionaryHomeView: View {
+        @EnvironmentObject var themeManager: ThemeManager
+        let onSelectCategory: (String) -> Void
+
         var body: some View {
-            HStack {
-                Image(systemName: "magnifyingglass")
-                    .foregroundColor(.secondary)
-                
-                TextField("Search...", text: $text)
-                    .background(.ultraThinMaterial)
-                    .textInputAutocapitalization(.never)
-                    .autocorrectionDisabled()
-                
-                if !text.isEmpty {
-                    Button(action: { text = "" }) {
-                        Image(systemName: "xmark.circle.fill")
-                            .foregroundColor(.secondary)
+            ScrollView {
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("Browse by Topic")
+                        .font(.title3.weight(.bold))
+
+                    LazyVStack(spacing: 12) {
+                        ForEach(MusicDictionaryService.browseCategories, id: \.category) { item in
+                            Button {
+                                HapticFeedback.lightImpact()
+                                onSelectCategory(item.category)
+                            } label: {
+                                CategoryBrowseCard(
+                                    title: item.title,
+                                    systemImage: item.icon,
+                                    accentColor: themeManager.accentColor
+                                )
+                            }
+                            .buttonStyle(.plain)
+                        }
                     }
                 }
+                .padding(.horizontal, 20)
+                .padding(.top, 8)
+                .padding(.bottom, 32)
             }
-            .padding(12)
-            .background(.ultraThinMaterial)
-            .cornerRadius(10)
+        }
+    }
+
+    struct CategoryBrowseCard: View {
+        let title: String
+        let systemImage: String
+        let accentColor: Color
+
+        var body: some View {
+            HStack(spacing: 12) {
+                Image(systemName: systemImage)
+                    .font(.title3)
+                    .foregroundStyle(accentColor)
+                    .frame(width: 28)
+
+                Text(title)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.primary)
+                    .multilineTextAlignment(.leading)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+
+                Spacer(minLength: 0)
+
+                Image(systemName: "chevron.right")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.tertiary)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 14)
+            .background {
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .fill(Color(.secondarySystemGroupedBackground))
+            }
         }
     }
     
     struct TermsListView: View {
         let terms: [MusicTerm]
         let searchText: String
+        var categoryTitle: String?
 
         private var sortedTerms: [MusicTerm] {
             terms.sorted { $0.term < $1.term }
@@ -105,13 +187,12 @@ struct MusicDictionaryView: View {
         var body: some View {
             if terms.isEmpty {
                 ContentUnavailableView {
-                    Label(searchText.isEmpty ? "No Terms" : "No Results", systemImage: "book.closed")
+                    Label(emptyTitle, systemImage: "book.closed")
                 } description: {
-                    Text(searchText.isEmpty ? "No terms available" : "Try a different search term")
+                    Text(emptyMessage)
                 }
             } else {
                 List {
-                    // Always show flat alphabetical list
                     ForEach(sortedTerms) { term in
                         NavigationLink {
                             TermDetailView(term: term)
@@ -122,6 +203,18 @@ struct MusicDictionaryView: View {
                 }
                 .listStyle(.insetGrouped)
             }
+        }
+
+        private var emptyTitle: String {
+            if !searchText.isEmpty { return "No Results" }
+            if categoryTitle != nil { return "No Terms" }
+            return "No Terms"
+        }
+
+        private var emptyMessage: String {
+            if !searchText.isEmpty { return "Try a different search term" }
+            if categoryTitle != nil { return "No terms in this topic" }
+            return "Search or pick a topic to get started"
         }
     }
     

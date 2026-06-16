@@ -37,98 +37,61 @@ struct RecordingRowView: View {
     @State private var lastKnownTime: TimeInterval = 0
     @State private var smoothUpdateTimer: Timer?
     @State private var seekDelayTask: Task<Void, Never>?
-    
-    private var isPhone: Bool {
-        UIDevice.current.userInterfaceIdiom == .phone
+
+    private var currentDisplayTime: TimeInterval {
+        isDragging ? dragValue : displayTime
     }
-    
-    private var buttonSize: CGFloat {
-        isPhone ? 46 : 60
-    }
-    
-    private var buttonSpacing: CGFloat {
-        isPhone ? 2 : 8
-    }
-    
-    private var iconSize: CGFloat {
-        isPhone ? 20 : 28
-    }
-    
-    private var playIconSize: CGFloat {
-        isPhone ? 22 : 30
-    }
-    
-    private var horizontalPadding: CGFloat {
-        isPhone ? 8 : 16
+
+    private let transportButtonSize: CGFloat = 44
+    private let playButtonSize: CGFloat = 52
+
+    private var rowSubtitle: String {
+        var parts: [String] = [recording.relativeDateString]
+        if let piece = recording.piece, !piece.isEmpty {
+            parts.append(piece)
+        }
+        return parts.joined(separator: " · ")
     }
     
     @ViewBuilder
     private var rowSummaryLabel: some View {
         HStack(alignment: .center, spacing: 12) {
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: 3) {
                 Text(recording.displayName)
-                    .font(.headline)
-                    .lineLimit(2)
-                
-                HStack(spacing: 8) {
-                    HStack(spacing: 4) {
-                        Image(systemName: "clock")
-                            .font(.caption2)
-                        Text(recording.shortDateString)
-                            .font(.caption)
-                    }
-                    .foregroundColor(.secondary)
-                    
-                    if let piece = recording.piece {
-                        Text("•")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                        HStack(spacing: 4) {
-                            Image(systemName: "music.note")
-                                .font(.caption2)
-                            Text(piece)
-                                .font(.caption)
-                                .lineLimit(1)
-                        }
-                        .foregroundColor(.secondary)
-                    }
-                }
-                
-                if !recording.tags.isEmpty {
-                    HStack(spacing: 6) {
-                        ForEach(recording.tags.prefix(3), id: \.self) { tag in
-                            Text(tag)
-                                .font(.caption2)
-                                .padding(.horizontal, 6)
-                                .padding(.vertical, 2)
-                                .background(Color(.systemGray5))
-                                .foregroundColor(.secondary)
-                                .cornerRadius(6)
-                        }
-                        if recording.tags.count > 3 {
-                            Text("+\(recording.tags.count - 3)")
-                                .font(.caption2)
-                                .foregroundColor(.secondary)
-                        }
-                    }
+                    .font(.body.weight(.semibold))
+                    .foregroundStyle(.primary)
+                    .lineLimit(isExpanded ? 2 : 1)
+
+                Text(rowSubtitle)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+
+                if isExpanded, !recording.tags.isEmpty {
+                    Text(recording.tags.joined(separator: " · "))
+                        .font(.caption)
+                        .foregroundStyle(.tertiary)
+                        .lineLimit(1)
                 }
             }
-            
-            Spacer()
-            
+
+            Spacer(minLength: 8)
+
             VStack(alignment: .trailing, spacing: 4) {
                 Text(recording.formattedDuration)
-                    .font(.headline)
-                    .foregroundColor(.primary)
+                    .font(.subheadline.weight(.medium))
+                    .foregroundStyle(isPlaying ? themeManager.accentColor : .secondary)
                     .monospacedDigit()
-                
+
                 if isPlaying {
                     Image(systemName: "waveform")
-                        .foregroundColor(themeManager.accentColor)
-                        .font(.caption)
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(themeManager.accentColor)
+                        .symbolEffect(.variableColor.iterative, options: .repeating, isActive: isPlaying)
                 }
             }
         }
+        .padding(.vertical, isExpanded ? 4 : 6)
     }
     
     var body: some View {
@@ -143,212 +106,324 @@ struct RecordingRowView: View {
                     }
                     .contentShape(Rectangle())
                 }
-                .buttonStyle(.plain)
             } else {
-                VStack(spacing: 0) {
-                    DisclosureGroup(isExpanded: $isExpanded) {
-                VStack(spacing: 0) {
-                    VStack(alignment: .leading, spacing: 12) {
-                        VStack(spacing: 8) {
-                            Slider(
-                                value: Binding(
-                                    get: { 
-                                        if isDragging {
-                                            return dragValue
-                                        }
-                                        return displayTime
-                                    },
-                                    set: { newValue in
-                                        dragValue = newValue
-                                        displayTime = newValue
-                                        lastKnownTime = newValue
-                                        lastUpdateTime = Date()
-                                        if !isDragging {
-                                            isDragging = true
-                                        }
-                                        
-                                        seekTask?.cancel()
-                                        seekTask = Task {
-                                            try? await Task.sleep(nanoseconds: 100_000_000)
-                                            if !Task.isCancelled {
-                                                onSeek(newValue)
-                                            }
-                                        }
-                                    }
-                                ),
-                                in: 0...max(duration, 0.1)
-                            )
-                            .tint(themeManager.accentColor)
-                            .onChange(of: currentTime) { _, newValue in
-                                guard let newValue = newValue else { return }
-                                
-                                if isDragging {
-                                    if abs(newValue - dragValue) < 0.3 {
-                                        isDragging = false
-                                        displayTime = newValue
-                                        lastKnownTime = newValue
-                                        lastUpdateTime = Date()
-                                        
-                                        seekDelayTask?.cancel()
-                                        seekDelayTask = Task {
-                                            try? await Task.sleep(nanoseconds: 300_000_000)
-                                            if !Task.isCancelled && isPlaying {
-                                                startSmoothTimer()
-                                            }
-                                        }
-                                    }
-                                } else {
-                                    displayTime = newValue
-                                    dragValue = newValue
-                                    lastKnownTime = newValue
-                                    lastUpdateTime = Date()
-                                }
+                VStack(alignment: .leading, spacing: isExpanded ? 10 : 0) {
+                    rowSummaryLabel
+                        .contentShape(Rectangle())
+                        .onTapGesture {
+                            HapticFeedback.lightImpact()
+                            withAnimation(.easeInOut(duration: 0.22)) {
+                                isExpanded.toggle()
                             }
-                            .onChange(of: isPlaying) { _, playing in
-                                if playing, let current = currentTime {
-                                    lastKnownTime = current
-                                    lastUpdateTime = Date()
-                                    startSmoothTimer()
-                                } else {
-                                    stopSmoothTimer()
-                                }
+                        }
+
+                    if isExpanded {
+                        playerPanel
+                            .transition(.opacity.combined(with: .move(edge: .top)))
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+        }
+        .modifier(RecordingRowBackgroundModifier(
+            isPlaying: isPlaying,
+            isExpanded: isExpanded,
+            fillColor: rowFillColor
+        ))
+        .listRowSeparator(isExpanded ? .hidden : .automatic)
+    }
+
+    private var rowFillColor: Color {
+        if isPlaying {
+            return themeManager.accentColor.opacity(colorScheme == .dark ? 0.2 : 0.1)
+        }
+        if isExpanded {
+            return Color(.secondarySystemGroupedBackground)
+        }
+        return .clear
+    }
+
+    private var transportButtonFill: Color {
+        if isExpanded || isPlaying {
+            return colorScheme == .dark
+                ? Color(.systemBackground).opacity(0.55)
+                : Color(.secondarySystemGroupedBackground)
+        }
+        return Color(.tertiarySystemFill)
+    }
+
+    private var playerPanel: some View {
+        VStack(alignment: .leading, spacing: 18) {
+            waveformScrubber
+                .frame(maxWidth: .infinity)
+
+            timelineLabels
+
+            playerControls
+        }
+        .padding(.top, 16)
+        .padding(.bottom, 10)
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private var waveformScrubber: some View {
+        Group {
+            if FileManager.default.fileExists(atPath: recording.fileURL.path) {
+                WaveformView(
+                    recording: recording,
+                    currentTime: currentDisplayTime,
+                    duration: duration,
+                    onSeek: { time in
+                        dragValue = time
+                        displayTime = time
+                        lastKnownTime = time
+                        lastUpdateTime = Date()
+                        isDragging = true
+
+                        seekTask?.cancel()
+                        seekTask = Task {
+                            try? await Task.sleep(nanoseconds: 100_000_000)
+                            if !Task.isCancelled {
+                                onSeek(time)
                             }
-                            .onAppear {
-                                let initial = currentTime ?? 0
-                                displayTime = initial
-                                dragValue = initial
-                                lastKnownTime = initial
-                                lastUpdateTime = Date()
+                        }
+
+                        seekDelayTask?.cancel()
+                        seekDelayTask = Task {
+                            try? await Task.sleep(nanoseconds: 300_000_000)
+                            if !Task.isCancelled {
+                                isDragging = false
                                 if isPlaying {
                                     startSmoothTimer()
                                 }
                             }
-                            .onDisappear {
-                                stopSmoothTimer()
-                            }
-                            
-                            HStack {
-                                Text(formatTime(isDragging ? dragValue : displayTime))
-                                    .font(.system(.caption, design: .monospaced))
-                                    .foregroundColor(.secondary)
-                                
-                                Spacer()
-                                
-                                let remaining = max(0, duration - (isDragging ? dragValue : displayTime))
-                                Text(isPlaying ? "-\(formatTime(remaining))" : formatTime(duration))
-                                    .font(.system(.caption, design: .monospaced))
-                                    .foregroundColor(.secondary)
-                            }
                         }
-                        
-                        Picker("Speed", selection: Binding(
-                            get: { playbackRate },
-                            set: { newValue in
-                                onSpeedChange(newValue)
-                            }
-                        )) {
-                            Text("0.75x").tag(0.75 as Float)
-                            Text("1x").tag(1.0 as Float)
-                            Text("1.25x").tag(1.25 as Float)
-                            Text("1.5x").tag(1.5 as Float)
-                        }
-                        .pickerStyle(.segmented)
-                        .tint(themeManager.accentColor)
                     }
-                    .padding(.vertical, 8)
-                    
-                    GeometryReader { geometry in
-                        let screenWidth = geometry.size.width
-                        let padding = horizontalPadding * 2
-                        let availableWidth = screenWidth - padding
-                        
-                        let minWidthForAllButtons: CGFloat = 650
-                        let showTrimAndExport = availableWidth >= minWidthForAllButtons
-                        
-                        let totalButtons = showTrimAndExport ? 7 : 5
-                        let spacingCount = CGFloat(totalButtons - 1)
-                        let totalSpacing = spacingCount * buttonSpacing
-                        let maxButtonSize: CGFloat = isPhone ? 48 : 60
-                        let buttonSpace = availableWidth - totalSpacing
-                        let buttonSpacePerButton = buttonSpace / CGFloat(totalButtons)
-                        let calculatedButtonSize = min(maxButtonSize, buttonSpacePerButton)
-                        let actualButtonSize = max(40, calculatedButtonSize)
-                        
-                        HStack(spacing: buttonSpacing) {
-                            HStack(spacing: buttonSpacing) {
-                                Button(action: onEdit) {
-                                    Image(systemName: "pencil")
-                                        .font(.system(size: iconSize))
-                                }
-                                .buttonStyle(.plain)
-                                .frame(width: actualButtonSize, height: actualButtonSize)
-                                
-                                if showTrimAndExport {
-                                    Button(action: onTrim) {
-                                        Image(systemName: "scissors")
-                                            .font(.system(size: iconSize))
-                                    }
-                                    .buttonStyle(.plain)
-                                    .frame(width: actualButtonSize, height: actualButtonSize)
-                                }
-                            }
-                            
-                            Spacer(minLength: 0)
-                            
-                            HStack(spacing: buttonSpacing) {
-                                Button(action: onSkipBackward) {
-                                    Image(systemName: "gobackward.15")
-                                        .font(.system(size: iconSize))
-                                }
-                                .buttonStyle(.plain)
-                                .frame(width: actualButtonSize, height: actualButtonSize)
-                                
-                                Button(action: onPlayPause) {
-                                    Image(systemName: isPlaying ? "pause.fill" : "play.fill")
-                                        .font(.system(size: playIconSize))
-                                }
-                                .buttonStyle(.plain)
-                                .frame(width: actualButtonSize, height: actualButtonSize)
-                                
-                                Button(action: onSkipForward) {
-                                    Image(systemName: "goforward.15")
-                                        .font(.system(size: iconSize))
-                                }
-                                .buttonStyle(.plain)
-                                .frame(width: actualButtonSize, height: actualButtonSize)
-                            }
-                            
-                            Spacer(minLength: 0)
-                            
-                            HStack(spacing: buttonSpacing) {
-                                if showTrimAndExport {
-                                    Button(action: onExport) {
-                                        Image(systemName: "square.and.arrow.up")
-                                            .font(.system(size: iconSize))
-                                    }
-                                    .buttonStyle(.plain)
-                                    .frame(width: actualButtonSize, height: actualButtonSize)
-                                    .disabled(!FileManager.default.fileExists(atPath: recording.fileURL.path))
-                                }
-                                
-                                Button(role: .destructive, action: onDelete) {
-                                    Image(systemName: "trash")
-                                        .font(.system(size: iconSize - 3))
-                                }
-                                .buttonStyle(.plain)
-                                .frame(width: actualButtonSize, height: actualButtonSize)
-                            }
-                        }
-                        .padding(.horizontal, horizontalPadding)
-                    }
-                    .frame(height: buttonSize)
-                }
-                .frame(maxWidth: .infinity)
-            } label: {
-                rowSummaryLabel
+                )
+                .frame(maxWidth: .infinity, minHeight: 50, maxHeight: 50)
+            } else {
+                Slider(
+                    value: playbackPositionBinding,
+                    in: 0...max(duration, 0.1)
+                )
+                .tint(themeManager.accentColor)
+                .frame(height: 32)
             }
         }
-        .contentShape(Rectangle())
+        .accessibilityLabel("Playback position")
+        .accessibilityValue("\(formatTime(currentDisplayTime)) of \(formatTime(duration))")
+        .onChange(of: currentTime) { _, newValue in
+            handleCurrentTimeChange(newValue)
+        }
+        .onChange(of: isPlaying) { _, playing in
+            if playing, let current = currentTime {
+                lastKnownTime = current
+                lastUpdateTime = Date()
+                startSmoothTimer()
+            } else {
+                stopSmoothTimer()
+            }
+        }
+        .onAppear {
+            let initial = currentTime ?? 0
+            displayTime = initial
+            dragValue = initial
+            lastKnownTime = initial
+            lastUpdateTime = Date()
+            if isPlaying {
+                startSmoothTimer()
+            }
+        }
+        .onDisappear {
+            stopSmoothTimer()
+        }
+    }
+
+    private var playbackPositionBinding: Binding<TimeInterval> {
+        Binding(
+            get: {
+                if isDragging {
+                    return dragValue
+                }
+                return displayTime
+            },
+            set: { newValue in
+                dragValue = newValue
+                displayTime = newValue
+                lastKnownTime = newValue
+                lastUpdateTime = Date()
+                if !isDragging {
+                    isDragging = true
+                }
+
+                seekTask?.cancel()
+                seekTask = Task {
+                    try? await Task.sleep(nanoseconds: 100_000_000)
+                    if !Task.isCancelled {
+                        onSeek(newValue)
+                    }
+                }
+            }
+        )
+    }
+
+    private func handleCurrentTimeChange(_ newValue: TimeInterval?) {
+        guard let newValue else { return }
+
+        if isDragging {
+            if abs(newValue - dragValue) < 0.3 {
+                isDragging = false
+                displayTime = newValue
+                lastKnownTime = newValue
+                lastUpdateTime = Date()
+
+                seekDelayTask?.cancel()
+                seekDelayTask = Task {
+                    try? await Task.sleep(nanoseconds: 300_000_000)
+                    if !Task.isCancelled && isPlaying {
+                        startSmoothTimer()
+                    }
+                }
+            }
+        } else {
+            displayTime = newValue
+            dragValue = newValue
+            lastKnownTime = newValue
+            lastUpdateTime = Date()
+        }
+    }
+
+    private var timelineLabels: some View {
+        HStack {
+            Text(formatTime(currentDisplayTime))
+                .font(.system(.caption, design: .monospaced))
+                .foregroundStyle(.secondary)
+
+            Spacer()
+
+            let remaining = max(0, duration - currentDisplayTime)
+            Text(isPlaying ? "-\(formatTime(remaining))" : formatTime(duration))
+                .font(.system(.caption, design: .monospaced))
+                .foregroundStyle(.secondary)
+        }
+    }
+
+    private var playerControls: some View {
+        HStack(spacing: 0) {
+            moreActionsMenu
+
+            Spacer(minLength: 12)
+
+            HStack(spacing: 22) {
+                transportCircleButton(
+                    systemImage: "gobackward.15",
+                    accessibilityLabel: "Back 15 seconds",
+                    action: onSkipBackward
+                )
+
+                Button {
+                    HapticFeedback.lightImpact()
+                    onPlayPause()
+                } label: {
+                    Image(systemName: isPlaying ? "pause.fill" : "play.fill")
+                        .font(.title3.weight(.semibold))
+                        .foregroundStyle(.white)
+                        .offset(x: isPlaying ? 0 : 2)
+                        .frame(width: playButtonSize, height: playButtonSize)
+                        .background(themeManager.accentColor, in: Circle())
+                }
+                .buttonStyle(.borderless)
+                .accessibilityLabel(isPlaying ? "Pause" : "Play")
+
+                transportCircleButton(
+                    systemImage: "goforward.15",
+                    accessibilityLabel: "Forward 15 seconds",
+                    action: onSkipForward
+                )
+            }
+
+            Spacer(minLength: 12)
+
+            transportCircleButton(
+                systemImage: "trash",
+                accessibilityLabel: "Delete",
+                foregroundColor: .red,
+                role: .destructive,
+                action: onDelete
+            )
+        }
+        .padding(.top, 8)
+    }
+
+    private var moreActionsMenu: some View {
+        Menu {
+            Menu("Playback Speed") {
+                speedMenuButton(rate: 0.75, label: "0.75×")
+                speedMenuButton(rate: 1.0, label: "1×")
+                speedMenuButton(rate: 1.25, label: "1.25×")
+                speedMenuButton(rate: 1.5, label: "1.5×")
+            }
+
+            Divider()
+
+            Button {
+                onEdit()
+            } label: {
+                Label("Edit", systemImage: "pencil")
+            }
+
+            Button {
+                onTrim()
+            } label: {
+                Label("Trim", systemImage: "scissors")
+            }
+
+            Button {
+                onExport()
+            } label: {
+                Label("Export", systemImage: "square.and.arrow.up")
+            }
+            .disabled(!FileManager.default.fileExists(atPath: recording.fileURL.path))
+        } label: {
+            transportButtonLabel(systemImage: "ellipsis")
+        }
+        .buttonStyle(.borderless)
+        .accessibilityLabel("More recording actions")
+    }
+
+    private func transportButtonLabel(systemImage: String, foregroundColor: Color = .primary) -> some View {
+        Image(systemName: systemImage)
+            .font(.body.weight(.semibold))
+            .foregroundStyle(foregroundColor)
+            .frame(width: transportButtonSize, height: transportButtonSize)
+            .background(transportButtonFill, in: Circle())
+    }
+
+    private func transportCircleButton(
+        systemImage: String,
+        accessibilityLabel: String,
+        foregroundColor: Color = .primary,
+        role: ButtonRole? = nil,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button(role: role) {
+            HapticFeedback.lightImpact()
+            action()
+        } label: {
+            transportButtonLabel(systemImage: systemImage, foregroundColor: foregroundColor)
+        }
+        .buttonStyle(.borderless)
+        .accessibilityLabel(accessibilityLabel)
+    }
+
+    private func speedMenuButton(rate: Float, label: String) -> some View {
+        Button {
+            onSpeedChange(rate)
+        } label: {
+            if abs(playbackRate - rate) < 0.01 {
+                Label(label, systemImage: "checkmark")
+            } else {
+                Text(label)
             }
         }
     }
@@ -356,7 +431,7 @@ struct RecordingRowView: View {
     private func startSmoothTimer() {
         stopSmoothTimer()
         guard isPlaying, !isDragging else { return }
-        smoothUpdateTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { timer in
+        let newTimer = Timer(timeInterval: 0.1, repeats: true) { timer in
             guard self.isPlaying, !self.isDragging, let lastUpdate = self.lastUpdateTime else {
                 timer.invalidate()
                 self.smoothUpdateTimer = nil
@@ -366,6 +441,8 @@ struct RecordingRowView: View {
             let interpolated = self.lastKnownTime + (elapsed * Double(self.playbackRate))
             self.displayTime = min(interpolated, self.duration)
         }
+        RunLoop.main.add(newTimer, forMode: .common)
+        smoothUpdateTimer = newTimer
     }
     
     private func stopSmoothTimer() {
@@ -380,4 +457,17 @@ struct RecordingRowView: View {
     }
 }
 
+private struct RecordingRowBackgroundModifier: ViewModifier {
+    let isPlaying: Bool
+    let isExpanded: Bool
+    let fillColor: Color
+
+    func body(content: Content) -> some View {
+        if isPlaying || isExpanded {
+            content.listRowBackground(fillColor)
+        } else {
+            content
+        }
+    }
+}
 

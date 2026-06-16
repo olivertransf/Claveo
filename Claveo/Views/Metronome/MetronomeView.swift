@@ -24,6 +24,7 @@ struct MetronomeView: View {
     @State var customTop: Int = 4
     @State var customBottom: Int = 4
     @FocusState var isToneFrequencyFocused: Bool
+    @Environment(\.colorScheme) var colorScheme
     /// Last note button tapped (0–11). Non-nil once the user has picked any note.
     @State var selectedNoteIndex: Int? = nil
     
@@ -125,24 +126,15 @@ struct MetronomeView: View {
     var volumeSheet: some View {
         NavigationStack {
             Form {
-                Section {
-                    VStack(alignment: .leading, spacing: 12) {
-                        HStack {
-                            Image(systemName: "speaker.wave.2.fill")
-                                .font(.title3)
-                                .foregroundColor(themeManager.accentColor)
-                            Text("System Volume")
-                                .font(.headline)
-                        }
-                        
-                        SystemVolumeSlider()
-                            .frame(height: 40)
-                            .padding(.vertical, 8)
-                    }
-                    .padding(.vertical, 8)
+                Section("System Volume") {
+                    SystemVolumeSlider()
+                        .frame(height: 40)
+                        .padding(.vertical, 8)
                 }
+
+                MetronomeSettingsSection()
             }
-            .navigationTitle("System Volume")
+            .navigationTitle("Metronome Settings")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {

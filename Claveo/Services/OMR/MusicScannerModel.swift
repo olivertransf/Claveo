@@ -8,7 +8,7 @@ import CoreML
 import UIKit
 
 final class MusicScannerModel: @unchecked Sendable {
-    private let model: MLModel
+    private nonisolated(unsafe) let model: MLModel
     private let inputName: String
     private let outputName: String
     nonisolated static let inputSize = 640
@@ -256,7 +256,7 @@ final class MusicScannerModel: @unchecked Sendable {
 }
 
 private extension CGImage {
-    func toCVPixelBuffer(width: Int, height: Int) -> CVPixelBuffer? {
+    nonisolated func toCVPixelBuffer(width: Int, height: Int) -> CVPixelBuffer? {
         let attrs: [CFString: Any] = [kCVPixelBufferCGImageCompatibilityKey: true, kCVPixelBufferCGBitmapContextCompatibilityKey: true]
         var pixelBuffer: CVPixelBuffer?
         let status = CVPixelBufferCreate(kCFAllocatorDefault, width, height, kCVPixelFormatType_32BGRA, attrs as CFDictionary, &pixelBuffer)

@@ -8,22 +8,22 @@
     {
       "term": "12-bar blues progression",
       "definition": "Typically comprises three phrases of four bars each. The first phrase is entirely tonic harmony (I). The second phrase contains two bars of subdominant (IV) and two bars of tonic (I). The final phrase begins with one bar of dominant (V) followed by one bar of subdominant (IV) and two bars of tonic (I). The third phrase may or may not end with a turnaround.",
-      "category": "Notation"
+      "category": "Form"
     },
     {
       "term": "16-bar blues progression",
       "definition": "A variation on the 12-bar blues progression. Typically composed of four four-bar phrases, usually two iterations of tonic, followed by subdominant and dominant. The final phrase may or may not end with a turnaround.",
-      "category": "Notation"
+      "category": "Form"
     },
     {
       "term": "a tempo",
       "definition": "Used after tempo alterations, such as ritardando or accelerando. Indicates a return to the original tempo.",
-      "category": "Rhythm"
+      "category": "Tempo"
     },
     {
       "term": "AABA form",
       "definition": "Also called 32-bar song form. AABA consists of at least four sections. It begins by repeating two strophes, moving to a contrasting bridge section, and then repeating the primary strophe again. AABA forms typically then include another repetition of BA, making the entire form AABABA.",
-      "category": "Notation"
+      "category": "Form"
     },
     {
       "term": "absent tonic",
@@ -38,16 +38,16 @@
     {
       "term": "accelerando",
       "definition": "A gradual increase in speed (tempo).",
-      "category": "Rhythm"
+      "category": "Tempo"
     },
     {
       "term": "accent cymbals",
-      "definition": "Cymbals ranging in size (6\u201318\u201d diameters are common) and thickness. Some have shapes and contours unlike other cymbals or are augmented with rivets or large holes. Depending on size, contour, and playing technique, these can produce a variety of crashing, splashing, sizzling, and barking sounds.",
+      "definition": "Cymbals ranging in size (6–18” diameters are common) and thickness. Some have shapes and contours unlike other cymbals or are augmented with rivets or large holes. Depending on size, contour, and playing technique, these can produce a variety of crashing, splashing, sizzling, and barking sounds.",
       "category": "Notation"
     },
     {
       "term": "acoustic collection",
-      "definition": "A seven-note collection similar to the mixolydian mode but with fi (\u21914\u0302); corresponds roughly to the lowest partials of the harmonic series.",
+      "definition": "A seven-note collection similar to the mixolydian mode but with fi (↑4̂); corresponds roughly to the lowest partials of the harmonic series.",
       "category": "Notation"
     },
     {
@@ -63,21 +63,21 @@
     {
       "term": "ADSR envelope",
       "definition": "A profile that represents fluctuations in amplitude over time. ADSR stands for attack, decay, sustain, and release.",
-      "category": "Rhythm"
+      "category": "General"
     },
     {
       "term": "aeolian",
-      "definition": "A diatonic mode that follows the pattern W\u2013H\u2013W\u2013W\u2013H\u2013W\u2013W. This is like the natural minor scale. This scale can also be found by playing the white notes of the piano starting on A.",
-      "category": "Notation"
+      "definition": "A diatonic mode that follows the pattern W–H–W–W–H–W–W. This is like the natural minor scale. This scale can also be found by playing the white notes of the piano starting on A.",
+      "category": "Theory"
     },
     {
       "term": "aeolian cadence",
-      "definition": "\u266dVI\u2013\u266dVII\u2013i, or A\u266d\u2013B\u266d\u2013Cmi in C minor. This schema implies the aeolian mode. Very frequently, the i chord is altered to be major, yielding a sequence of three major chords related by steps in the same direction. This progression, especially with a major I chord, is often associated with heroic themes in video games and movies.",
+      "definition": "♭VI–♭VII–i, or A♭–B♭–Cmi in C minor. This schema implies the aeolian mode. Very frequently, the i chord is altered to be major, yielding a sequence of three major chords related by steps in the same direction. This progression, especially with a major I chord, is often associated with heroic themes in video games and movies.",
       "category": "Theory"
     },
     {
       "term": "aeolian shuttle",
-      "definition": "i\u2013\u266dVII\u2013\u266dVI\u2013\u266dVII. This progression can be understood as a shuttle between i and \u266dVI, with the intermediate \u266dVIIs acting as passing chords.",
+      "definition": "i–♭VII–♭VI–♭VII. This progression can be understood as a shuttle between i and ♭VI, with the intermediate ♭VIIs acting as passing chords.",
       "category": "Theory"
     },
     {
@@ -87,7 +87,7 @@
     },
     {
       "term": "after-beat fifths or octaves",
-      "definition": "Two consecutive weak-beat fifths or octaves in fourth species counterpoint; e.g., from two successive 9\u20138 suspensions.",
+      "definition": "Two consecutive weak-beat fifths or octaves in fourth species counterpoint; e.g., from two successive 9–8 suspensions.",
       "category": "Rhythm"
     },
     {
@@ -107,7 +107,7 @@
     },
     {
       "term": "American Standard Pitch Notation (ASPN)",
-      "definition": "Designates specific musical frequencies by combining a note name (such as C) with an octave designation (such as 4), creating a bipartite label (C\u2084).",
+      "definition": "Designates specific musical frequencies by combining a note name (such as C) with an octave designation (such as 4), creating a bipartite label (C₄).",
       "category": "Notation"
     },
     {
@@ -138,7 +138,7 @@
     {
       "term": "antiphony",
       "definition": "A call-and-response texture in which musical material is passed from group to group.",
-      "category": "General"
+      "category": "Performance"
     },
     {
       "term": "applied chord",
@@ -153,7 +153,7 @@
     {
       "term": "archetype",
       "definition": "Phrases that are \"archetypal\" or that follow an archetype are related to the sentence, the period, or one of the hybrid phrase-level forms.",
-      "category": "General"
+      "category": "Form"
     },
     {
       "term": "arpeggiating 6/4",
@@ -187,8 +187,8 @@
     },
     {
       "term": "Augenmusik",
-      "definition": "German for \u201ceye music;\u201d a type of music notation which alters the design and layout of traditional musical features to display a shape, design, or picture.",
-      "category": "General"
+      "definition": "German for “eye music;” a type of music notation which alters the design and layout of traditional musical features to display a shape, design, or picture.",
+      "category": "Notation"
     },
     {
       "term": "augmented intervals",
@@ -212,18 +212,18 @@
     },
     {
       "term": "authentic cadence",
-      "definition": "A cadence with the harmonies V\u2013I. The harmonies are typically in root position. Authentic cadences can be further distinguished by their melody note in the I chord: an authentic cadence ending on 1\u0302 in the melody is a perfect authentic cadence, while one with 3\u0302 or 5\u0302 in the melody is an imperfect authentic cadence.",
+      "definition": "A cadence with the harmonies V–I. The harmonies are typically in root position. Authentic cadences can be further distinguished by their melody note in the I chord: an authentic cadence ending on 1̂ in the melody is a perfect authentic cadence, while one with 3̂ or 5̂ in the melody is an imperfect authentic cadence.",
       "category": "Notation"
     },
     {
       "term": "auxiliary percussion",
       "definition": "Unpitched percussion instruments that are not the drum kit (in pop music) or the snare, bass drum, cymbals, or timpani (in classical music). Examples include tambourine, triangle, castanets, or claves, although there are too many auxiliary percussion instruments to list.",
-      "category": "Instruments"
+      "category": "Notation"
     },
     {
       "term": "auxiliary section",
       "definition": "Auxiliary sections help frame the core sections: introducing them, providing temporary relief from them, or winding down from them.",
-      "category": "Rhythm"
+      "category": "Form"
     },
     {
       "term": "backbeat",
@@ -261,14 +261,14 @@
       "category": "Notation"
     },
     {
-      "term": "becoming \u21d2 (the process of)",
-      "definition": "The process of becoming is an analytical phenomenon that captures an in-time, analytical reinterpretation regarding a formal/phrasal unit's function, abbreviated with a rightward double arrow symbol (\u21d2). Examples include primary theme \u21d2 transition, continuation \u21d2 cadential, or suffix \u21d2 transition.",
-      "category": "Rhythm"
+      "term": "becoming ⇒ (the process of)",
+      "definition": "The process of becoming is an analytical phenomenon that captures an in-time, analytical reinterpretation regarding a formal/phrasal unit's function, abbreviated with a rightward double arrow symbol (⇒). Examples include primary theme ⇒ transition, continuation ⇒ cadential, or suffix ⇒ transition.",
+      "category": "Form"
     },
     {
       "term": "beginning",
       "definition": "One of three formal functions (with the other two being middle and ending). Beginnings are often signaled by establishment of a new melody or repetition of the beginning of a previously heard melody, emphasis on tonic harmony (especially root position), a melody that opens up musical space by ascending, a statement of a motive that is developed through the remainder of the phrase.",
-      "category": "Theory"
+      "category": "Form"
     },
     {
       "term": "binary form",
@@ -288,7 +288,7 @@
     {
       "term": "bridge",
       "definition": "A type of contrasting section that tends to function transitionally in the formal cycle. Bridges tend to emphasize non-tonic harmonies and commonly end on dominant harmony.",
-      "category": "Theory"
+      "category": "Form"
     },
     {
       "term": "bright (timbre)",
@@ -302,12 +302,12 @@
     },
     {
       "term": "cadential",
-      "definition": "One of the three common ending types. Its distinguishing characteristic is its bass line: mi\u2013fa\u2013sol\u2013do (3\u0302\u20134\u0302\u20135\u0302\u20131\u0302), which may be elaborated with chromaticism.",
-      "category": "General"
+      "definition": "One of the three common ending types. Its distinguishing characteristic is its bass line: mi–fa–sol–do (3̂–4̂–5̂–1̂), which may be elaborated with chromaticism.",
+      "category": "Theory"
     },
     {
       "term": "cadential 6/4",
-      "definition": "A common embellishment of the cadential V chord, in which the fifth of the V chord (re, 2\u0302) is replaced with the sixth (mi/me, 3\u0302) and the third (ti, 7\u0302) is replaced with the fourth (do, 1\u0302). The sixth and fourth form a 6/4 chord, hence its label. The cadential 6/4 resembles a I6/4 in its pitch content.",
+      "definition": "A common embellishment of the cadential V chord, in which the fifth of the V chord (re, 2̂) is replaced with the sixth (mi/me, 3̂) and the third (ti, 7̂) is replaced with the fourth (do, 1̂). The sixth and fourth form a 6/4 chord, hence its label. The cadential 6/4 resembles a I6/4 in its pitch content.",
       "category": "Theory"
     },
     {
@@ -323,11 +323,11 @@
     {
       "term": "call-and-response",
       "definition": "A feature of musical phrasing that features a simulated dialogue between two instruments or groups of instruments.",
-      "category": "Articulation"
+      "category": "Performance"
     },
     {
       "term": "cantus firmus",
-      "definition": "Literally meaning \u201cfixed voice,\" this is a pre-existing melodic line that serves as the basis for a new counterpoint exercise or other composition.",
+      "definition": "Literally meaning “fixed voice,\" this is a pre-existing melodic line that serves as the basis for a new counterpoint exercise or other composition.",
       "category": "Theory"
     },
     {
@@ -358,7 +358,7 @@
     {
       "term": "china cymbal",
       "definition": "A kind of crash cymbal with an especially bright, forward, and splashy sound.",
-      "category": "General"
+      "category": "Instruments"
     },
     {
       "term": "chord",
@@ -382,18 +382,18 @@
     },
     {
       "term": "chord symbols",
-      "definition": "A system of naming chords that specifies the note name of the root, chord quality, and any alterations. Some basic symbols are given below as a quick reference, but for more detail, see the Chord Symbols chapter. chord quality chord symbol (for a chord with a root of C) major triad C minor triad Cmi, Cm, C- diminished triad Co, Cdim augmented triad C+, Caug dominant seventh chord C7 major seventh chord Cma7, C\u22067, Cmaj7 minor seventh chord Cmi7, C-7, Cm7 half-diminished seventh chord C\u00f87, Cm7\u266d5, C-7\u266d5 diminished seventh chord Co7",
+      "definition": "A system of naming chords that specifies the note name of the root, chord quality, and any alterations. Some basic symbols are given below as a quick reference, but for more detail, see the Chord Symbols chapter. chord quality chord symbol (for a chord with a root of C) major triad C minor triad Cmi, Cm, C- diminished triad Co, Cdim augmented triad C+, Caug dominant seventh chord C7 major seventh chord Cma7, C∆7, Cmaj7 minor seventh chord Cmi7, C-7, Cm7 half-diminished seventh chord Cø7, Cm7♭5, C-7♭5 diminished seventh chord Co7",
       "category": "Notation"
     },
     {
       "term": "chordal seventh",
-      "definition": "Refers to the seventh above the root of a chord. For example, V\u2077 in the key of C is spelled G-B-D-F; F is the chordal seventh.",
+      "definition": "Refers to the seventh above the root of a chord. For example, V⁷ in the key of C is spelled G-B-D-F; F is the chordal seventh.",
       "category": "Theory"
     },
     {
       "term": "chorus",
       "definition": "A core section of a popular song that is lyric-invariant and contains the primary lyrical material of the song. Chorus function is also typified by heightened musical intensity relative to the verse. Chorus sections are distinct from refrains, which are contained within a section.",
-      "category": "Dynamics"
+      "category": "Form"
     },
     {
       "term": "chorusification",
@@ -417,12 +417,12 @@
     },
     {
       "term": "class",
-      "definition": "In set theory, a class is a group whose members are all equivalent in some sense\u2014transposition, inversion, octave, enharmonic, etc.",
+      "definition": "In set theory, a class is a group whose members are all equivalent in some sense—transposition, inversion, octave, enharmonic, etc.",
       "category": "Theory"
     },
     {
       "term": "clausula vera",
-      "definition": "A contrapuntal cadence in which a perfect octave or unison is approached through contrary motion by step. One line will have re\u2013do (2\u0302\u2013 1\u0302) while the other has ti\u2013do (7\u0302-1\u0302). This results in the sequence of harmonic intervals sixth\u2013octave, tenth\u2013octave, or third\u2013unison.",
+      "definition": "A contrapuntal cadence in which a perfect octave or unison is approached through contrary motion by step. One line will have re–do (2̂– 1̂) while the other has ti–do (7̂-1̂). This results in the sequence of harmonic intervals sixth–octave, tenth–octave, or third–unison.",
       "category": "Theory"
     },
     {
@@ -437,7 +437,7 @@
     },
     {
       "term": "closing section",
-      "definition": "A large suffix in sonata-form works. The closing section is usually very stable and often consists of many V\u2013I or IV\u2013I motions confirming the local tonic.",
+      "definition": "A large suffix in sonata-form works. The closing section is usually very stable and often consists of many V–I or IV–I motions confirming the local tonic.",
       "category": "Form"
     },
     {
@@ -457,8 +457,8 @@
     },
     {
       "term": "common practice",
-      "definition": "A periodization of Western music utilized by music theorists and musicologists encompassing c. 1600\u20131900.",
-      "category": "General"
+      "definition": "A periodization of Western music utilized by music theorists and musicologists encompassing c. 1600–1900.",
+      "category": "Theory"
     },
     {
       "term": "common tone",
@@ -466,8 +466,8 @@
       "category": "Theory"
     },
     {
-      "term": "common-tone diminished seventh chord (CT\u00b0\u2077)",
-      "definition": "A diminished seventh chord that, instead of having dominant function, is a neighbor chord that embellishes the chord that comes after it. The CT\u00b0\u2077 has a common tone with the root of the following chord; all the other notes are a step away from a note in the following chord.",
+      "term": "common-tone diminished seventh chord (CT°⁷)",
+      "definition": "A diminished seventh chord that, instead of having dominant function, is a neighbor chord that embellishes the chord that comes after it. The CT°⁷ has a common tone with the root of the following chord; all the other notes are a step away from a note in the following chord.",
       "category": "Notation"
     },
     {
@@ -523,7 +523,7 @@
     {
       "term": "conductor",
       "definition": "The director of an ensemble.",
-      "category": "General"
+      "category": "Performance"
     },
     {
       "term": "connective auxiliary sections",
@@ -533,7 +533,7 @@
     {
       "term": "consequent",
       "definition": "A phrase consisting of a basic idea followed by a contrasting idea that ends with a strong cadence. It usually forms the second half of a phrase-level form.",
-      "category": "Theory"
+      "category": "Form"
     },
     {
       "term": "consonance",
@@ -543,7 +543,7 @@
     {
       "term": "consonant passing tone",
       "definition": "Passing motion that does not involve dissonance.",
-      "category": "General"
+      "category": "Theory"
     },
     {
       "term": "continuation",
@@ -553,7 +553,7 @@
     {
       "term": "contour lines",
       "definition": "Lines that indicate whether pitch moves up, down, or stays the same.",
-      "category": "General"
+      "category": "Notation"
     },
     {
       "term": "contraction",
@@ -567,13 +567,13 @@
     },
     {
       "term": "contrary motion",
-      "definition": "When two voices move melodically in opposite directions\u2014that is, one voice moves up and the other moves down.",
+      "definition": "When two voices move melodically in opposite directions—that is, one voice moves up and the other moves down.",
       "category": "Theory"
     },
     {
       "term": "contrasting beginning",
       "definition": "The contrasting beginning is like an antecedent without a cadence. It is a beginning part of a phrase-level form that consists of a basic idea followed by a contrasting idea, and it doesn't end with a cadence.",
-      "category": "Theory"
+      "category": "Form"
     },
     {
       "term": "contrasting idea",
@@ -612,7 +612,7 @@
     },
     {
       "term": "crash cymbal",
-      "definition": "A mid-sized suspended cymbal. Can be various diameters (16\u201318\u201d are typical) and thicknesses. Depending on size, contour, and playing technique, these can produce a variety of crashing, splashing, sizzling, and barking sounds.",
+      "definition": "A mid-sized suspended cymbal. Can be various diameters (16–18” are typical) and thicknesses. Depending on size, contour, and playing technique, these can produce a variety of crashing, splashing, sizzling, and barking sounds.",
       "category": "Notation"
     },
     {
@@ -628,7 +628,7 @@
     {
       "term": "cycle",
       "definition": "A grouping that contains one or more sections, typically in the same order. Sometimes one or more sections are omitted in the repetition of a cycle, especially toward the end of a song.",
-      "category": "Rhythm"
+      "category": "Form"
     },
     {
       "term": "dance chorus",
@@ -638,11 +638,11 @@
     {
       "term": "decay",
       "definition": "In a sound signal's envelope, the decay is the second phase, in which the loudness of the sound decreases after the initial peak (attack).",
-      "category": "Dynamics"
+      "category": "General"
     },
     {
       "term": "deceptive motion",
-      "definition": "A cadence-like resolution from V to a non-tonic harmony. The most common deceptive motion is V\u2013vi; the next most common is V\u2013IV\u2076.",
+      "definition": "A cadence-like resolution from V to a non-tonic harmony. The most common deceptive motion is V–vi; the next most common is V–IV⁶.",
       "category": "Theory"
     },
     {
@@ -677,7 +677,7 @@
     },
     {
       "term": "diatonic",
-      "definition": "1. A scale, mode, or collection that follows the pattern of whole and half steps W\u2013W\u2013H\u2013W\u2013W\u2013W\u2013H, or any rotation of that pattern. 2. Belonging to the local key (as opposed to \"chromatic\").",
+      "definition": "1. A scale, mode, or collection that follows the pattern of whole and half steps W–W–H–W–W–W–H, or any rotation of that pattern. 2. Belonging to the local key (as opposed to \"chromatic\").",
       "category": "Theory"
     },
     {
@@ -713,7 +713,7 @@
     {
       "term": "direct fifths or octaves",
       "definition": "Similar motion into a fifth or octave. Also called hidden fifths or octaves.",
-      "category": "General"
+      "category": "Notation"
     },
     {
       "term": "discrete",
@@ -747,12 +747,12 @@
     },
     {
       "term": "dominant function",
-      "definition": "A category of chords that provides a sense of urgency to resolve toward the tonic chord, including V and vii\u00b0 (in minor: V and vii\u00b0).",
+      "definition": "A category of chords that provides a sense of urgency to resolve toward the tonic chord, including V and vii° (in minor: V and vii°).",
       "category": "Theory"
     },
     {
       "term": "dominant lock",
-      "definition": "Extensive prolongation of the V chord. Also known as \"standing on the dominant.\" Often involves a pedal point on sol (5\u0302).",
+      "definition": "Extensive prolongation of the V chord. Also known as \"standing on the dominant.\" Often involves a pedal point on sol (5̂).",
       "category": "Theory"
     },
     {
@@ -762,27 +762,27 @@
     },
     {
       "term": "doo-wop schema",
-      "definition": "\ud834\udd06I \u2013 VI \u2013 IV \u2013 V \ud834\udd07, or C \u2013 Ami \u2013 F \u2013 G in C major. Common alterations: substituting ii for IV; rotation.",
+      "definition": "𝄆I – VI – IV – V 𝄇, or C – Ami – F – G in C major. Common alterations: substituting ii for IV; rotation.",
       "category": "General"
     },
     {
       "term": "dorian",
-      "definition": "A diatonic mode that follows the pattern W\u2013H\u2013W\u2013W\u2013W\u2013H\u2013W. This is like the natural minor scale, but with a raised scale degree 6. This scale can also be found by playing the white notes of the piano starting on D.",
-      "category": "Notation"
+      "definition": "A diatonic mode that follows the pattern W–H–W–W–W–H–W. This is like the natural minor scale, but with a raised scale degree 6. This scale can also be found by playing the white notes of the piano starting on D.",
+      "category": "Theory"
     },
     {
       "term": "dorian shuttle",
-      "definition": "IV\u2013i, or F\u2013Cmi in C minor. This shuttle implies the dorian mode. It can sound like ii\u2013V to someone who is not used to the dorian mode.",
+      "definition": "IV–i, or F–Cmi in C minor. This shuttle implies the dorian mode. It can sound like ii–V to someone who is not used to the dorian mode.",
       "category": "Theory"
     },
     {
       "term": "double neighbor",
-      "definition": "An embellishment that surrounds a note with its upper and lower neighbor (e.g., C\u2013B\u2013D\u2013C). The note being embellished may be articulated between the two neighbor tones, as in C\u2013D\u2013C\u2013B\u2013C.",
+      "definition": "An embellishment that surrounds a note with its upper and lower neighbor (e.g., C–B–D–C). The note being embellished may be articulated between the two neighbor tones, as in C–D–C–B–C.",
       "category": "Notation"
     },
     {
       "term": "double plagal schema",
-      "definition": "\u266dVII\u2013IV\u2013I, or B\u266d\u2013F\u2013C in C major. The term comes from duplicating the plagal relationship (IV\u2013I) by applying it to IV as well (IV/IV\u2013IV, or \u266dVII\u2013IV).",
+      "definition": "♭VII–IV–I, or B♭–F–C in C major. The term comes from duplicating the plagal relationship (IV–I) by applying it to IV as well (IV/IV–IV, or ♭VII–IV).",
       "category": "General"
     },
     {
@@ -843,12 +843,12 @@
     {
       "term": "episode",
       "definition": "A term used when describing the sections of a rondo form that are not the main theme (a.k.a. A or refrain). Episodes provide contrast with the main theme through changes in multiple domains, primarily key and melodic/rhythmic/harmonic material.",
-      "category": "Theory"
+      "category": "Form"
     },
     {
       "term": "escape tone",
       "definition": "An embellishing tone that is approached by step and left by leap in the opposite direction.",
-      "category": "General"
+      "category": "Theory"
     },
     {
       "term": "essential expositional cadence (EEC)",
@@ -878,12 +878,12 @@
     {
       "term": "exposition (sonata form)",
       "definition": "The first large section in a sonata-form work. It usually establishes the main themes of a work and sets up a conflict that is later resolved in the work. This conflict often takes the form of differing key centers (such as when the primary theme of a sonata is in tonic and the secondary theme is in the dominant).",
-      "category": "Theory"
+      "category": "Form"
     },
     {
       "term": "extended cadential ending",
-      "definition": "A subphrase that harmonizes the core bass pattern mi\u2013fa\u2013sol\u2013do (3\u0302\u20134\u0302\u20135\u0302\u20131\u0302). Functions similarly to a continuation.",
-      "category": "General"
+      "definition": "A subphrase that harmonizes the core bass pattern mi–fa–sol–do (3̂–4̂–5̂–1̂). Functions similarly to a continuation.",
+      "category": "Theory"
     },
     {
       "term": "extension (harmony)",
@@ -927,7 +927,7 @@
     },
     {
       "term": "fixed do",
-      "definition": "A system of solf\u00e8ge in which do is always the pitch class C, re the pitch class D, etc., regardless of scale.",
+      "definition": "A system of solfège in which do is always the pitch class C, re the pitch class D, etc., regardless of scale.",
       "category": "Notation"
     },
     {
@@ -943,7 +943,7 @@
     {
       "term": "Forte number",
       "definition": "A nomenclature for set classes developed by Allen Forte; each set class has a unique Forte number. The first number refers to the cardinality of the set, and the second number is semi-arbitrary, but generally proceeds from the most compact to the most expanded set.",
-      "category": "Dynamics"
+      "category": "Notation"
     },
     {
       "term": "four on the floor",
@@ -963,7 +963,7 @@
     {
       "term": "free atonal music",
       "definition": "Music that is atonal, avoiding a traditional pitch center and harmonic hierarchy, but is not serial.",
-      "category": "General"
+      "category": "Theory"
     },
     {
       "term": "free counterpoint",
@@ -978,7 +978,7 @@
     {
       "term": "frequency",
       "definition": "Acoustically, how often a sound wave repeats; the pitch of a sound.",
-      "category": "General"
+      "category": "Notation"
     },
     {
       "term": "fully diminished seventh chord",
@@ -988,16 +988,16 @@
     {
       "term": "function",
       "definition": "The role that a musical element plays in the creation of a larger musical unit.",
-      "category": "General"
+      "category": "Theory"
     },
     {
       "term": "functional bass layer",
       "definition": "A layer within a pop song texture that provides a harmonic foundation for the track. Bass-register instruments likely belong to in this layer.",
-      "category": "General"
+      "category": "Theory"
     },
     {
       "term": "functional layer",
-      "definition": "An instrument or group of instruments that perform a specific role within a pop song texture. These roles are: \u2022 the explicit beat layer \u2022 the functional bass layer \u2022 the melodic layer \u2022 the harmonic filler layer \u2022 the novelty layer",
+      "definition": "An instrument or group of instruments that perform a specific role within a pop song texture. These roles are: • the explicit beat layer • the functional bass layer • the melodic layer • the harmonic filler layer • the novelty layer",
       "category": "Rhythm"
     },
     {
@@ -1033,7 +1033,7 @@
     {
       "term": "ground bass",
       "definition": "A repeated bass pattern that forms the foundation for a set of variations, not unlike the cyclical progressions of pop/rock songs.",
-      "category": "Theory"
+      "category": "Form"
     },
     {
       "term": "grouping dissonance",
@@ -1047,7 +1047,7 @@
     },
     {
       "term": "half cadence (HC)",
-      "definition": "A kind of inconclusive cadence that occurs when a phrase ends on V. Occasionally, particularly in Romantic music, the final chord of a half cadence will be V\u2077.",
+      "definition": "A kind of inconclusive cadence that occurs when a phrase ends on V. Occasionally, particularly in Romantic music, the final chord of a half cadence will be V⁷.",
       "category": "Theory"
     },
     {
@@ -1092,12 +1092,12 @@
     },
     {
       "term": "harmonic major",
-      "definition": "A major scale with le (\u21936\u0302) instead of la (6\u0302): do\u2013re\u2013mi\u2013fa\u2013sol\u2013le\u2013ti\u2013do (1\u0302\u20132\u0302\u20133\u0302\u20134\u0302\u20135\u0302\u2013\u21936\u0302\u20137\u0302\u20131\u0302).",
+      "definition": "A major scale with le (↓6̂) instead of la (6̂): do–re–mi–fa–sol–le–ti–do (1̂–2̂–3̂–4̂–5̂–↓6̂–7̂–1̂).",
       "category": "Theory"
     },
     {
       "term": "harmonic minor",
-      "definition": "An ordered collection of half and whole steps with the ascending succession W\u2013H\u2013W\u2013W\u2013H\u20133Hs\u2013H. Like natural minor, but with a raised leading tone.",
+      "definition": "An ordered collection of half and whole steps with the ascending succession W–H–W–W–H–3Hs–H. Like natural minor, but with a raised leading tone.",
       "category": "Theory"
     },
     {
@@ -1107,7 +1107,7 @@
     },
     {
       "term": "harmonic series",
-      "definition": "A series of notes whose frequencies are multiples of the first frequency: 1:1, 1:2, 1:3, 1:4, 1:5, etc. Starting with the pitch C\u2082, this would result in the series of pitches C\u2082, C\u2083, G\u2083, C\u2084, E\u2084, G\u2084, B\u266d\u2084, C\u2085, etc.",
+      "definition": "A series of notes whose frequencies are multiples of the first frequency: 1:1, 1:2, 1:3, 1:4, 1:5, etc. Starting with the pitch C₂, this would result in the series of pitches C₂, C₃, G₃, C₄, E₄, G₄, B♭₄, C₅, etc.",
       "category": "Notation"
     },
     {
@@ -1138,7 +1138,7 @@
     {
       "term": "head refrain",
       "definition": "A refrain that is the first line or so of the section's text.",
-      "category": "General"
+      "category": "Form"
     },
     {
       "term": "hemiola",
@@ -1153,7 +1153,7 @@
     {
       "term": "heterophony",
       "definition": "A musical texture with multiple simultaneous variants on a single melodic line.",
-      "category": "General"
+      "category": "Performance"
     },
     {
       "term": "hexachord",
@@ -1167,18 +1167,18 @@
     },
     {
       "term": "hexatonic scale",
-      "definition": "A six-note collection that alternates between half steps and minor thirds, such as C\u2013C\u266f\u2013E\u2013F\u2013G\u266f\u2013A.",
+      "definition": "A six-note collection that alternates between half steps and minor thirds, such as C–C♯–E–F–G♯–A.",
       "category": "Notation"
     },
     {
       "term": "Hexpole (H) transformation",
-      "definition": "A Neo-Riemannian transformation that connects a triad to its modal opposite a third away by moving each voice by a single semitone (e.g., connecting C major and A\u266d minor).",
+      "definition": "A Neo-Riemannian transformation that connects a triad to its modal opposite a third away by moving each voice by a single semitone (e.g., connecting C major and A♭ minor).",
       "category": "Theory"
     },
     {
       "term": "Hi-hat cymbals",
-      "definition": "A pair of smaller cymbals, matched in size, typically 14\u201d in diameter, mounted on a specially designed stand. The bottom cymbal sits upside down, unmoving, and the top cymbal is attached to the stand so that it can be controlled by a foot pedal. When struck, the hi-hats\u2019 timbre depends on how open or closed the two cymbals are. The hi-hat is most often struck while closed, producing a characteristic, bright \u201ctick tick tick\u201d; the open sound has a more aggressive crashing or rattling quality; and a wide range of intermediate timbres are also available. When played with the foot pedal only, the cymbals make a splashing effect.",
-      "category": "Rhythm"
+      "definition": "A pair of smaller cymbals, matched in size, typically 14” in diameter, mounted on a specially designed stand. The bottom cymbal sits upside down, unmoving, and the top cymbal is attached to the stand so that it can be controlled by a foot pedal. When struck, the hi-hats’ timbre depends on how open or closed the two cymbals are. The hi-hat is most often struck while closed, producing a characteristic, bright “tick tick tick”; the open sound has a more aggressive crashing or rattling quality; and a wide range of intermediate timbres are also available. When played with the foot pedal only, the cymbals make a splashing effect.",
+      "category": "Instruments"
     },
     {
       "term": "hierarchical",
@@ -1193,7 +1193,7 @@
     {
       "term": "homophony",
       "definition": "A musical texture consisting of one melodic part (usually the topmost) and other subordinate accompanying parts. This includes chorale texture and melody-and-accompaniment texture.",
-      "category": "Theory"
+      "category": "Performance"
     },
     {
       "term": "homorhythm",
@@ -1202,7 +1202,7 @@
     },
     {
       "term": "hopscotch schema",
-      "definition": "IV\u2013V\u2013vi\u2013I. This four-chord schema has become increasingly common in pop music since 2010.",
+      "definition": "IV–V–vi–I. This four-chord schema has become increasingly common in pop music since 2010.",
       "category": "Theory"
     },
     {
@@ -1213,7 +1213,7 @@
     {
       "term": "Hybrid Scores",
       "definition": "A score that contains prominent elements from both traditional and graphic notation.",
-      "category": "General"
+      "category": "Notation"
     },
     {
       "term": "hyperbeat",
@@ -1248,7 +1248,7 @@
     {
       "term": "idea",
       "definition": "The smallest unit of music identified by a segmentation analysis. Ideas need not end with cadences, and they may combine to form subphrases or phrases. Examples include basic idea, contrasting idea, unit, cadential idea, and fragments.",
-      "category": "Theory"
+      "category": "Form"
     },
     {
       "term": "ideogram",
@@ -1256,24 +1256,24 @@
       "category": "General"
     },
     {
-      "term": "ii\u2013V\u2013I",
-      "definition": "ii\u2077\u2013V\u2077\u2013Imaj\u2077 in major, or ii\u00f8\u2077\u2013V\u2077\u2013i\u2077 in minor. A fundamentally important progression in traditional jazz.",
+      "term": "ii–V–I",
+      "definition": "ii⁷–V⁷–Imaj⁷ in major, or iiø⁷–V⁷–i⁷ in minor. A fundamentally important progression in traditional jazz.",
       "category": "Theory"
     },
     {
       "term": "imitation",
       "definition": "Imitation sees two or more parts enter separately with (versions of) the same melody.",
-      "category": "General"
+      "category": "Performance"
     },
     {
       "term": "imperfect authentic cadence (IAC)",
-      "definition": "A V\u2013I cadence in which V, I, or both harmonies are inverted, and/or do (1\u0302) is not in the soprano over the tonic triad. Additionally, IACs are often used to evade a cadence.",
+      "definition": "A V–I cadence in which V, I, or both harmonies are inverted, and/or do (1̂) is not in the soprano over the tonic triad. Additionally, IACs are often used to evade a cadence.",
       "category": "Theory"
     },
     {
       "term": "imperfect consonance",
       "definition": "Thirds or sixths with major or minor quality.",
-      "category": "General"
+      "category": "Theory"
     },
     {
       "term": "incomplete neighbor",
@@ -1292,17 +1292,17 @@
     },
     {
       "term": "index number",
-      "definition": "In a transformation (T\u2099 or I\u2099), n is the index number, representing the interval of transposition in semitones.",
+      "definition": "In a transformation (Tₙ or Iₙ), n is the index number, representing the interval of transposition in semitones.",
       "category": "Theory"
     },
     {
       "term": "inflected",
       "definition": "Chromatically altered from the typical version.",
-      "category": "General"
+      "category": "Theory"
     },
     {
       "term": "integer notation",
-      "definition": "A system of naming pitch classes that treats C as 0, C\u266f as 1, D as 2, etc.",
+      "definition": "A system of naming pitch classes that treats C as 0, C♯ as 1, D as 2, etc.",
       "category": "Notation"
     },
     {
@@ -1343,16 +1343,16 @@
     {
       "term": "introduction (song form)",
       "definition": "Introduction sections transition from the unmetered silence that precedes the song to the musical activity of the first core section. They tend to be short and untexted (i.e., instrumental) and tend to present musical material from one or more core sections to come.",
-      "category": "Rhythm"
+      "category": "Form"
     },
     {
       "term": "invariance",
       "definition": "In serial music, invariance refers to keeping a property of a row the same through different transformations. For example, when a retrograde version of a row contains the same ordered pitch classes as a prime version of the row, we would call it \"retrograde invariant\" to mean that the order of pitch classes doesn't change when the row is reversed and transposed",
-      "category": "Theory"
+      "category": "Form"
     },
     {
       "term": "ionian",
-      "definition": "A diatonic mode that follows the pattern W\u2013W\u2013H\u2013W\u2013W\u2013W\u2013H. This is equivalent to a major scale.",
+      "definition": "A diatonic mode that follows the pattern W–W–H–W–W–W–H. This is equivalent to a major scale.",
       "category": "Theory"
     },
     {
@@ -1362,13 +1362,13 @@
     },
     {
       "term": "jazz blues",
-      "definition": "The jazz blues incorporates several alterations to the 12-bar blues to blend together blues harmony and jazz harmony. In the eighth bar, instead of remaining on tonic, there is an applied ii\u2013V that leads to the ii chord in bar 9. In the third phrase, the V\u2013IV\u2013I of the standard blues is replaced with a ii\u2013V\u2013I more common to jazz.",
+      "definition": "The jazz blues incorporates several alterations to the 12-bar blues to blend together blues harmony and jazz harmony. In the eighth bar, instead of remaining on tonic, there is an applied ii–V that leads to the ii chord in bar 9. In the third phrase, the V–IV–I of the standard blues is replaced with a ii–V–I more common to jazz.",
       "category": "Notation"
     },
     {
       "term": "Kick drum",
-      "definition": "A large cylindrical drum, usually 18\u201324\u201d in diameter, set on its side, typically with a wooden shell and two tensioned heads (the back one is sometimes removed or \u201cported,\u201d meaning a circle is cut out), played with a foot pedal comprising a beater (a large mallet of felt, wood, or plastic) mounted to a cam and chain. The lowest-pitched drum in the kit, it is played with a foot pedal. It is originally based on a modified concert bass drum, and some still sound with the same booming quality. Other kick-drum sounds have a dull thud, or a sub-bass effect that (over the right speakers) is felt in the body as much as it is heard.",
-      "category": "Rhythm"
+      "definition": "A large cylindrical drum, usually 18–24” in diameter, set on its side, typically with a wooden shell and two tensioned heads (the back one is sometimes removed or “ported,” meaning a circle is cut out), played with a foot pedal comprising a beater (a large mallet of felt, wood, or plastic) mounted to a cam and chain. The lowest-pitched drum in the kit, it is played with a foot pedal. It is originally based on a modified concert bass drum, and some still sound with the same booming quality. Other kick-drum sounds have a dull thud, or a sub-bass effect that (over the right speakers) is felt in the body as much as it is heard.",
+      "category": "Instruments"
     },
     {
       "term": "kinesthetically",
@@ -1377,12 +1377,12 @@
     },
     {
       "term": "lament bass progression (classical)",
-      "definition": "A variety of harmonic progressions that harmonize a stepwise descending bass line from tonic to dominant. The simplest diatonic version uses the bass notes do\u2013te\u2013le\u2013sol and is harmonized by the progression i\u2013v\u2076\u2013iv\u2076\u2013V. Chromatic alternatives are common.",
+      "definition": "A variety of harmonic progressions that harmonize a stepwise descending bass line from tonic to dominant. The simplest diatonic version uses the bass notes do–te–le–sol and is harmonized by the progression i–v⁶–iv⁶–V. Chromatic alternatives are common.",
       "category": "Notation"
     },
     {
       "term": "lament schema (pop)",
-      "definition": "A harmonization of a descending upper tetrachord (1\u0302\u20137\u0302\u20136\u0302\u20135\u0302) in the bass.",
+      "definition": "A harmonization of a descending upper tetrachord (1̂–7̂–6̂–5̂) in the bass.",
       "category": "Theory"
     },
     {
@@ -1397,7 +1397,7 @@
     },
     {
       "term": "leading-tone chord",
-      "definition": "The triad or seventh chord built on ti (7\u0302).",
+      "definition": "The triad or seventh chord built on ti (7̂).",
       "category": "Theory"
     },
     {
@@ -1432,28 +1432,28 @@
     },
     {
       "term": "locrian",
-      "definition": "A diatonic mode that follows the pattern H\u2013W\u2013W\u2013H\u2013W\u2013W\u2013W. This is like the natural minor scale, but with a lowered scale degree 2 and lowered scale degree 5. This scale can also be found by playing the white notes of the piano starting on B.",
-      "category": "Notation"
+      "definition": "A diatonic mode that follows the pattern H–W–W–H–W–W–W. This is like the natural minor scale, but with a lowered scale degree 2 and lowered scale degree 5. This scale can also be found by playing the white notes of the piano starting on B.",
+      "category": "Theory"
     },
     {
       "term": "loose-knit",
       "definition": "A perceived characteristic of music that is created by unconventional phrase structures, unstable harmonies, diverse motivic material, and so on. Loose organization is common in passages with transitional function.",
-      "category": "Instruments"
+      "category": "Theory"
     },
     {
       "term": "lydian",
-      "definition": "A diatonic mode that follows the pattern W\u2013W\u2013W\u2013H\u2013W\u2013W\u2013H. This is like the major scale, but with a raised scale degree 4. This scale can also be found by playing the white notes of the piano starting on F.",
-      "category": "Notation"
+      "definition": "A diatonic mode that follows the pattern W–W–W–H–W–W–H. This is like the major scale, but with a raised scale degree 4. This scale can also be found by playing the white notes of the piano starting on F.",
+      "category": "Theory"
     },
     {
       "term": "lydian shuttle",
-      "definition": "I\u2013II\u266f, or C\u2013D in C major. This progression can easily be confused with IV\u2013V in major or \u266dVII\u2013I in mixolydian, so one should be careful when referencing this progression. It implies the lydian mode.",
+      "definition": "I–II♯, or C–D in C major. This progression can easily be confused with IV–V in major or ♭VII–I in mixolydian, so one should be careful when referencing this progression. It implies the lydian mode.",
       "category": "Theory"
     },
     {
       "term": "lyric-invariant",
-      "definition": "A module or phrase is lyric-invariant if each time it appears it brings (mostly) the same lyrics. Lyric invariance tends to come at points of formal closure (tail refrains at the ends of strophes, choruses at the end of a verse-chorus song\u2019s formal cycle).",
-      "category": "Rhythm"
+      "definition": "A module or phrase is lyric-invariant if each time it appears it brings (mostly) the same lyrics. Lyric invariance tends to come at points of formal closure (tail refrains at the ends of strophes, choruses at the end of a verse-chorus song’s formal cycle).",
+      "category": "Form"
     },
     {
       "term": "lyric-variant",
@@ -1467,17 +1467,17 @@
     },
     {
       "term": "major pentatonic collection",
-      "definition": "A five-note pentatonic collection with the solf\u00e8ge do, re, mi, sol, la, do.",
+      "definition": "A five-note pentatonic collection with the solfège do, re, mi, sol, la, do.",
       "category": "Notation"
     },
     {
       "term": "major pentatonic scale",
-      "definition": "A scale that proceeds ma2\u2013ma2\u2013mi3\u2013ma2\u2013mi3. For example, starting on C, the C major pentatonic scale is C\u2013D\u2013E\u2013G\u2013A.",
+      "definition": "A scale that proceeds ma2–ma2–mi3–ma2–mi3. For example, starting on C, the C major pentatonic scale is C–D–E–G–A.",
       "category": "Theory"
     },
     {
       "term": "major scale",
-      "definition": "An ordered collection of half steps (H) and whole steps (W) as follows (ascending): W\u2013W\u2013H\u2013W\u2013W\u2013W\u2013H.",
+      "definition": "An ordered collection of half steps (H) and whole steps (W) as follows (ascending): W–W–H–W–W–W–H.",
       "category": "Theory"
     },
     {
@@ -1508,11 +1508,11 @@
     {
       "term": "medial caesura",
       "definition": "In sonata form, the cadence that is the goal of the transition and marks the boundary between the transition and the secondary theme. Usually a HC, in I, V, or the secondary key; sometimes an authentic cadence in the secondary key; rarely, it could be an AC in the tonic key.",
-      "category": "Theory"
+      "category": "Form"
     },
     {
       "term": "mediant",
-      "definition": "This term has multiple meanings, given here from most to least specific: 1. The third scale degree (mi, 3\u0302) and/or the triad built upon it (iii/III). 2. The chords a third above or below the root (iii and vi in major keys; III and VI in minor keys). 3. The relationship between two chords whose roots are related by third.",
+      "definition": "This term has multiple meanings, given here from most to least specific: 1. The third scale degree (mi, 3̂) and/or the triad built upon it (iii/III). 2. The chords a third above or below the root (iii and vi in major keys; III and VI in minor keys). 3. The relationship between two chords whose roots are related by third.",
       "category": "Theory"
     },
     {
@@ -1532,11 +1532,11 @@
     },
     {
       "term": "melodic minor",
-      "definition": "An ordered collection of half steps (H) and whole steps (W) with the ascending succession W\u2013H\u2013W\u2013W\u2013W\u2013W\u2013H and the descending succession W\u2013W\u2013H\u2013W\u2013W\u2013H\u2013W.",
-      "category": "General"
+      "definition": "An ordered collection of half steps (H) and whole steps (W) with the ascending succession W–H–W–W–W–W–H and the descending succession W–W–H–W–W–H–W.",
+      "category": "Theory"
     },
     {
-      "term": "m\u00e9lodie",
+      "term": "mélodie",
       "definition": "A French-language art song.",
       "category": "General"
     },
@@ -1558,7 +1558,7 @@
     {
       "term": "metronome marking",
       "definition": "An indication of tempo in beats per minute (BPM).",
-      "category": "Rhythm"
+      "category": "Tempo"
     },
     {
       "term": "microtone",
@@ -1567,17 +1567,17 @@
     },
     {
       "term": "mid-range",
-      "definition": "A band of frequencies meant to capture melodic instruments; about 500\u20135000 Hz.",
-      "category": "General"
+      "definition": "A band of frequencies meant to capture melodic instruments; about 500–5000 Hz.",
+      "category": "Instruments"
     },
     {
       "term": "mid-song introduction",
       "definition": "Mid-song intros function similarly to introductions, but in the middle of the song. They usually introduce the first section in the formal cycle.",
-      "category": "General"
+      "category": "Form"
     },
     {
       "term": "middle C",
-      "definition": "C\u2084; the C near the middle of the piano keyboard, written on the first ledger line below the treble clef staff or the first ledger line above the bass clef staff.",
+      "definition": "C₄; the C near the middle of the piano keyboard, written on the first ledger line below the treble clef staff or the first ledger line above the bass clef staff.",
       "category": "Notation"
     },
     {
@@ -1587,22 +1587,22 @@
     },
     {
       "term": "minor blues",
-      "definition": "The minor blues differs from the standard 12-bar blues by having minor seventh chords on the i and iv chords, and replacing the V\u2013IV\u2013I cadence with a ii\u2013V\u2013I cadence.",
+      "definition": "The minor blues differs from the standard 12-bar blues by having minor seventh chords on the i and iv chords, and replacing the V–IV–I cadence with a ii–V–I cadence.",
       "category": "Notation"
     },
     {
       "term": "minor iv schema",
-      "definition": "Use of a minor iv chord in a major key. This creates a semitone descent between scale degrees \u21936\u0302 and 5\u0302. It is common to precede iv with IV (major), creating a descent 6\u0302\u2013\u21936\u0302\u20135\u0302.",
+      "definition": "Use of a minor iv chord in a major key. This creates a semitone descent between scale degrees ↓6̂ and 5̂. It is common to precede iv with IV (major), creating a descent 6̂–↓6̂–5̂.",
       "category": "Theory"
     },
     {
       "term": "minor pentatonic collection",
-      "definition": "A five-note pentatonic collection with the solf\u00e8ge do, me, fa, sol, te, do.",
+      "definition": "A five-note pentatonic collection with the solfège do, me, fa, sol, te, do.",
       "category": "Notation"
     },
     {
       "term": "minor pentatonic scale",
-      "definition": "A pentatonic scale with the intervals mi3\u2013ma2\u2013ma2\u2013mi3\u2013ma2. For example, starting on A, the minor pentatonic would be A\u2013C\u2013D\u2013E\u2013G. The minor pentatonic is a rotation of the major pentatonic.",
+      "definition": "A pentatonic scale with the intervals mi3–ma2–ma2–mi3–ma2. For example, starting on A, the minor pentatonic would be A–C–D–E–G. The minor pentatonic is a rotation of the major pentatonic.",
       "category": "Theory"
     },
     {
@@ -1622,8 +1622,8 @@
     },
     {
       "term": "mixolydian",
-      "definition": "A diatonic mode that follows the pattern W\u2013W\u2013H\u2013W\u2013W\u2013H\u2013W. This is like the major scale, but with a lowered scale degree 7. This scale can also be found by playing the white notes of the piano starting on G.",
-      "category": "Notation"
+      "definition": "A diatonic mode that follows the pattern W–W–H–W–W–H–W. This is like the major scale, but with a lowered scale degree 7. This scale can also be found by playing the white notes of the piano starting on G.",
+      "category": "Theory"
     },
     {
       "term": "mnemonic device",
@@ -1632,7 +1632,7 @@
     },
     {
       "term": "mod 12",
-      "definition": "Short for modulo 12, where numbers wrap around upon reaching 12. Arithmetic in mod 12 is most commonly encountered in clock time: after 12 o\u2019clock, the time becomes 1 o\u2019clock again.",
+      "definition": "Short for modulo 12, where numbers wrap around upon reaching 12. Arithmetic in mod 12 is most commonly encountered in clock time: after 12 o’clock, the time becomes 1 o’clock again.",
       "category": "Rhythm"
     },
     {
@@ -1642,7 +1642,7 @@
     },
     {
       "term": "mode mixture",
-      "definition": "The intermixing of major and minor versions of 3\u0302, 6\u0302, and/or 7\u0302 within a composition.",
+      "definition": "The intermixing of major and minor versions of 3̂, 6̂, and/or 7̂ within a composition.",
       "category": "Theory"
     },
     {
@@ -1653,7 +1653,7 @@
     {
       "term": "monophony",
       "definition": "A musical texture with a single, unaccompanied melodic line.",
-      "category": "Theory"
+      "category": "Performance"
     },
     {
       "term": "monotonality",
@@ -1663,7 +1663,7 @@
     {
       "term": "motive",
       "definition": "A regularly recurring unit of music that's smaller than an idea, and which is typically transformed across a work. The word \"motive\" usually refers to pitch material, but other kinds of motives such as rhythmic or contour also exist.",
-      "category": "Rhythm"
+      "category": "Theory"
     },
     {
       "term": "motivic enlargement",
@@ -1677,7 +1677,7 @@
     },
     {
       "term": "movable do",
-      "definition": "A system of solf\u00e8ge in which do is the first scale degree in a scale; this is in contrast to fixed do, where do is always the pitch class C.",
+      "definition": "A system of solfège in which do is the first scale degree in a scale; this is in contrast to fixed do, where do is always the pitch class C.",
       "category": "Notation"
     },
     {
@@ -1697,12 +1697,12 @@
     },
     {
       "term": "natural minor",
-      "definition": "An ordered collection of half steps (H) and whole steps (W) with the ascending succession W\u2013H\u2013W\u2013W\u2013H\u2013W\u2013W.",
+      "definition": "An ordered collection of half steps (H) and whole steps (W) with the ascending succession W–H–W–W–H–W–W.",
       "category": "Notation"
     },
     {
       "term": "Neapolitan sixth",
-      "definition": "A \u266dII\u2076 chord.",
+      "definition": "A ♭II⁶ chord.",
       "category": "Theory"
     },
     {
@@ -1713,11 +1713,11 @@
     {
       "term": "neighbor tones (NTs)",
       "definition": "Embellishing tones that are approached by step and left by step in the opposite direction.",
-      "category": "General"
+      "category": "Theory"
     },
     {
       "term": "neighboring",
-      "definition": "A type of motion where a chord tone moves by step to another tone, then moves back to the original chord tone. For example, C\u2013D\u2013C above a C major chord would be an example of neighboring motion, in which D can be described as a neighbor tone. Entire harmonies may be said to be neighboring when embellishing another harmony, when the voice-leading between the two chords involves only neighboring and common-tone motion (as in the common-tone diminished seventh chord).",
+      "definition": "A type of motion where a chord tone moves by step to another tone, then moves back to the original chord tone. For example, C–D–C above a C major chord would be an example of neighboring motion, in which D can be described as a neighbor tone. Entire harmonies may be said to be neighboring when embellishing another harmony, when the voice-leading between the two chords involves only neighboring and common-tone motion (as in the common-tone diminished seventh chord).",
       "category": "Theory"
     },
     {
@@ -1752,18 +1752,18 @@
     },
     {
       "term": "octatonic collection",
-      "definition": "The octatonic collection is built with an alternation of whole steps and half steps, leading to a total of eight distinct pitches. One example is C\u2013C\u266f\u2013D\u266f\u2013E\u2013F\u266f\u2013G\u2013A\u2013B\u266d. Jazz musicians refer to this as the diminished scale.",
+      "definition": "The octatonic collection is built with an alternation of whole steps and half steps, leading to a total of eight distinct pitches. One example is C–C♯–D♯–E–F♯–G–A–B♭. Jazz musicians refer to this as the diminished scale.",
       "category": "Theory"
     },
     {
       "term": "octave",
-      "definition": "An interval of twelve half steps between two notes with the same letter name. The frequencies of two notes related by octave form a 2:1 ratio. Abbreviated \u201c8ve.\u201d",
+      "definition": "An interval of twelve half steps between two notes with the same letter name. The frequencies of two notes related by octave form a 2:1 ratio. Abbreviated “8ve.”",
       "category": "Notation"
     },
     {
       "term": "octave equivalence",
       "definition": "A relationship between pitches that share a letter name but are separated by one or more octaves.",
-      "category": "General"
+      "category": "Notation"
     },
     {
       "term": "off-beat",
@@ -1797,7 +1797,7 @@
     },
     {
       "term": "ordered pitch interval",
-      "definition": "The distance between two pitches measured in semitones, with a plus or minus symbol to indicate ascending or descending, respectively. For example: C\u2084 to E\u2085 would be an ordered pitch interval of +16.",
+      "definition": "The distance between two pitches measured in semitones, with a plus or minus symbol to indicate ascending or descending, respectively. For example: C₄ to E₅ would be an ordered pitch interval of +16.",
       "category": "Notation"
     },
     {
@@ -1818,7 +1818,7 @@
     {
       "term": "outro",
       "definition": "Outros function as a transition from song back to silence, and thus decrease energy. Often this is accomplished in the recording studio by way of a fadeout.",
-      "category": "General"
+      "category": "Theory"
     },
     {
       "term": "pandiatonic",
@@ -1827,7 +1827,7 @@
     },
     {
       "term": "parallel motion",
-      "definition": "When two voices move melodically in the same direction and by the same interval\u2014for example, both voices move upward by a melodic second. (Note: the quality of the interval may vary, and it still counts as parallel motion.) By definition, two voices moving in parallel motion will also maintain the same harmonic interval between them.",
+      "definition": "When two voices move melodically in the same direction and by the same interval—for example, both voices move upward by a melodic second. (Note: the quality of the interval may vary, and it still counts as parallel motion.) By definition, two voices moving in parallel motion will also maintain the same harmonic interval between them.",
       "category": "Notation"
     },
     {
@@ -1847,7 +1847,7 @@
     },
     {
       "term": "passing",
-      "definition": "A type of motion where a chord tone moves by step to another tone, then resolves by step in the same direction. For example, C\u2013D\u2013E above a C major chord would be an example of neighboring motion, in which D can be described as a passing tone. Entire harmonies may be said to be passing when embellishing another harmony, when the voice-leading between the two chords involves mainly passing tones (as in the passing 6/4 chord).",
+      "definition": "A type of motion where a chord tone moves by step to another tone, then resolves by step in the same direction. For example, C–D–E above a C major chord would be an example of neighboring motion, in which D can be described as a passing tone. Entire harmonies may be said to be passing when embellishing another harmony, when the voice-leading between the two chords involves mainly passing tones (as in the passing 6/4 chord).",
       "category": "Theory"
     },
     {
@@ -1862,7 +1862,7 @@
     },
     {
       "term": "pentatonic collection",
-      "definition": "A pitch collection built with the interval pattern ma2\u2013ma2\u2013mi3\u2013ma2\u2013mi3. This collection can also be generated by using scale degrees 1\u0302, 2\u0302, 3\u0302, 5\u0302, and 6\u0302 only of the major scale.",
+      "definition": "A pitch collection built with the interval pattern ma2–ma2–mi3–ma2–mi3. This collection can also be generated by using scale degrees 1̂, 2̂, 3̂, 5̂, and 6̂ only of the major scale.",
       "category": "Theory"
     },
     {
@@ -1872,18 +1872,18 @@
     },
     {
       "term": "perfect authentic cadence (PAC)",
-      "definition": "A V\u2013I cadence that ends with do (1\u0302) in the melody. Both harmonies must be in root position.",
+      "definition": "A V–I cadence that ends with do (1̂) in the melody. Both harmonies must be in root position.",
       "category": "Theory"
     },
     {
       "term": "perfect consonance",
       "definition": "Perfect octaves (twelve semitones), perfect unisons (zero semitones), and perfect fifths (seven semitones). Perfect fourths (five semitones) are sometimes considered a perfect consonance, sometimes a dissonance; this depends on the context.",
-      "category": "Rhythm"
+      "category": "Theory"
     },
     {
       "term": "period",
       "definition": "A phrase-level form that consists of two phrases: an antecedent and a consequent.",
-      "category": "General"
+      "category": "Form"
     },
     {
       "term": "periodicity",
@@ -1912,7 +1912,7 @@
     },
     {
       "term": "phrase model",
-      "definition": "Indicates the typical order and flow of harmonic functions in a phrase: tonic\u2013predominant\u2013dominant(\u2013tonic).",
+      "definition": "Indicates the typical order and flow of harmonic functions in a phrase: tonic–predominant–dominant(–tonic).",
       "category": "Theory"
     },
     {
@@ -1927,12 +1927,12 @@
     },
     {
       "term": "phrygian",
-      "definition": "A diatonic mode that follows the pattern H\u2013W\u2013W\u2013W\u2013H\u2013W\u2013W. This is like the natural minor scale, but with a lowered scale degree 2. This scale can also be found by playing the white notes of the piano starting on E.",
-      "category": "Notation"
+      "definition": "A diatonic mode that follows the pattern H–W–W–W–H–W–W. This is like the natural minor scale, but with a lowered scale degree 2. This scale can also be found by playing the white notes of the piano starting on E.",
+      "category": "Theory"
     },
     {
       "term": "phrygian half cadence",
-      "definition": "The phrygian half cadence (PHC) is a special kind of cadential phrase ending that occurs only in minor and involves the progression iv6\u2013V. It's called \u201cphrygian\u201d because of the half step that occurs when le (\u21936\u0302) moves to sol (5\u0302) in the bass, a sound that\u2019s similar to when ra (\u21932\u0302) moves to do (1\u0302) in the phrygian mode.",
+      "definition": "The phrygian half cadence (PHC) is a special kind of cadential phrase ending that occurs only in minor and involves the progression iv6–V. It's called “phrygian” because of the half step that occurs when le (↓6̂) moves to sol (5̂) in the bass, a sound that’s similar to when ra (↓2̂) moves to do (1̂) in the phrygian mode.",
       "category": "Theory"
     },
     {
@@ -1943,12 +1943,12 @@
     {
       "term": "pitch",
       "definition": "A discrete tone with an individual frequency.",
-      "category": "General"
+      "category": "Notation"
     },
     {
       "term": "pitch class",
       "definition": "A group of pitches that are octave equivalent and enharmonically equivalent.",
-      "category": "General"
+      "category": "Notation"
     },
     {
       "term": "pitch interval",
@@ -1972,12 +1972,12 @@
     },
     {
       "term": "plagal cadence",
-      "definition": "A plagal cadence uses the harmonies IV\u2013I.",
+      "definition": "A plagal cadence uses the harmonies IV–I.",
       "category": "Theory"
     },
     {
       "term": "plagal motion",
-      "definition": "Occurs when IV (or IV\u2076) moves to I (or I\u2076).",
+      "definition": "Occurs when IV (or IV⁶) moves to I (or I⁶).",
       "category": "General"
     },
     {
@@ -1988,7 +1988,7 @@
     {
       "term": "polyphony",
       "definition": "A musical texture with multiple independent melodic voices, distinguished from one another through different rhythms and/or intervallic profiles. Also known as counterpoint. Polyphony may occur in many styles but is commonly associated with contrapuntal genres like fugues and canons.",
-      "category": "Theory"
+      "category": "Performance"
     },
     {
       "term": "post-cadential extension (p.c.e.)",
@@ -1997,7 +1997,7 @@
     },
     {
       "term": "postchorus",
-      "definition": "A short section that follows a chorus and serves only to close the cycle\u2014does not introduce or transition to the beginning of the next cycle.",
+      "definition": "A short section that follows a chorus and serves only to close the cycle—does not introduce or transition to the beginning of the next cycle.",
       "category": "Form"
     },
     {
@@ -2023,7 +2023,7 @@
     {
       "term": "primary theme (P theme)",
       "definition": "The main section of a sonata-form work, in the tonic key. P themes are usually stable.",
-      "category": "Theory"
+      "category": "Form"
     },
     {
       "term": "prime form",
@@ -2032,8 +2032,8 @@
     },
     {
       "term": "prime symbol",
-      "definition": "A symbol (\u2032) that is used in the analysis of phrases and forms to indicate that some repeated material has changed, in some way, from its initial statement.",
-      "category": "General"
+      "definition": "A symbol (′) that is used in the analysis of phrases and forms to indicate that some repeated material has changed, in some way, from its initial statement.",
+      "category": "Form"
     },
     {
       "term": "progressive tonality",
@@ -2042,7 +2042,7 @@
     },
     {
       "term": "prolongation",
-      "definition": "When a given harmony\u2019s influence lasts longer than a single chord. Usually this is accomplished by alternating the prolonged chord with other, less important chords.",
+      "definition": "When a given harmony’s influence lasts longer than a single chord. Usually this is accomplished by alternating the prolonged chord with other, less important chords.",
       "category": "Theory"
     },
     {
@@ -2097,7 +2097,7 @@
     },
     {
       "term": "refrain (song form)",
-      "definition": "A lyric-invariant passage within a section that is otherwise lyric-variant. A refrain is too short to form its own section\u2014typically a phrase or less.",
+      "definition": "A lyric-invariant passage within a section that is otherwise lyric-variant. A refrain is too short to form its own section—typically a phrase or less.",
       "category": "Form"
     },
     {
@@ -2122,8 +2122,8 @@
     },
     {
       "term": "repeat signs",
-      "definition": "Symbols (\ud834\udd06 and \ud834\udd07) indicating that a section of music is repeated.",
-      "category": "General"
+      "definition": "Symbols (𝄆 and 𝄇) indicating that a section of music is repeated.",
+      "category": "Notation"
     },
     {
       "term": "repetition",
@@ -2172,13 +2172,13 @@
     },
     {
       "term": "Ride cymbal",
-      "definition": "A large suspended cymbal, usually 20\u201324\u201d in diameter. Depending on the thickness of the cymbal, the ride may sound like a warm wash of sound (thinner rides, common in jazz) or a sharp, high-pitched crunch (thicker rides, common in metal music). High, pure ringing sounds can be produced by playing the \u201cbell\u201d of the ride, located in the middle of the cymbal.",
-      "category": "Rhythm"
+      "definition": "A large suspended cymbal, usually 20–24” in diameter. Depending on the thickness of the cymbal, the ride may sound like a warm wash of sound (thinner rides, common in jazz) or a sharp, high-pitched crunch (thicker rides, common in metal music). High, pure ringing sounds can be produced by playing the “bell” of the ride, located in the middle of the cymbal.",
+      "category": "Instruments"
     },
     {
       "term": "ritardando",
       "definition": "A gradual decrease in speed (tempo).",
-      "category": "Rhythm"
+      "category": "Tempo"
     },
     {
       "term": "Roman numeral analysis",
@@ -2187,7 +2187,7 @@
     },
     {
       "term": "Roman numerals",
-      "definition": "Numerals I, II, III, IV, V, VI, and VII for 1\u20137, respectively. In the analysis of harmony, Roman numerals represent triads built on the corresponding scale degree (for example, a V chord is a triad built on 5\u0302).",
+      "definition": "Numerals I, II, III, IV, V, VI, and VII for 1–7, respectively. In the analysis of harmony, Roman numerals represent triads built on the corresponding scale degree (for example, a V chord is a triad built on 5̂).",
       "category": "Theory"
     },
     {
@@ -2213,17 +2213,17 @@
     {
       "term": "rounded binary form",
       "definition": "A type of binary form where the material at the start of reprise 1 returns somewhere near the middle of reprise 2. Both appearances of that repeated music are expected to be in the home key.",
-      "category": "Theory"
+      "category": "Form"
     },
     {
       "term": "row",
       "definition": "The ordered elements in a serial composition, also referred to as a series. These elements are often pitches, but could be other things such as durations or dynamics.",
-      "category": "Dynamics"
+      "category": "Theory"
     },
     {
       "term": "row class",
       "definition": "A collection of all forms of a given row. Most row classes contain 48 versions of a row, but some contain fewer due to duplications of row forms. For example, a prime version of a row may be equivalent to a retrograde version of the row.",
-      "category": "General"
+      "category": "Form"
     },
     {
       "term": "row form",
@@ -2233,12 +2233,12 @@
     {
       "term": "row matrix",
       "definition": "A 12-by-12 grid that sets out all 48 forms of a row class.",
-      "category": "General"
+      "category": "Form"
     },
     {
       "term": "SATB",
       "definition": "A musical texture with soprano (S), alto (A), tenor (T), and bass (B) parts.",
-      "category": "General"
+      "category": "Performance"
     },
     {
       "term": "scale",
@@ -2247,7 +2247,7 @@
     },
     {
       "term": "scale degree",
-      "definition": "The relative position of a note within a diatonic scale. Indicated with a number, 1\u20137, that indicates this position relative to the tonic of that scale.",
+      "definition": "The relative position of a note within a diatonic scale. Indicated with a number, 1–7, that indicates this position relative to the tonic of that scale.",
       "category": "Notation"
     },
     {
@@ -2258,7 +2258,7 @@
     {
       "term": "schema",
       "definition": "A prototypical chord progression or formal structure.",
-      "category": "Theory"
+      "category": "Form"
     },
     {
       "term": "second inversion",
@@ -2283,7 +2283,7 @@
     {
       "term": "secondary theme (S theme)",
       "definition": "The contrasting section of a sonata-form work. The S theme begins and ends in a contrasting key (usually V in major-mode sonatas and either III or v in minor-mode sonatas). S themes are usually stable.",
-      "category": "Theory"
+      "category": "Form"
     },
     {
       "term": "section",
@@ -2328,26 +2328,26 @@
     {
       "term": "serialism",
       "definition": "A strategy of putting elements of music (pitch, duration, dynamics, etc.) in a particular order.",
-      "category": "Dynamics"
+      "category": "Theory"
     },
     {
       "term": "series",
       "definition": "Refers to the ordered elements in a serial composition. These elements are often pitches, but could be other things such as durations or dynamics.",
-      "category": "Dynamics"
+      "category": "Theory"
     },
     {
       "term": "set",
       "definition": "In set theory, a group whose members are not necessarily related.",
-      "category": "General"
+      "category": "Theory"
     },
     {
       "term": "set class",
       "definition": "A group of pitch-class sets related by transposition or inversion. Set classes are named by their prime forms; for example, (012) is a set class.",
-      "category": "Theory"
+      "category": "Form"
     },
     {
       "term": "set theory",
-      "definition": "A methodology for analyzing pitch in atonal music. Pitch classes are given an integer name (0\u201311, where C is 0, C\u266f is 1, etc.). Groups of pitches are considered together as \"sets.\" Sets may be related by inversion or transposition.",
+      "definition": "A methodology for analyzing pitch in atonal music. Pitch classes are given an integer name (0–11, where C is 0, C♯ is 1, etc.). Groups of pitches are considered together as \"sets.\" Sets may be related by inversion or transposition.",
       "category": "Theory"
     },
     {
@@ -2363,7 +2363,7 @@
     {
       "term": "sight singing",
       "definition": "Singing music at \"sight\" (that is, never having seen or heard it before).",
-      "category": "General"
+      "category": "Performance"
     },
     {
       "term": "similar motion",
@@ -2372,7 +2372,7 @@
     },
     {
       "term": "simple binary form",
-      "definition": "A type of binary form that does not contain the thematic return of a rounded binary. Instead, the second reprise continues with A material without ever having departed from it (thus there is no \u201creturn\u201d), or it contains relatively new material throughout.",
+      "definition": "A type of binary form that does not contain the thematic return of a rounded binary. Instead, the second reprise continues with A material without ever having departed from it (thus there is no “return”), or it contains relatively new material throughout.",
       "category": "Form"
     },
     {
@@ -2412,7 +2412,7 @@
     },
     {
       "term": "singer/songwriter schema",
-      "definition": "I\u2013V\u2013vi\u2013IV in major, or III\u2013VII\u2013i\u2013VI in minor (C\u2013G\u2013Ami\u2013F, for example). This chord progression often loops throughout a pop song. Frequently, this progression begins on the vi/i chord instead of the I/III chord.",
+      "definition": "I–V–vi–IV in major, or III–VII–i–VI in minor (C–G–Ami–F, for example). This chord progression often loops throughout a pop song. Frequently, this progression begins on the vi/i chord instead of the I/III chord.",
       "category": "Theory"
     },
     {
@@ -2423,7 +2423,7 @@
     {
       "term": "skipped passing tone",
       "definition": "In counterpoint, a type of consonant weak-beat motion that is approached by skip (third) and left by step in the same direction.",
-      "category": "Rhythm"
+      "category": "Theory"
     },
     {
       "term": "slash notation",
@@ -2432,16 +2432,16 @@
     },
     {
       "term": "Slide transformation (S)",
-      "definition": "A Neo-Riemannian transformation that moves the two pitches that form the perfect fifth in a triad by semitone and changes the mode of the triad (e.g., relating C major and C\u266f minor).",
-      "category": "Theory"
+      "definition": "A Neo-Riemannian transformation that moves the two pitches that form the perfect fifth in a triad by semitone and changes the mode of the triad (e.g., relating C major and C♯ minor).",
+      "category": "Form"
     },
     {
       "term": "snare drum",
-      "definition": "A cylindrical drum, typically 14\u201d in diameter, made of wood or metal with tensioned heads (or skins) on the top and bottom and a set of snare wires stretched below the bottom head to create the drum\u2019s characteristic buzzing and cracking sounds. Played with force, it sounds like wood cracking or like a thunderclap. Played softly, it offers a range of effects from clicks and taps to buzzing rolls.",
+      "definition": "A cylindrical drum, typically 14” in diameter, made of wood or metal with tensioned heads (or skins) on the top and bottom and a set of snare wires stretched below the bottom head to create the drum’s characteristic buzzing and cracking sounds. Played with force, it sounds like wood cracking or like a thunderclap. Played softly, it offers a range of effects from clicks and taps to buzzing rolls.",
       "category": "Rhythm"
     },
     {
-      "term": "solf\u00e8ge",
+      "term": "solfège",
       "definition": "The application of solmization syllables (do, re, mi, fa, sol, etc.) to scale degrees.",
       "category": "Theory"
     },
@@ -2452,12 +2452,12 @@
     },
     {
       "term": "sonata form",
-      "definition": "A complex large-scale musical form that can be understood as an elaborate version of rounded binary form with a balanced component. The larger level names are as follows: Exposition (\u2248A), Development (\u2248B), and Recapitulation (\u2248A\u2032). In general terms, the exposition contains two main sections (primary and secondary) separated by a transition. The secondary theme is presented in a non-tonic key in the exposition, and crucially, it is restated in the recapitulation in the tonic key. The exposition and recapitulation often end with a large suffix (closing section).",
-      "category": "Notation"
+      "definition": "A complex large-scale musical form that can be understood as an elaborate version of rounded binary form with a balanced component. The larger level names are as follows: Exposition (≈A), Development (≈B), and Recapitulation (≈A′). In general terms, the exposition contains two main sections (primary and secondary) separated by a transition. The secondary theme is presented in a non-tonic key in the exposition, and crucially, it is restated in the recapitulation in the tonic key. The exposition and recapitulation often end with a large suffix (closing section).",
+      "category": "Form"
     },
     {
       "term": "soprano",
-      "definition": "The highest part in SATB style, written in the treble clef staff with an up-stem; its generally accepted range is C\u2084\u2013G\u2085.",
+      "definition": "The highest part in SATB style, written in the treble clef staff with an up-stem; its generally accepted range is C₄–G₅.",
       "category": "Notation"
     },
     {
@@ -2477,13 +2477,13 @@
     },
     {
       "term": "species counterpoint",
-      "definition": "A traditional approach to composition pedagogy focused on counterpoint as a way of learning to think of music horizontally (melodically) and vertically (harmonically) simultaneously. Consists of five \u201cspecies,\u201d each of which focuses on a single compositional element.",
+      "definition": "A traditional approach to composition pedagogy focused on counterpoint as a way of learning to think of music horizontally (melodically) and vertically (harmonically) simultaneously. Consists of five “species,” each of which focuses on a single compositional element.",
       "category": "Theory"
     },
     {
       "term": "spondee",
       "definition": "A poetic foot consisting of two stressed syllables in a row.",
-      "category": "Rhythm"
+      "category": "Theory"
     },
     {
       "term": "srdc",
@@ -2503,7 +2503,7 @@
     {
       "term": "stanza",
       "definition": "In lyrics, a stanza is a group of lines of lyrics. In music notation, a stanza is a group of staves that are played simultaneously.",
-      "category": "General"
+      "category": "Notation"
     },
     {
       "term": "stem",
@@ -2513,7 +2513,7 @@
     {
       "term": "stem (music production)",
       "definition": "A music production term for a single instrumental track or group of tracks that are mixed together into a single digital file. A stem is an intermediate level of mixing, between each individual instrument's track and the final composite mix.",
-      "category": "General"
+      "category": "Notation"
     },
     {
       "term": "stem direction",
@@ -2533,22 +2533,22 @@
     {
       "term": "string instrument",
       "definition": "An instrument that produces sound via one or more vibrating strings.",
-      "category": "General"
+      "category": "Instruments"
     },
     {
       "term": "strophe",
       "definition": "A basic multi-phrase unit. In pop music, a strophe is a focal module within strophic-form and AABA-form songs.",
-      "category": "General"
+      "category": "Form"
     },
     {
       "term": "strophic form",
-      "definition": "A large-scale song structure, in which the same basic multi-phrase unit is repeated throughout (AAA). The basic unit that is repeated is called a strophe. Strophic form is more common in early rock-and-roll (1950s\u20131960s) than in the 1970s and beyond.",
-      "category": "Theory"
+      "definition": "A large-scale song structure, in which the same basic multi-phrase unit is repeated throughout (AAA). The basic unit that is repeated is called a strophe. Strophic form is more common in early rock-and-roll (1950s–1960s) than in the 1970s and beyond.",
+      "category": "Form"
     },
     {
       "term": "structural features",
       "definition": "Musical features that pertain to section divisions and form.",
-      "category": "General"
+      "category": "Form"
     },
     {
       "term": "subdominant",
@@ -2573,16 +2573,16 @@
     {
       "term": "substitution (counterpoint)",
       "definition": "In counterpoint, a type of consonant weak beat that involves a leap of a fourth followed by a step in the opposite direction. The name implies that this motion substitutes for a more common passing-tone motion.",
-      "category": "Rhythm"
+      "category": "Theory"
     },
     {
       "term": "subtonic",
-      "definition": "The unraised seventh scale degree in minor keys (te, 7\u0302), or the triad built upon that scale degree (VII).",
+      "definition": "The unraised seventh scale degree in minor keys (te, 7̂), or the triad built upon that scale degree (VII).",
       "category": "Theory"
     },
     {
       "term": "subtonic shuttle",
-      "definition": "\u266dVII\u2013I, or B\u266d\u2013C in C major. This shuttle can imply mixolydian if the tonic chord is major, or aeolian if it is minor. In this shuttle, the \u266dVII chord has dominant function.",
+      "definition": "♭VII–I, or B♭–C in C major. This shuttle can imply mixolydian if the tonic chord is major, or aeolian if it is minor. In this shuttle, the ♭VII chord has dominant function.",
       "category": "Theory"
     },
     {
@@ -2597,13 +2597,13 @@
     },
     {
       "term": "superscript",
-      "definition": "In typesetting, superscript characters appear higher on the page than the regular characters\u2014like an exponent in math. For example, in the chord symbol C\u2077, the 7 is superscript.",
+      "definition": "In typesetting, superscript characters appear higher on the page than the regular characters—like an exponent in math. For example, in the chord symbol C⁷, the 7 is superscript.",
       "category": "Theory"
     },
     {
       "term": "superset",
       "definition": "A larger set that contains other smaller sets. For example, a superset of (037) is the diatonic collection, (013568t).",
-      "category": "General"
+      "category": "Theory"
     },
     {
       "term": "suspension",
@@ -2613,7 +2613,7 @@
     {
       "term": "sustain",
       "definition": "In a sound signal's envelope, the sustain is the third phase. The sustain is a (relatively) constant loudness level that is held for some duration.",
-      "category": "Dynamics"
+      "category": "General"
     },
     {
       "term": "swing eighths",
@@ -2637,18 +2637,18 @@
     },
     {
       "term": "tactus",
-      "definition": "The perceptual equivalent of a \"beat\"\u2014the pulse that you might tap your foot or bob your head along to. A tactus is felt, not notated.",
+      "definition": "The perceptual equivalent of a \"beat\"—the pulse that you might tap your foot or bob your head along to. A tactus is felt, not notated.",
       "category": "Rhythm"
     },
     {
       "term": "tail refrain",
       "definition": "A refrain that is the last line or so of a section's text.",
-      "category": "General"
+      "category": "Form"
     },
     {
       "term": "tempo",
       "definition": "How fast or slow a work is performed; many tempo markings are in Italian or another non-English language.",
-      "category": "Rhythm"
+      "category": "Tempo"
     },
     {
       "term": "temporal",
@@ -2662,13 +2662,13 @@
     },
     {
       "term": "tenor (voice)",
-      "definition": "The second lowest part in SATB style, written in the bass clef staff with up-stems; its generally accepted range is C\u2083\u2013G\u2084.",
+      "definition": "The second lowest part in SATB style, written in the bass clef staff with up-stems; its generally accepted range is C₃–G₄.",
       "category": "Notation"
     },
     {
       "term": "ternary form",
       "definition": "A musical form consisting of three distinct sections, in an ABA (not ABC) formal structure. The B section typically contains contrasting material in a new key. Repeat signs around each section are common.",
-      "category": "Theory"
+      "category": "Form"
     },
     {
       "term": "tetrachord",
@@ -2688,7 +2688,7 @@
     {
       "term": "through-composed",
       "definition": "An attribute of a musical form where no sections of music return. Similar motivic material may be present in different sections, but the sections would each be considered distinct.",
-      "category": "Ornamentation"
+      "category": "Form"
     },
     {
       "term": "tight-knit",
@@ -2698,7 +2698,7 @@
     {
       "term": "timbre",
       "definition": "The aspect of sound that distinguishes sound sources from one another; for example, what makes a flute sound different from a guitar, even if they are playing the same pitch at the same loudness. Timbre arises from acoustic aspects of a sound signal but is also strongly influenced by human perception and thus subjective.",
-      "category": "Dynamics"
+      "category": "General"
     },
     {
       "term": "timeline notation",
@@ -2707,7 +2707,7 @@
     },
     {
       "term": "Toms",
-      "definition": "Drums of various sizes (diameters of 10\u201316\u201d are most common), similar to the snare drum but with deeper bodies and lacking the snares. They have a more focused pitch fundamental than the snare and are higher-pitched than the kick. There are often three toms on a drum kit, with pitches that are low, middle, and high. The pitch can be a more or less prominent feature of the toms\u2019 sound.",
+      "definition": "Drums of various sizes (diameters of 10–16” are most common), similar to the snare drum but with deeper bodies and lacking the snares. They have a more focused pitch fundamental than the snare and are higher-pitched than the kick. There are often three toms on a drum kit, with pitches that are low, middle, and high. The pitch can be a more or less prominent feature of the toms’ sound.",
       "category": "Rhythm"
     },
     {
@@ -2722,7 +2722,7 @@
     },
     {
       "term": "tonal answer",
-      "definition": "An imitative repetition of a subject that is not an exact transposition of the subject (that is, a real answer) but modifies the intervals to fit within the same key as the original subject. A common modification is to change a perfect fifth do\u2013sol (1\u0302\u20135\u0302) in the subject to a perfect fourth sol\u2013do (5\u0302\u20131\u0302) in the answer. The term \"tonal answer\" refers to the fact that this preserves the tonal relationships (e.g., between do and sol) instead of preserving intervallic relationships.",
+      "definition": "An imitative repetition of a subject that is not an exact transposition of the subject (that is, a real answer) but modifies the intervals to fit within the same key as the original subject. A common modification is to change a perfect fifth do–sol (1̂–5̂) in the subject to a perfect fourth sol–do (5̂–1̂) in the answer. The term \"tonal answer\" refers to the fact that this preserves the tonal relationships (e.g., between do and sol) instead of preserving intervallic relationships.",
       "category": "Theory"
     },
     {
@@ -2797,7 +2797,7 @@
     },
     {
       "term": "turnaround",
-      "definition": "The use of a non-tonic chord (usually dominant) at the end of a harmonically closed unit to transition into the beginning of the following on-tonic unit. In jazz, the term \"turnaround\" often refers to the progression vi\u2013ii\u2013V\u2013I. The exact qualities of these chords are highly variable, and one or more of the chords may be substituted with a different, related chord.",
+      "definition": "The use of a non-tonic chord (usually dominant) at the end of a harmonically closed unit to transition into the beginning of the following on-tonic unit. In jazz, the term \"turnaround\" often refers to the progression vi–ii–V–I. The exact qualities of these chords are highly variable, and one or more of the chords may be substituted with a different, related chord.",
       "category": "Theory"
     },
     {
@@ -2808,17 +2808,17 @@
     {
       "term": "unit",
       "definition": "A segment of music that expresses whatever the prevailing higher-level grouping expresses. For example, if a unit is contained within a continuation, it expresses continuation function. We often apply the term \"unit\" to ideas that aren't easily categorized using terms such as basic idea, contrasting idea, or cadential idea.",
-      "category": "General"
+      "category": "Theory"
     },
     {
       "term": "unordered pitch intervals",
-      "definition": "The distance between two pitches, measured in semitones. For example, C\u2084 to E\u2085 would be an unordered pitch interval of 16.",
+      "definition": "The distance between two pitches, measured in semitones. For example, C₄ to E₅ would be an unordered pitch interval of 16.",
       "category": "Notation"
     },
     {
       "term": "unpitched percussion",
       "definition": "Percussion instruments that do not produce a definite pitch; for example, snare drum, bass drum, cymbals, maracas, and so on. While unpitched percussion can still be \"tuned\" and can be described as having a higher or lower sound, unpitched percussion is acoustically noisy, and does not create discrete frequency bands that allow for easy perception of a fundamental pitch. Compare them against pitched percussion, such as timpani, xylophone, or gamelan.",
-      "category": "Instruments"
+      "category": "Notation"
     },
     {
       "term": "unvoiced",
@@ -2887,13 +2887,13 @@
     },
     {
       "term": "whole-tone collection",
-      "definition": "A pitch collection composed entirely of whole steps. There are six whole steps in a whole tone collection, and there are only two possible whole tone scales: C\u2013D\u2013E\u2013F\u266f\u2013G\u266f\u2013A\u266f, or C\u266f\u2013D\u266f\u2013F\u2013G\u2013A\u2013B.",
+      "definition": "A pitch collection composed entirely of whole steps. There are six whole steps in a whole tone collection, and there are only two possible whole tone scales: C–D–E–F♯–G♯–A♯, or C♯–D♯–F–G–A–B.",
       "category": "Theory"
     },
     {
       "term": "a battuta",
       "definition": "Return to normal tempo after a deviation. Not recommended in string parts, due to possible confusion with battuto; use a tempo, which means the same thing",
-      "category": "General"
+      "category": "Tempo"
     },
     {
       "term": "a bene placito",
@@ -2903,27 +2903,27 @@
     {
       "term": "a capriccio",
       "definition": "A free and capricious approach to tempo",
-      "category": "General"
+      "category": "Form"
     },
     {
       "term": "a due",
       "definition": "intended as a duet; for two voices or instruments; together; two instruments are to play in unison after a solo passage for one of the instruments",
-      "category": "General"
+      "category": "Instruments"
     },
     {
       "term": "a niente",
       "definition": "To nothing; indicating a diminuendo which fades completely away",
-      "category": "General"
+      "category": "Dynamics"
     },
     {
       "term": "a piacere",
       "definition": "At pleasure (i.e. the performer need not follow the rhythm strictly, for example in a cadenza)",
-      "category": "General"
+      "category": "Rhythm"
     },
     {
       "term": "a prima vista",
       "definition": "lit. \"at first sight\". Sight-reading (i.e. played or sung from written notation without prior review of the written material)",
-      "category": "General"
+      "category": "Notation"
     },
     {
       "term": "abafando",
@@ -2933,27 +2933,27 @@
     {
       "term": "abandon",
       "definition": "free, unrestrained, passionate",
-      "category": "General"
+      "category": "Notation"
     },
     {
       "term": "abbandonatamente",
       "definition": "freely, in relaxed mode",
-      "category": "General"
+      "category": "Theory"
     },
     {
       "term": "accarezzevole",
       "definition": "Expressive and caressing",
-      "category": "General"
+      "category": "Expression"
     },
     {
       "term": "accelerato",
       "definition": "with increased tempo",
-      "category": "General"
+      "category": "Tempo"
     },
     {
       "term": "accentato",
       "definition": "Accented; with emphasis",
-      "category": "General"
+      "category": "Articulation"
     },
     {
       "term": "acceso",
@@ -2963,17 +2963,17 @@
     {
       "term": "acciaccato",
       "definition": "Broken down, crushed; the sounding of the notes of a chord not quite simultaneously, but from bottom to top",
-      "category": "General"
+      "category": "Theory"
     },
     {
       "term": "acciaccatura",
       "definition": "Crushing (i.e. a very fast grace note that is \"crushed\" against the note that follows and takes up no value in the measure)",
-      "category": "General"
+      "category": "Ornamentation"
     },
     {
       "term": "accidental",
       "definition": "A note that is not part of the scale indicated by the key signature.",
-      "category": "General"
+      "category": "Theory"
     },
     {
       "term": "accompagnato",
@@ -2988,12 +2988,12 @@
     {
       "term": "adagietto",
       "definition": "Fairly slowly (but faster than adagio)",
-      "category": "General"
+      "category": "Tempo"
     },
     {
       "term": "adagissimo",
       "definition": "Very, very slowly",
-      "category": "General"
+      "category": "Tempo"
     },
     {
       "term": "affannato",
@@ -3003,7 +3003,7 @@
     {
       "term": "affrettando",
       "definition": "Hurrying, pressing onwards",
-      "category": "General"
+      "category": "Tempo"
     },
     {
       "term": "agile",
@@ -3013,17 +3013,17 @@
     {
       "term": "agitato",
       "definition": "Agitated",
-      "category": "General"
+      "category": "Expression"
     },
     {
       "term": "alla breve",
       "definition": "In cut-time; two beats per measure or the equivalent thereof",
-      "category": "General"
+      "category": "Rhythm"
     },
     {
       "term": "alla marcia",
       "definition": "In the style of a march",
-      "category": "General"
+      "category": "Expression"
     },
     {
       "term": "alla polacca",
@@ -3038,27 +3038,27 @@
     {
       "term": "allargando",
       "definition": "Broadening, becoming progressively slower",
-      "category": "General"
+      "category": "Tempo"
     },
     {
       "term": "allegretto vivace",
       "definition": "A moderately quick tempo",
-      "category": "General"
+      "category": "Tempo"
     },
     {
       "term": "allegrissimo",
       "definition": "Very fast, though slower than presto",
-      "category": "General"
+      "category": "Tempo"
     },
     {
       "term": "all'ottava",
       "definition": "\"at the octave\", see ottava",
-      "category": "General"
+      "category": "Notation"
     },
     {
       "term": "alt dom",
       "definition": "A jazz term which instructs chord-playing musicians such as a jazz pianist or jazz guitarist to perform a dominant (V7) chord with at least one (often both) altered (sharpened or flattened) 5th or 9th",
-      "category": "General"
+      "category": "Theory"
     },
     {
       "term": "altissimo",
@@ -3073,7 +3073,7 @@
     {
       "term": "am Steg",
       "definition": "At the bridge (i.e. playing a bowed string instrument near its bridge, which produces a heavier, stronger tone); see sul ponticello",
-      "category": "General"
+      "category": "Articulation"
     },
     {
       "term": "amabile",
@@ -3083,7 +3083,7 @@
     {
       "term": "ambitus",
       "definition": "Range between highest and lowest note",
-      "category": "General"
+      "category": "Notation"
     },
     {
       "term": "amore",
@@ -3093,22 +3093,22 @@
     {
       "term": "amoroso",
       "definition": "Loving",
-      "category": "General"
+      "category": "Expression"
     },
     {
       "term": "andantino",
       "definition": "Slightly faster than andante (but earlier it is sometimes used to mean slightly slower than andante)",
-      "category": "General"
+      "category": "Tempo"
     },
     {
-      "term": "\u00e4ngstlich",
+      "term": "ängstlich",
       "definition": "Anxiously",
       "category": "General"
     },
     {
       "term": "anima",
       "definition": "Soul; con anima: with feeling",
-      "category": "General"
+      "category": "Expression"
     },
     {
       "term": "animandosi",
@@ -3118,37 +3118,37 @@
     {
       "term": "animato",
       "definition": "Animated, lively",
-      "category": "General"
+      "category": "Expression"
     },
     {
       "term": "antiphon",
       "definition": "A liturgical or other composition consisting of choral responses, sometimes between two choirs; a passage of this nature forming part of another composition; a repeated passage in a psalm or other liturgical piece, similar to a refrain.",
-      "category": "General"
+      "category": "Performance"
     },
     {
       "term": "antiphonal",
       "definition": "A style of composition in which two sections of singers or instrumentalists exchange sections or music one after the other; typically the performers are on different sides of a hall or venue",
-      "category": "General"
+      "category": "Performance"
     },
     {
-      "term": "apais\u00e9",
+      "term": "apaisé",
       "definition": "Calmed",
-      "category": "General"
+      "category": "Expression"
     },
     {
       "term": "appoggiatura",
       "definition": "One or more grace notes that take up some note value of the next full note.",
-      "category": "General"
+      "category": "Ornamentation"
     },
     {
       "term": "arco",
       "definition": "The bow used for playing some string instruments (i.e. played with the bow, as opposed to pizzicato, in music for bowed instruments); normally used to cancel a pizzicato direction",
-      "category": "General"
+      "category": "Articulation"
     },
     {
       "term": "aria",
       "definition": "Self-contained piece for one voice usually with orchestral accompaniment (which may be provided by a pianist using an orchestral reduction)",
-      "category": "General"
+      "category": "Form"
     },
     {
       "term": "arietta",
@@ -3168,7 +3168,7 @@
     {
       "term": "articulato",
       "definition": "Articulate",
-      "category": "General"
+      "category": "Articulation"
     },
     {
       "term": "assai",
@@ -3183,17 +3183,17 @@
     {
       "term": "attacca",
       "definition": "Attack or attach; go straight on (i.e. at the end of a movement, a direction to attach the next movement to the previous one, without a gap or pause). Often used as \"attacca subito,\" meaning a \"sudden\" movement transition (literally, \"attack suddenly\").",
-      "category": "General"
+      "category": "Notation"
     },
     {
       "term": "Ausdruck",
       "definition": "Expression",
-      "category": "General"
+      "category": "Expression"
     },
     {
       "term": "ausdrucksvoll",
       "definition": "Expressively, with expression",
-      "category": "General"
+      "category": "Expression"
     },
     {
       "term": "avec",
@@ -3203,12 +3203,12 @@
     {
       "term": "con fuoco",
       "definition": "with fire, passionately",
-      "category": "General"
+      "category": "Expression"
     },
     {
       "term": "con moto",
       "definition": "with motion",
-      "category": "General"
+      "category": "Expression"
     },
     {
       "term": "con sordino",
@@ -3218,87 +3218,87 @@
     {
       "term": "crescendo",
       "definition": "gradually getting louder",
-      "category": "General"
+      "category": "Dynamics"
     },
     {
       "term": "da capo",
       "definition": "from the beginning",
-      "category": "General"
+      "category": "Notation"
     },
     {
       "term": "dal segno",
       "definition": "from the sign",
-      "category": "General"
+      "category": "Notation"
     },
     {
       "term": "decrescendo",
       "definition": "gradually getting softer",
-      "category": "General"
+      "category": "Dynamics"
     },
     {
       "term": "diminuendo",
       "definition": "gradually getting softer",
-      "category": "General"
+      "category": "Dynamics"
     },
     {
       "term": "dolce",
       "definition": "sweetly, softly",
-      "category": "General"
+      "category": "Expression"
     },
     {
       "term": "espressivo",
       "definition": "expressively",
-      "category": "General"
+      "category": "Expression"
     },
     {
       "term": "fine",
       "definition": "end",
-      "category": "General"
+      "category": "Notation"
     },
     {
       "term": "forte",
       "definition": "loud",
-      "category": "General"
+      "category": "Dynamics"
     },
     {
       "term": "fortissimo",
       "definition": "very loud",
-      "category": "General"
+      "category": "Dynamics"
     },
     {
       "term": "giocoso",
       "definition": "playfully",
-      "category": "General"
+      "category": "Expression"
     },
     {
       "term": "grave",
       "definition": "very slow and solemn",
-      "category": "General"
+      "category": "Tempo"
     },
     {
       "term": "grazioso",
       "definition": "gracefully",
-      "category": "General"
+      "category": "Expression"
     },
     {
       "term": "largo",
       "definition": "very slow and broad",
-      "category": "General"
+      "category": "Tempo"
     },
     {
       "term": "lento",
       "definition": "slow",
-      "category": "General"
+      "category": "Tempo"
     },
     {
       "term": "maestoso",
       "definition": "majestically",
-      "category": "General"
+      "category": "Expression"
     },
     {
       "term": "marcato",
       "definition": "marked, accented",
-      "category": "General"
+      "category": "Articulation"
     },
     {
       "term": "meno",
@@ -3308,12 +3308,12 @@
     {
       "term": "mezzo",
       "definition": "half, medium",
-      "category": "General"
+      "category": "Dynamics"
     },
     {
       "term": "moderato",
       "definition": "moderate tempo",
-      "category": "General"
+      "category": "Tempo"
     },
     {
       "term": "molto",
@@ -3323,12 +3323,12 @@
     {
       "term": "morendo",
       "definition": "dying away",
-      "category": "General"
+      "category": "Dynamics"
     },
     {
       "term": "mosso",
       "definition": "movement, motion",
-      "category": "General"
+      "category": "Tempo"
     },
     {
       "term": "non troppo",
@@ -3343,15 +3343,15 @@
     {
       "term": "pianissimo",
       "definition": "very soft",
-      "category": "General"
+      "category": "Dynamics"
     },
     {
       "term": "piano",
       "definition": "soft",
-      "category": "General"
+      "category": "Dynamics"
     },
     {
-      "term": "pi\u00f9",
+      "term": "più",
       "definition": "more",
       "category": "General"
     },
@@ -3368,27 +3368,27 @@
     {
       "term": "prestissimo",
       "definition": "as fast as possible",
-      "category": "General"
+      "category": "Tempo"
     },
     {
       "term": "presto",
       "definition": "very fast",
-      "category": "General"
+      "category": "Tempo"
     },
     {
       "term": "rallentando",
       "definition": "gradually slowing down",
-      "category": "General"
+      "category": "Tempo"
     },
     {
       "term": "rinforzando",
       "definition": "reinforcing, suddenly louder",
-      "category": "General"
+      "category": "Dynamics"
     },
     {
       "term": "rubato",
       "definition": "with flexibility of tempo",
-      "category": "General"
+      "category": "Tempo"
     },
     {
       "term": "sempre",
@@ -3398,7 +3398,7 @@
     {
       "term": "sforzando",
       "definition": "sudden accent",
-      "category": "General"
+      "category": "Dynamics"
     },
     {
       "term": "simile",
@@ -3408,12 +3408,12 @@
     {
       "term": "sostenuto",
       "definition": "sustained",
-      "category": "General"
+      "category": "Articulation"
     },
     {
       "term": "staccato",
       "definition": "detached, separated",
-      "category": "General"
+      "category": "Articulation"
     },
     {
       "term": "subito",
@@ -3423,92 +3423,92 @@
     {
       "term": "tempo primo",
       "definition": "original tempo",
-      "category": "General"
+      "category": "Tempo"
     },
     {
       "term": "tenuto",
       "definition": "held, sustained",
-      "category": "General"
+      "category": "Articulation"
     },
     {
       "term": "tranquillo",
       "definition": "tranquil, calm",
-      "category": "General"
+      "category": "Expression"
     },
     {
       "term": "tremolo",
       "definition": "trembling, rapid repetition",
-      "category": "General"
+      "category": "Ornamentation"
     },
     {
       "term": "trill",
       "definition": "rapid alternation between two notes",
-      "category": "General"
+      "category": "Ornamentation"
     },
     {
       "term": "vivace",
       "definition": "lively, fast",
-      "category": "General"
+      "category": "Tempo"
     },
     {
       "term": "vivacissimo",
       "definition": "very lively",
-      "category": "General"
+      "category": "Tempo"
     },
     {
       "term": "volti subito",
       "definition": "turn the page quickly",
-      "category": "General"
+      "category": "Notation"
     },
     {
       "term": "ballabile",
       "definition": "from the Italian meaning \"danceable\" In ballet, a dance performed by the corps de ballet. The term Grand ballabile is used if nearly all participants (including principal characters) of a particular scene in a full-length work perform a large-scale dance.",
-      "category": "General"
+      "category": "Theory"
     },
     {
       "term": "bar, or measure",
       "definition": "unit of music containing a number of beats as indicated by a time signature; also the vertical bar enclosing it",
-      "category": "General"
+      "category": "Rhythm"
     },
     {
       "term": "barbaro",
-      "definition": "Barbarous (notably used in Allegro barbaro by B\u00e9la Bart\u00f3k)",
-      "category": "General"
+      "definition": "Barbarous (notably used in Allegro barbaro by Béla Bartók)",
+      "category": "Notation"
     },
     {
       "term": "baritone",
       "definition": "A male vocal range that lies between the ranges of bass and tenor",
-      "category": "General"
+      "category": "Notation"
     },
     {
-      "term": "Bart\u00f3k pizzicato",
+      "term": "Bartók pizzicato",
       "definition": "An instruction to string performers to play a pizzicato note to pull the string away from the fingerboard so that it snaps back percussively on the fingerboard.",
-      "category": "General"
+      "category": "Articulation"
     },
     {
       "term": "bass",
       "definition": "The lowest of the standard four voice ranges (bass, tenor, alto, soprano); the lowest melodic line in a musical composition, often thought of as defining and supporting the harmony; in an orchestral context, the term usually refers to the double bass.",
-      "category": "General"
+      "category": "Theory"
     },
     {
       "term": "basso continuo",
       "definition": "Continuous bass, i.e. a bass accompaniment part played continuously throughout a piece by a chordal instrument (pipe organ, harpsichord, lute, etc.), often with a bass instrument, to give harmonic structure; used especially in the Baroque period",
-      "category": "General"
+      "category": "Theory"
     },
     {
       "term": "battement",
       "definition": "Used in the 17th century to refer to ornaments consisting of two adjacent notes, such as trills or mordents",
-      "category": "General"
+      "category": "Notation"
     },
     {
       "term": "battuto",
       "definition": "To strike the strings with the bow (on a bowed stringed instrument)",
-      "category": "General"
+      "category": "Articulation"
     },
     {
       "term": "beam",
       "definition": "Horizontal or diagonal line used to connect multiple consecutive notes",
-      "category": "General"
+      "category": "Notation"
     },
     {
       "term": "belebt",
@@ -3523,17 +3523,17 @@
     {
       "term": "ben or bene",
       "definition": "Well; in ben marcato (\"well marked\") for example",
-      "category": "General"
+      "category": "Expression"
     },
     {
       "term": "bend",
       "definition": "In jazz, either establishing a pitch, sliding down half a step and returning to the original pitch or sliding up half a step from the original note",
-      "category": "General"
+      "category": "Notation"
     },
     {
       "term": "beschleunigt",
       "definition": "Accelerated, as in mit beschleunigter Geschwindigkeit, at an accelerated tempo",
-      "category": "General"
+      "category": "Tempo"
     },
     {
       "term": "bewegt",
@@ -3543,12 +3543,12 @@
     {
       "term": "binary",
       "definition": "A musical form in two sections: AB",
-      "category": "General"
+      "category": "Form"
     },
     {
       "term": "bird's eye",
       "definition": "Slang for fermata, which instructs the performer to hold a note or chord as long as they wish or following cues from a conductor",
-      "category": "General"
+      "category": "Theory"
     },
     {
       "term": "bis",
@@ -3558,7 +3558,7 @@
     {
       "term": "bisbigliando",
       "definition": "Whispering (i.e. a special tremolo effect on the harp where a chord or note is rapidly repeated at a low volume)",
-      "category": "General"
+      "category": "Theory"
     },
     {
       "term": "bocca chiusa",
@@ -3578,12 +3578,12 @@
     {
       "term": "brillante",
       "definition": "Brilliantly, with sparkle. Play in a showy and spirited style.",
-      "category": "General"
+      "category": "Expression"
     },
     {
       "term": "broken chord",
       "definition": "A chord in which the notes are not all played at once, but in some more or less consistent sequence. They may follow singly one after the other, or two notes may be immediately followed by another two, for example. See also arpeggio, which as an accompaniment pattern may be seen as a kind of broken chord; see Alberti bass.",
-      "category": "General"
+      "category": "Theory"
     },
     {
       "term": "bruscamente",
@@ -3593,22 +3593,22 @@
     {
       "term": "cabaletta",
       "definition": "The concluding, rapid, audience-rousing section of an aria",
-      "category": "General"
+      "category": "Form"
     },
     {
       "term": "cadenza",
       "definition": "A solo section, usually in a concerto or similar work, that is used to display the performer's technique, sometimes at considerable length",
-      "category": "General"
+      "category": "Form"
     },
     {
       "term": "calando",
       "definition": "Falling away, or lowering (i.e. getting slower and quieter; ritardando along with diminuendo)",
-      "category": "General"
+      "category": "Dynamics"
     },
     {
       "term": "calma",
       "definition": "Calm; so con calma, calmly. Also calmato meaning calmed, relaxed",
-      "category": "General"
+      "category": "Expression"
     },
     {
       "term": "calore",
@@ -3618,27 +3618,27 @@
     {
       "term": "cambiare",
       "definition": "To change (i.e. any change, such as to a new instrument)",
-      "category": "General"
+      "category": "Instruments"
     },
     {
       "term": "cambiata",
       "definition": "An ornamental tone following a principal tone by a skip up or down, usually of a third, and proceeding in the opposite direction by a step, not to be confused with changing tone.",
-      "category": "General"
+      "category": "Theory"
     },
     {
       "term": "canon",
       "definition": "A theme that is repeated and imitated and built upon by other instruments with a time delay, creating a layered effect; see Pachelbel's Canon.",
-      "category": "General"
+      "category": "Form"
     },
     {
       "term": "cantabile",
       "definition": "In a singing style. In instrumental music, a style of playing that imitates the way the human voice might express the music, with a measured tempo and flexible legato.",
-      "category": "General"
+      "category": "Expression"
     },
     {
       "term": "cantilena",
       "definition": "a vocal melody or instrumental passage in a smooth, lyrical style",
-      "category": "General"
+      "category": "Instruments"
     },
     {
       "term": "canto",
@@ -3648,32 +3648,32 @@
     {
       "term": "cantus mensuratus",
       "definition": "Meaning respectively \"measured song\" or \"figured song\". Originally used by medieval music theorists, it refers to polyphonic song with exactly measured notes and is used in contrast to cantus planus.",
-      "category": "General"
+      "category": "Notation"
     },
     {
       "term": "capo",
       "definition": "1. capo (short for capotasto: \"nut\") : A key-changing device for stringed instruments (e.g. guitars and banjos) 2. head (i.e. the beginning, as in da capo)",
-      "category": "General"
+      "category": "Theory"
     },
     {
       "term": "capriccio",
       "definition": "A humorous, fanciful, or bizarre, composition, often characterized by an idiosyncratic departure from current stylistic norms.",
-      "category": "General"
+      "category": "Form"
     },
     {
       "term": "capriccioso",
       "definition": "Capricious, unpredictable, volatile",
-      "category": "General"
+      "category": "Form"
     },
     {
       "term": "cassa",
       "definition": "Drum, usually an orchestral bass drum. Sometimes written as Gran Cassa where Gran specifically means Bass",
-      "category": "General"
+      "category": "Instruments"
     },
     {
       "term": "cavalleresco",
       "definition": "Chivalrous (used in Carl Nielsen's violin concerto)",
-      "category": "General"
+      "category": "Instruments"
     },
     {
       "term": "cedendo",
@@ -3681,34 +3681,34 @@
       "category": "General"
     },
     {
-      "term": "c\u00e9sure",
+      "term": "césure",
       "definition": "Break, stop; (i.e. a complete break in sound)",
       "category": "General"
     },
     {
       "term": "chiuso",
       "definition": "Closed (i.e. muted by hand) (for a horn, or similar instrument; but see also bocca chiusa, which uses the feminine form)",
-      "category": "General"
+      "category": "Form"
     },
     {
       "term": "coda",
       "definition": "A tail (i.e. a closing section appended to a movement)",
-      "category": "General"
+      "category": "Notation"
     },
     {
       "term": "colla parte",
       "definition": "literally \"with the part\". An indication that another (written-out) part should be followed, i.e. accommodate the tempo, expression, phrasing, and possible rubato of the leading part. In vocal music, also expressed by colla voce",
-      "category": "General"
+      "category": "Performance"
     },
     {
       "term": "colla voce",
       "definition": "literally \"with the voice\". An instruction, in a choral or orchestral part, that a vocal part should be followed, e.g., play the same notes as the vocal part and accommodate the tempo, expression, etc. of the vocalist",
-      "category": "General"
+      "category": "Notation"
     },
     {
       "term": "coloratura",
       "definition": "Coloration (i.e. elaborate ornamentation of a vocal line, or a soprano voice that is well-suited to such elaboration)",
-      "category": "General"
+      "category": "Ornamentation"
     },
     {
       "term": "colossale",
@@ -3718,27 +3718,27 @@
     {
       "term": "come prima",
       "definition": "As before, typically referring to an earlier tempo",
-      "category": "General"
+      "category": "Tempo"
     },
     {
       "term": "come sopra",
       "definition": "As above (i.e. like the previous tempo)",
-      "category": "General"
+      "category": "Tempo"
     },
     {
       "term": "common time",
       "definition": "The time signature 4/4: four beats per measure, each beat a quarter note (a crotchet) in length. 4/4 is often written on the musical staff as common time. The symbol is not a C as an abbreviation for common time, but a broken circle; the full circle at one time stood for triple time, 3/4.",
-      "category": "General"
+      "category": "Rhythm"
     },
     {
       "term": "comodo",
       "definition": "Comfortable (i.e. at moderate speed); also, allegro comodo, tempo comodo, etc.",
-      "category": "General"
+      "category": "Theory"
     },
     {
       "term": "comp",
       "definition": "1. abbreviation of accompanying, accompanying music, accompaniment 2. describes the chords, rhythms, and countermelodies that instrumental players used to support a musician's melody and improvised solos. 3. Ostinato",
-      "category": "General"
+      "category": "Rhythm"
     },
     {
       "term": "comping",
@@ -3748,17 +3748,17 @@
     {
       "term": "concerto",
       "definition": "Composition for solo instrument(s) and orchestra",
-      "category": "General"
+      "category": "Form"
     },
     {
       "term": "concerto grosso",
       "definition": "Composition for a group of solo instruments (concertino or soli) and orchestra (ripieno or tutti)",
-      "category": "General"
+      "category": "Form"
     },
     {
       "term": "conjunct",
       "definition": "An adjective applied to a melodic line that moves by step (intervals of a 2nd) rather than in disjunct motion (by leap).",
-      "category": "General"
+      "category": "Theory"
     },
     {
       "term": "contralto",
@@ -3768,37 +3768,37 @@
     {
       "term": "contrapuntalism",
       "definition": "See counterpoint",
-      "category": "General"
+      "category": "Theory"
     },
     {
       "term": "coperti",
       "definition": "(plural of coperto) covered (i.e. on a drum, muted with a cloth)",
-      "category": "General"
+      "category": "Instruments"
     },
     {
       "term": "count",
       "definition": "Series of regularly occurring sounds to assist with ready identification of beat",
-      "category": "General"
+      "category": "Rhythm"
     },
     {
-      "term": "cuivr\u00e9",
-      "definition": "Brassy. Used almost exclusively as a French horn technique to indicate a forced, rough tone. A note marked both stopped and loud will be cuivr\u00e9 automatically",
-      "category": "General"
+      "term": "cuivré",
+      "definition": "Brassy. Used almost exclusively as a French horn technique to indicate a forced, rough tone. A note marked both stopped and loud will be cuivré automatically",
+      "category": "Notation"
     },
     {
       "term": "custos",
       "definition": "Symbol at the very end of a staff of music which indicates the pitch for the first note of the next line as a warning of what is to come. The custos was commonly used in handwritten Renaissance and typeset Baroque music.",
-      "category": "General"
+      "category": "Notation"
     },
     {
       "term": "cut time",
       "definition": "Same as the meter 2/2: two half-note (minim) beats per measure. Notated and executed like common time (4/4), except with the beat lengths doubled. Indicated by cut time. This comes from a literal cut of the common time symbol of common time. Thus, a quarter note in cut time is only half a beat long, and a measure has only two beats. See also alla breve.",
-      "category": "General"
+      "category": "Rhythm"
     },
     {
       "term": "bar",
       "definition": "unit of music containing a number of beats as indicated by a time signature; also the vertical bar enclosing it",
-      "category": "General"
+      "category": "Rhythm"
     },
     {
       "term": "cesura",
@@ -3808,17 +3808,17 @@
     {
       "term": "dal segno al fine",
       "definition": "From the sign to the end",
-      "category": "General"
+      "category": "Notation"
     },
     {
       "term": "dal segno alla coda",
       "definition": "Repeat to the sign and continue to the coda sign",
-      "category": "General"
+      "category": "Notation"
     },
     {
       "term": "decelerando",
       "definition": "Slowing down; decelerating; opposite of accelerando",
-      "category": "General"
+      "category": "Tempo"
     },
     {
       "term": "deciso",
@@ -3828,7 +3828,7 @@
     {
       "term": "declamando",
       "definition": "Solemn, expressive, impassioned",
-      "category": "General"
+      "category": "Expression"
     },
     {
       "term": "deest",
@@ -3846,9 +3846,9 @@
       "category": "General"
     },
     {
-      "term": "detach\u00e9",
+      "term": "detaché",
       "definition": "Act of playing notes separately",
-      "category": "General"
+      "category": "Articulation"
     },
     {
       "term": "devoto",
@@ -3868,37 +3868,37 @@
     {
       "term": "divisi",
       "definition": "Divided (i.e. in a part where musicians split the playing of simultaneous notes)",
-      "category": "General"
+      "category": "Notation"
     },
     {
       "term": "dolente",
       "definition": "Sorrowful, plaintive",
-      "category": "General"
+      "category": "Expression"
     },
     {
       "term": "dolore",
       "definition": "Pain, distress, sorrow, grief",
-      "category": "General"
+      "category": "Theory"
     },
     {
       "term": "doloroso",
       "definition": "Sorrowful, plaintive",
-      "category": "General"
+      "category": "Expression"
     },
     {
       "term": "doppio movimento",
       "definition": "Double movement, i.e. the note values are halved",
-      "category": "General"
+      "category": "Notation"
     },
     {
       "term": "double dot",
       "definition": "Two dots placed side by side after a note to indicate that it is to be lengthened by three quarters of its value",
-      "category": "General"
+      "category": "Notation"
     },
     {
       "term": "double stop",
       "definition": "The technique of playing two notes simultaneously on a bowed string instrument",
-      "category": "General"
+      "category": "Notation"
     },
     {
       "term": "doux",
@@ -3908,17 +3908,17 @@
     {
       "term": "downtempo",
       "definition": "A slow, moody, or decreased tempo",
-      "category": "General"
+      "category": "Tempo"
     },
     {
       "term": "drone",
       "definition": "Bass note or chord performed continuously throughout a composition",
-      "category": "General"
+      "category": "Theory"
     },
     {
       "term": "drop",
       "definition": "In jazz, a note that slides to an indefinite pitch chromatically downwards",
-      "category": "General"
+      "category": "Theory"
     },
     {
       "term": "duolo",
@@ -3928,12 +3928,12 @@
     {
       "term": "Dur",
       "definition": "major; used in key signatures",
-      "category": "General"
+      "category": "Theory"
     },
     {
       "term": "eco",
       "definition": "The Italian word for \"echo\"; an effect in which a group of notes is repeated, usually more softly",
-      "category": "General"
+      "category": "Notation"
     },
     {
       "term": "egal",
@@ -3956,7 +3956,7 @@
       "category": "General"
     },
     {
-      "term": "emport\u00e9",
+      "term": "emporté",
       "definition": "Fiery, impetuous",
       "category": "General"
     },
@@ -3966,7 +3966,7 @@
       "category": "General"
     },
     {
-      "term": "en c\u00e9dant",
+      "term": "en cédant",
       "definition": "Yielding",
       "category": "General"
     },
@@ -4003,7 +4003,7 @@
     {
       "term": "energico",
       "definition": "Energetic, strong",
-      "category": "General"
+      "category": "Expression"
     },
     {
       "term": "enfatico",
@@ -4013,12 +4013,12 @@
     {
       "term": "eroico",
       "definition": "Heroic",
-      "category": "General"
+      "category": "Expression"
     },
     {
       "term": "espansivo",
       "definition": "Effusive; excessive in emotional expression",
-      "category": "General"
+      "category": "Expression"
     },
     {
       "term": "espirando",
@@ -4028,7 +4028,7 @@
     {
       "term": "espressione",
       "definition": "Expression",
-      "category": "General"
+      "category": "Expression"
     },
     {
       "term": "estinto",
@@ -4053,7 +4053,7 @@
     {
       "term": "fall",
       "definition": "In jazz, a note that slides to an indefinite pitch chromatically upwards",
-      "category": "General"
+      "category": "Theory"
     },
     {
       "term": "falsetto",
@@ -4063,7 +4063,7 @@
     {
       "term": "fantasia",
       "definition": "A piece not adhering to any strict musical form",
-      "category": "General"
+      "category": "Form"
     },
     {
       "term": "feierlich",
@@ -4073,17 +4073,17 @@
     {
       "term": "fermata",
       "definition": "Stop (i.e. a rest or note to be held for a duration that is at the discretion of the performer or conductor)",
-      "category": "General"
+      "category": "Notation"
     },
     {
       "term": "feroce",
       "definition": "Ferocious",
-      "category": "General"
+      "category": "Expression"
     },
     {
       "term": "festivamente",
       "definition": "Cheerfully, in a celebratory mode",
-      "category": "General"
+      "category": "Theory"
     },
     {
       "term": "feurig",
@@ -4098,27 +4098,27 @@
     {
       "term": "fil di voce",
       "definition": "thread of voice, very quiet, pianissimo",
-      "category": "General"
+      "category": "Dynamics"
     },
     {
       "term": "fill",
       "definition": "A jazz term which instructs performers to improvise a scalar passage or riff",
-      "category": "General"
+      "category": "Performance"
     },
     {
       "term": "fioritura",
       "definition": "the florid embellishment of melodic lines",
-      "category": "General"
+      "category": "Ornamentation"
     },
     {
       "term": "flat",
-      "definition": "A symbol (\u266d) that lowers the pitch of a note by a semitone",
-      "category": "General"
+      "definition": "A symbol (♭) that lowers the pitch of a note by a semitone",
+      "category": "Notation"
     },
     {
       "term": "flautando",
       "definition": "Flutelike mode; used for string instruments to indicate a light, rapid bowing",
-      "category": "General"
+      "category": "Theory"
     },
     {
       "term": "flebile",
@@ -4138,12 +4138,12 @@
     {
       "term": "fortepiano",
       "definition": "An early pianoforte",
-      "category": "General"
+      "category": "Dynamics"
     },
     {
       "term": "forte-piano",
       "definition": "Strong-gentle (i.e. loud, then immediately soft)",
-      "category": "General"
+      "category": "Dynamics"
     },
     {
       "term": "forza",
@@ -4153,7 +4153,7 @@
     {
       "term": "forzando",
       "definition": "Sudden strong accent",
-      "category": "General"
+      "category": "Dynamics"
     },
     {
       "term": "freddo",
@@ -4166,19 +4166,19 @@
       "category": "General"
     },
     {
-      "term": "fr\u00f6hlich",
+      "term": "fröhlich",
       "definition": "Lively, joyfully",
       "category": "General"
     },
     {
       "term": "funebre",
       "definition": "Funeral; marcia funebre means funeral march",
-      "category": "General"
+      "category": "Expression"
     },
     {
       "term": "fuoco",
       "definition": "Fire; con fuoco: with fire, in a fiery manner",
-      "category": "General"
+      "category": "Expression"
     },
     {
       "term": "furia",
@@ -4193,7 +4193,7 @@
     {
       "term": "G.P.",
       "definition": "Grand Pause, General Pause; indicates entire ensemble has a rest of indeterminate length",
-      "category": "General"
+      "category": "Notation"
     },
     {
       "term": "gaudioso",
@@ -4201,7 +4201,7 @@
       "category": "General"
     },
     {
-      "term": "gem\u00e4chlich",
+      "term": "gemächlich",
       "definition": "Unhurried, at a leisurely pace",
       "category": "General"
     },
@@ -4228,7 +4228,7 @@
     {
       "term": "getragen",
       "definition": "Solemnly, in a stately tempo",
-      "category": "General"
+      "category": "Tempo"
     },
     {
       "term": "gioioso",
@@ -4243,17 +4243,17 @@
     {
       "term": "glissando",
       "definition": "A continuous sliding from one pitch to another",
-      "category": "General"
+      "category": "Ornamentation"
     },
     {
       "term": "grace note",
       "definition": "An extra note added as an embellishment",
-      "category": "General"
+      "category": "Ornamentation"
     },
     {
       "term": "grandioso",
       "definition": "Grand, solemn",
-      "category": "General"
+      "category": "Expression"
     },
     {
       "term": "guerriero",
@@ -4268,7 +4268,7 @@
     {
       "term": "H",
       "definition": "German for B natural",
-      "category": "General"
+      "category": "Notation"
     },
     {
       "term": "Hauptstimme",
@@ -4303,27 +4303,27 @@
     {
       "term": "improvvisando",
       "definition": "With improvisation",
-      "category": "General"
+      "category": "Performance"
     },
     {
       "term": "improvvisato",
       "definition": "Improvised",
-      "category": "General"
+      "category": "Performance"
     },
     {
       "term": "improvise",
       "definition": "To create music spontaneously",
-      "category": "General"
+      "category": "Performance"
     },
     {
       "term": "in alto",
       "definition": "octave above the treble staff",
-      "category": "General"
+      "category": "Notation"
     },
     {
       "term": "in altissimo",
       "definition": "Octave above the in alt octave",
-      "category": "General"
+      "category": "Notation"
     },
     {
       "term": "in modo di",
@@ -4333,7 +4333,7 @@
     {
       "term": "in stand",
       "definition": "An instruction to brass players to direct the bell into the music stand",
-      "category": "General"
+      "category": "Instruments"
     },
     {
       "term": "incalzando",
@@ -4358,7 +4358,7 @@
     {
       "term": "intro",
       "definition": "Opening section of a piece",
-      "category": "General"
+      "category": "Form"
     },
     {
       "term": "irato",
@@ -4368,7 +4368,7 @@
     {
       "term": "-issimamente",
       "definition": "The adverbial form of the superlative",
-      "category": "General"
+      "category": "Form"
     },
     {
       "term": "-issimo",
@@ -4388,12 +4388,12 @@
     {
       "term": "jete",
       "definition": "A bowing technique where the player lets the bow bounce",
-      "category": "General"
+      "category": "Articulation"
     },
     {
       "term": "keyboardist",
       "definition": "A musician who plays keyboard instruments",
-      "category": "General"
+      "category": "Instruments"
     },
     {
       "term": "Klangfarbenmelodie",
@@ -4401,7 +4401,7 @@
       "category": "General"
     },
     {
-      "term": "kr\u00e4ftig",
+      "term": "kräftig",
       "definition": "Strong",
       "category": "General"
     },
@@ -4413,12 +4413,12 @@
     {
       "term": "lamentando",
       "definition": "Lamenting, mournfully",
-      "category": "General"
+      "category": "Expression"
     },
     {
       "term": "lamentoso",
       "definition": "Lamenting, mournfully",
-      "category": "General"
+      "category": "Expression"
     },
     {
       "term": "langsam",
@@ -4433,7 +4433,7 @@
     {
       "term": "larghetto",
       "definition": "Somewhat slow",
-      "category": "General"
+      "category": "Tempo"
     },
     {
       "term": "larghezza",
@@ -4443,7 +4443,7 @@
     {
       "term": "larghissimo",
       "definition": "Very slow",
-      "category": "General"
+      "category": "Tempo"
     },
     {
       "term": "lebhaft",
@@ -4473,22 +4473,22 @@
     {
       "term": "lentando",
       "definition": "Gradual slowing",
-      "category": "General"
+      "category": "Tempo"
     },
     {
       "term": "lentissimo",
       "definition": "Very slow",
-      "category": "General"
+      "category": "Tempo"
     },
     {
       "term": "l'istesso",
       "definition": "The same tempo",
-      "category": "General"
+      "category": "Tempo"
     },
     {
       "term": "loco",
       "definition": "In place, perform notes at written pitch",
-      "category": "General"
+      "category": "Notation"
     },
     {
       "term": "long accent",
@@ -4503,7 +4503,7 @@
     {
       "term": "lugubre",
       "definition": "Lugubrious, mournful",
-      "category": "General"
+      "category": "Expression"
     },
     {
       "term": "luminoso",
@@ -4518,7 +4518,7 @@
     {
       "term": "lusingando",
       "definition": "Coaxingly, flatteringly",
-      "category": "General"
+      "category": "Notation"
     },
     {
       "term": "ma non tanto",
@@ -4533,7 +4533,7 @@
     {
       "term": "maggiore",
       "definition": "The major key",
-      "category": "General"
+      "category": "Theory"
     },
     {
       "term": "magico",
@@ -4583,12 +4583,12 @@
     {
       "term": "marcia",
       "definition": "A march",
-      "category": "General"
+      "category": "Expression"
     },
     {
       "term": "martellato",
       "definition": "Hammered out",
-      "category": "General"
+      "category": "Articulation"
     },
     {
       "term": "marziale",
@@ -4596,14 +4596,14 @@
       "category": "General"
     },
     {
-      "term": "m\u00e4\u00dfig",
+      "term": "mäßig",
       "definition": "Moderately",
-      "category": "General"
+      "category": "Theory"
     },
     {
       "term": "medesimo tempo",
       "definition": "Same tempo",
-      "category": "General"
+      "category": "Tempo"
     },
     {
       "term": "medley",
@@ -4618,22 +4618,22 @@
     {
       "term": "melisma",
       "definition": "Changing the note of a syllable while singing",
-      "category": "General"
+      "category": "Notation"
     },
     {
       "term": "messa di voce",
       "definition": "A controlled swell on a long held note",
-      "category": "General"
+      "category": "Notation"
     },
     {
       "term": "mesto",
       "definition": "Mournful, sad",
-      "category": "General"
+      "category": "Expression"
     },
     {
       "term": "mezza voce",
       "definition": "Half voice (quietly)",
-      "category": "General"
+      "category": "Dynamics"
     },
     {
       "term": "mezzo-soprano",
@@ -4643,22 +4643,22 @@
     {
       "term": "minore",
       "definition": "Minor key",
-      "category": "General"
+      "category": "Theory"
     },
     {
       "term": "misterioso",
       "definition": "Mysterious",
-      "category": "General"
+      "category": "Expression"
     },
     {
-      "term": "mit D\u00e4mpfer",
+      "term": "mit Dämpfer",
       "definition": "With a mute",
       "category": "General"
     },
     {
       "term": "M.M.",
       "definition": "Metronome Marking",
-      "category": "General"
+      "category": "Notation"
     },
     {
       "term": "mobile",
@@ -4668,17 +4668,17 @@
     {
       "term": "mode",
       "definition": "Type and characteristic of a musical scale",
-      "category": "General"
+      "category": "Theory"
     },
     {
-      "term": "mod\u00e9r\u00e9",
+      "term": "modéré",
       "definition": "Moderate",
-      "category": "General"
+      "category": "Theory"
     },
     {
       "term": "modesto",
       "definition": "Modest",
-      "category": "General"
+      "category": "Theory"
     },
     {
       "term": "Moll",
@@ -4688,7 +4688,7 @@
     {
       "term": "movement",
       "definition": "A section of a musical composition",
-      "category": "General"
+      "category": "Form"
     },
     {
       "term": "MS",
@@ -4703,7 +4703,7 @@
     {
       "term": "Musette",
       "definition": "A dance with drone-bass character",
-      "category": "General"
+      "category": "Expression"
     },
     {
       "term": "muta",
@@ -4713,7 +4713,7 @@
     {
       "term": "nach und nach",
       "definition": "Increasing feeling",
-      "category": "General"
+      "category": "Expression"
     },
     {
       "term": "narrante",
@@ -4722,18 +4722,18 @@
     },
     {
       "term": "natural",
-      "definition": "A symbol (\u266e) that cancels a sharp or flat",
-      "category": "General"
+      "definition": "A symbol (♮) that cancels a sharp or flat",
+      "category": "Notation"
     },
     {
       "term": "naturale",
       "definition": "Natural (discontinue special effect)",
-      "category": "General"
+      "category": "Notation"
     },
     {
       "term": "N.C.",
       "definition": "No chord",
-      "category": "General"
+      "category": "Theory"
     },
     {
       "term": "Nebenstimme",
@@ -4748,7 +4748,7 @@
     {
       "term": "niente",
       "definition": "Nothing, barely audible",
-      "category": "General"
+      "category": "Notation"
     },
     {
       "term": "nobile",
@@ -4763,17 +4763,17 @@
     {
       "term": "nocturne",
       "definition": "A piece for the night",
-      "category": "General"
+      "category": "Form"
     },
     {
-      "term": "notes in\u00e9gales",
+      "term": "notes inégales",
       "definition": "Unequal notes",
-      "category": "General"
+      "category": "Notation"
     },
     {
       "term": "notturno",
       "definition": "Nocturne",
-      "category": "General"
+      "category": "Form"
     },
     {
       "term": "number opera",
@@ -4786,7 +4786,7 @@
       "category": "General"
     },
     {
-      "term": "ohne D\u00e4mpfer",
+      "term": "ohne Dämpfer",
       "definition": "Without a mute",
       "category": "General"
     },
@@ -4798,7 +4798,7 @@
     {
       "term": "one-voice-per-part",
       "definition": "Using solo voices on each part",
-      "category": "General"
+      "category": "Performance"
     },
     {
       "term": "oppure",
@@ -4808,12 +4808,12 @@
     {
       "term": "ottava",
       "definition": "Octave",
-      "category": "General"
+      "category": "Notation"
     },
     {
       "term": "ouverture",
       "definition": "Orchestral introduction to opera/oratorio",
-      "category": "General"
+      "category": "Form"
     },
     {
       "term": "oversinging",
@@ -4823,7 +4823,7 @@
     {
       "term": "overture",
       "definition": "Orchestral composition as prelude",
-      "category": "General"
+      "category": "Form"
     },
     {
       "term": "parlando",
@@ -4833,7 +4833,7 @@
     {
       "term": "Partitur",
       "definition": "Full orchestral score",
-      "category": "General"
+      "category": "Notation"
     },
     {
       "term": "pastorale",
@@ -4843,17 +4843,17 @@
     {
       "term": "patetico",
       "definition": "Passionate, emotional",
-      "category": "General"
+      "category": "Expression"
     },
     {
       "term": "pausa",
       "definition": "Rest",
-      "category": "General"
+      "category": "Notation"
     },
     {
       "term": "pedale",
       "definition": "Sustain pedal on piano",
-      "category": "General"
+      "category": "Articulation"
     },
     {
       "term": "pensieroso",
@@ -4863,7 +4863,7 @@
     {
       "term": "perdendosi",
       "definition": "Dying away",
-      "category": "General"
+      "category": "Dynamics"
     },
     {
       "term": "pesante",
@@ -4871,7 +4871,7 @@
       "category": "General"
     },
     {
-      "term": "peu \u00e0 peu",
+      "term": "peu à peu",
       "definition": "Little by little",
       "category": "General"
     },
@@ -4898,7 +4898,7 @@
     {
       "term": "piatti",
       "definition": "Cymbals",
-      "category": "General"
+      "category": "Instruments"
     },
     {
       "term": "piena",
@@ -4913,7 +4913,7 @@
     {
       "term": "pizzicato",
       "definition": "Plucked string technique",
-      "category": "General"
+      "category": "Articulation"
     },
     {
       "term": "plop",
@@ -4948,17 +4948,17 @@
     {
       "term": "ponticello",
       "definition": "On the bridge of string instrument",
-      "category": "General"
+      "category": "Instruments"
     },
     {
       "term": "portamento",
       "definition": "Sliding between pitches",
-      "category": "General"
+      "category": "Ornamentation"
     },
     {
       "term": "portato",
       "definition": "Carried non-legato",
-      "category": "General"
+      "category": "Articulation"
     },
     {
       "term": "potpourri",
@@ -4973,12 +4973,12 @@
     {
       "term": "prelude",
       "definition": "Introductory movement",
-      "category": "General"
+      "category": "Form"
     },
     {
       "term": "quartal",
       "definition": "Composed of fourth intervals",
-      "category": "General"
+      "category": "Theory"
     },
     {
       "term": "quarter tone",
@@ -4993,7 +4993,7 @@
     {
       "term": "quintal",
       "definition": "Composed of fifth intervals",
-      "category": "General"
+      "category": "Theory"
     },
     {
       "term": "rapide",
@@ -5013,7 +5013,7 @@
     {
       "term": "rasgueado",
       "definition": "Guitar technique with back of fingernail",
-      "category": "General"
+      "category": "Instruments"
     },
     {
       "term": "ravvivando",
@@ -5023,12 +5023,12 @@
     {
       "term": "recitativo",
       "definition": "Speech-like singing",
-      "category": "General"
+      "category": "Form"
     },
     {
       "term": "religioso",
       "definition": "Religious",
-      "category": "General"
+      "category": "Expression"
     },
     {
       "term": "repente",
@@ -5038,7 +5038,7 @@
     {
       "term": "rest",
       "definition": "Period of silence",
-      "category": "General"
+      "category": "Notation"
     },
     {
       "term": "rete",
@@ -5053,7 +5053,7 @@
     {
       "term": "riff",
       "definition": "Repeated chord progression",
-      "category": "General"
+      "category": "Theory"
     },
     {
       "term": "risoluto",
@@ -5063,17 +5063,17 @@
     {
       "term": "ritenuto",
       "definition": "Suddenly slower",
-      "category": "General"
+      "category": "Tempo"
     },
     {
       "term": "ritmico",
       "definition": "Rhythmical",
-      "category": "General"
+      "category": "Rhythm"
     },
     {
       "term": "ritmo",
       "definition": "Rhythm",
-      "category": "General"
+      "category": "Rhythm"
     },
     {
       "term": "ritornello",
@@ -5083,32 +5083,32 @@
     {
       "term": "rolled chord",
       "definition": "Arpeggio",
-      "category": "General"
+      "category": "Theory"
     },
     {
       "term": "rondo",
       "definition": "Form with recurring sections",
-      "category": "General"
+      "category": "Form"
     },
     {
       "term": "round",
       "definition": "Canon with voices entering at different times",
-      "category": "General"
+      "category": "Performance"
     },
     {
       "term": "roulade",
       "definition": "Florid vocal phrase",
-      "category": "General"
+      "category": "Ornamentation"
     },
     {
       "term": "ruhig",
       "definition": "Calm",
-      "category": "General"
+      "category": "Expression"
     },
     {
       "term": "saltando",
       "definition": "Bouncing bow technique",
-      "category": "General"
+      "category": "Articulation"
     },
     {
       "term": "sanft",
@@ -5138,12 +5138,12 @@
     {
       "term": "scherzando",
       "definition": "Playfully",
-      "category": "General"
+      "category": "Expression"
     },
     {
       "term": "scherzo",
       "definition": "Light, playful movement",
-      "category": "General"
+      "category": "Form"
     },
     {
       "term": "schleppend",
@@ -5168,7 +5168,7 @@
     {
       "term": "schmerzlich",
       "definition": "Sorrowful",
-      "category": "General"
+      "category": "Theory"
     },
     {
       "term": "schwer",
@@ -5178,7 +5178,7 @@
     {
       "term": "schwungvoll",
       "definition": "Lively, swinging",
-      "category": "General"
+      "category": "Rhythm"
     },
     {
       "term": "scordatura",
@@ -5193,12 +5193,12 @@
     {
       "term": "secco",
       "definition": "Dry accompaniment",
-      "category": "General"
+      "category": "Articulation"
     },
     {
       "term": "segno",
       "definition": "Sign",
-      "category": "General"
+      "category": "Notation"
     },
     {
       "term": "segue",
@@ -5218,12 +5218,12 @@
     {
       "term": "sentimento",
       "definition": "Feeling",
-      "category": "General"
+      "category": "Expression"
     },
     {
       "term": "sentito",
       "definition": "With expression",
-      "category": "General"
+      "category": "Expression"
     },
     {
       "term": "senza",
@@ -5233,7 +5233,7 @@
     {
       "term": "senza misura",
       "definition": "Without measure",
-      "category": "General"
+      "category": "Notation"
     },
     {
       "term": "senza replica",
@@ -5263,12 +5263,12 @@
     {
       "term": "shake",
       "definition": "Trill between note and minor third",
-      "category": "General"
+      "category": "Ornamentation"
     },
     {
       "term": "sharp",
-      "definition": "Symbol (\u266f) raising pitch by semitone",
-      "category": "General"
+      "definition": "Symbol (♯) raising pitch by semitone",
+      "category": "Notation"
     },
     {
       "term": "short accent",
@@ -5277,8 +5277,8 @@
     },
     {
       "term": "si",
-      "definition": "Seventh note of solf\u00e8ge",
-      "category": "General"
+      "definition": "Seventh note of solfège",
+      "category": "Theory"
     },
     {
       "term": "siciliana",
@@ -5308,17 +5308,17 @@
     {
       "term": "slargando",
       "definition": "Broadening, slowing",
-      "category": "General"
+      "category": "Tempo"
     },
     {
       "term": "slur",
       "definition": "Curved line indicating legato",
-      "category": "General"
+      "category": "Articulation"
     },
     {
       "term": "smorzando",
       "definition": "Extinguishing, dying away",
-      "category": "General"
+      "category": "Dynamics"
     },
     {
       "term": "soave",
@@ -5338,12 +5338,12 @@
     {
       "term": "solo",
       "definition": "Performed by single instrument/voice",
-      "category": "General"
+      "category": "Instruments"
     },
     {
       "term": "solo break",
       "definition": "Improvised solo passage",
-      "category": "General"
+      "category": "Performance"
     },
     {
       "term": "sommo",
@@ -5353,17 +5353,17 @@
     {
       "term": "sonata",
       "definition": "Instrumental composition",
-      "category": "General"
+      "category": "Form"
     },
     {
       "term": "sonatina",
       "definition": "Small sonata",
-      "category": "General"
+      "category": "Form"
     },
     {
       "term": "sonatine",
       "definition": "Small sonata",
-      "category": "General"
+      "category": "Form"
     },
     {
       "term": "sonore",
@@ -5408,7 +5408,7 @@
     {
       "term": "sotto voce",
       "definition": "In undertone",
-      "category": "General"
+      "category": "Dynamics"
     },
     {
       "term": "soutenu",
@@ -5418,7 +5418,7 @@
     {
       "term": "Sprechgesang",
       "definition": "Pitched speaking",
-      "category": "General"
+      "category": "Notation"
     },
     {
       "term": "spianato",
@@ -5428,7 +5428,7 @@
     {
       "term": "spiccato",
       "definition": "Bouncing bow technique",
-      "category": "General"
+      "category": "Articulation"
     },
     {
       "term": "spinto",
@@ -5468,17 +5468,17 @@
     {
       "term": "stringendo",
       "definition": "Getting faster",
-      "category": "General"
+      "category": "Tempo"
     },
     {
       "term": "strisciando",
       "definition": "Smooth slur",
-      "category": "General"
+      "category": "Articulation"
     },
     {
       "term": "struggle",
       "definition": "Jazz term for ornamentation",
-      "category": "General"
+      "category": "Ornamentation"
     },
     {
       "term": "suave",
@@ -5518,37 +5518,37 @@
     {
       "term": "tasto solo",
       "definition": "Single key",
-      "category": "General"
+      "category": "Theory"
     },
     {
       "term": "tempo di marcia",
       "definition": "March tempo",
-      "category": "General"
+      "category": "Tempo"
     },
     {
       "term": "tempo di mezzo",
       "definition": "Middle section of aria",
-      "category": "General"
+      "category": "Tempo"
     },
     {
       "term": "tempo di valzer",
       "definition": "Waltz tempo",
-      "category": "General"
+      "category": "Tempo"
     },
     {
       "term": "tempo di menuetto",
       "definition": "Minuet tempo",
-      "category": "General"
+      "category": "Tempo"
     },
     {
       "term": "tempo giusto",
       "definition": "Strict time",
-      "category": "General"
+      "category": "Tempo"
     },
     {
       "term": "tempo rubato",
       "definition": "Flexible tempo",
-      "category": "General"
+      "category": "Tempo"
     },
     {
       "term": "tenerezza",
@@ -5563,12 +5563,12 @@
     {
       "term": "ternary",
       "definition": "Three-part form",
-      "category": "General"
+      "category": "Form"
     },
     {
       "term": "tessitura",
       "definition": "Comfortable pitch range",
-      "category": "General"
+      "category": "Notation"
     },
     {
       "term": "tierce de Picardie",
@@ -5578,7 +5578,7 @@
     {
       "term": "time",
       "definition": "Return to tempo",
-      "category": "General"
+      "category": "Tempo"
     },
     {
       "term": "tosto",
@@ -5588,7 +5588,7 @@
     {
       "term": "trattenuto",
       "definition": "Held back",
-      "category": "General"
+      "category": "Articulation"
     },
     {
       "term": "tre corde",
@@ -5613,17 +5613,17 @@
     {
       "term": "tremolando",
       "definition": "Trembling",
-      "category": "General"
+      "category": "Articulation"
     },
     {
       "term": "turn",
       "definition": "Ornament with notes above and below",
-      "category": "General"
+      "category": "Ornamentation"
     },
     {
       "term": "tutti",
       "definition": "All instruments/voices",
-      "category": "General"
+      "category": "Instruments"
     },
     {
       "term": "un",
@@ -5638,17 +5638,17 @@
     {
       "term": "unisono",
       "definition": "All play same notes",
-      "category": "General"
+      "category": "Notation"
     },
     {
       "term": "uptempo",
       "definition": "Fast tempo",
-      "category": "General"
+      "category": "Tempo"
     },
     {
       "term": "ut",
-      "definition": "First note of solf\u00e8ge",
-      "category": "General"
+      "definition": "First note of solfège",
+      "category": "Notation"
     },
     {
       "term": "vagans",
@@ -5663,12 +5663,12 @@
     {
       "term": "vamp till cue",
       "definition": "Repeat until conductor signals",
-      "category": "General"
+      "category": "Performance"
     },
     {
       "term": "variazioni",
       "definition": "Variations",
-      "category": "General"
+      "category": "Form"
     },
     {
       "term": "veloce",
@@ -5676,7 +5676,7 @@
       "category": "General"
     },
     {
-      "term": "velocit\u00e0",
+      "term": "velocità",
       "definition": "Speed",
       "category": "General"
     },
@@ -5693,7 +5693,7 @@
     {
       "term": "vibrato",
       "definition": "Slight pitch variation",
-      "category": "General"
+      "category": "Articulation"
     },
     {
       "term": "vif",
@@ -5703,7 +5703,7 @@
     {
       "term": "violoncello",
       "definition": "Cello",
-      "category": "General"
+      "category": "Instruments"
     },
     {
       "term": "virtuoso",
@@ -5733,7 +5733,7 @@
     {
       "term": "vocal score",
       "definition": "Piano reduction with voices",
-      "category": "General"
+      "category": "Dynamics"
     },
     {
       "term": "voce",
@@ -5766,9 +5766,9 @@
       "category": "General"
     },
     {
-      "term": "Z\u00e4hlzeit",
+      "term": "Zählzeit",
       "definition": "Beat",
-      "category": "General"
+      "category": "Rhythm"
     },
     {
       "term": "zart",
@@ -5781,7 +5781,7 @@
       "category": "General"
     },
     {
-      "term": "z\u00e4rtlich",
+      "term": "zärtlich",
       "definition": "Tenderly",
       "category": "General"
     },
@@ -5791,9 +5791,9 @@
       "category": "General"
     },
     {
-      "term": "Zeitma\u00df",
+      "term": "Zeitmaß",
       "definition": "Tempo",
-      "category": "General"
+      "category": "Tempo"
     },
     {
       "term": "zelo",
@@ -5811,12 +5811,12 @@
       "category": "General"
     },
     {
-      "term": "z\u00f6gernd",
+      "term": "zögernd",
       "definition": "Hesitantly",
       "category": "General"
     },
     {
-      "term": "zur\u00fcckhalten",
+      "term": "zurückhalten",
       "definition": "Hold back",
       "category": "General"
     }

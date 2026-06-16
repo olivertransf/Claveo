@@ -20,6 +20,7 @@ extension MetronomeView {
             }
             .padding(.bottom, isIPad ? 40 : 24)
         }
+        .background(Color(.systemGroupedBackground))
         .scrollDismissesKeyboard(.interactively)
         .navigationTitle("Metronome")
         .navigationBarTitleDisplayMode(.inline)
@@ -28,8 +29,9 @@ extension MetronomeView {
                 Button {
                     showingVolumeSheet = true
                 } label: {
-                    Image(systemName: "speaker.wave.2.fill")
+                    Image(systemName: "slider.horizontal.3")
                 }
+                .accessibilityLabel("Metronome Settings")
             }
         }
         .sheet(isPresented: $showingTemposManagement) {
@@ -70,35 +72,25 @@ extension MetronomeView {
     // MARK: - iPhone
 
     private var phoneMetronomeLayout: some View {
-        VStack(spacing: 24) {
-            tempoDisplay
-            playAndFavoriteControls
-            VStack(spacing: 20) {
-                tempoSliderControl
-                metronomeControlsBlock
-                toneGeneratorSection(compact: true)
-            }
+        VStack(spacing: 16) {
+            metronomeHeroCard
+            metronomeDetailsCard
+            toneGeneratorSection(compact: true)
         }
+        .padding(.horizontal, 16)
+        .padding(.top, 8)
     }
 
     // MARK: - iPad
 
     private var iPadMetronomeLayout: some View {
-        VStack(spacing: 28) {
-            metronomePanel {
-                HStack(alignment: .top, spacing: 28) {
-                    VStack(spacing: 28) {
-                        tempoDisplay
-                        playAndFavoriteControls
-                        tempoSliderControl
-                    }
+        VStack(spacing: 20) {
+            HStack(alignment: .top, spacing: 20) {
+                metronomeHeroCard
                     .frame(maxWidth: .infinity)
 
-                    VStack(spacing: 24) {
-                        metronomeControlsBlock
-                    }
+                metronomeDetailsCard
                     .frame(maxWidth: .infinity)
-                }
             }
 
             toneGeneratorPanel {
@@ -113,16 +105,6 @@ extension MetronomeView {
         }
         .padding(.horizontal, 32)
         .padding(.top, 24)
-    }
-
-    private func metronomePanel<Content: View>(@ViewBuilder content: () -> Content) -> some View {
-        VStack(alignment: .leading, spacing: 16) {
-            sectionLabel("Metronome", systemImage: "metronome")
-            content()
-        }
-        .padding(24)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(panelBackground)
     }
 
     private func toneGeneratorPanel<Content: View>(@ViewBuilder content: () -> Content) -> some View {
@@ -146,101 +128,62 @@ extension MetronomeView {
             .fill(Color(.secondarySystemGroupedBackground))
     }
 
-    // MARK: - Shared metronome blocks
+    // MARK: - Metronome cards
 
-    private var tempoDisplay: some View {
-        VStack(spacing: 12) {
-            Text("\(metronome.tempo)")
-                .font(.system(size: isIPad ? 120 : 96, weight: .light, design: .rounded))
-                .foregroundStyle(.primary)
-                .monospacedDigit()
-
-            Text("BPM")
-                .font(isIPad ? .title2 : .title3)
-                .foregroundStyle(.secondary)
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.top, isIPad ? 8 : 20)
-    }
-
-    private var playAndFavoriteControls: some View {
-        HStack(spacing: 24) {
-            Button(action: toggleFavoriteTempo) {
-                Image(systemName: favoriteTempos.contains(metronome.tempo) ? "star.fill" : "star")
-                    .font(.system(size: isIPad ? 36 : 32, weight: .medium))
-                    .foregroundStyle(favoriteTempos.contains(metronome.tempo) ? .yellow : themeManager.accentColor)
+    private var metronomeHeroCard: some View {
+        VStack(spacing: 18) {
+            HStack {
+                Label("Tempo", systemImage: "metronome")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.secondary)
+                Spacer()
+                Button(action: toggleFavoriteTempo) {
+                    Image(systemName: favoriteTempos.contains(metronome.tempo) ? "star.fill" : "star")
+                        .font(.body.weight(.semibold))
+                        .foregroundStyle(favoriteTempos.contains(metronome.tempo) ? .yellow : .secondary)
+                        .frame(width: 36, height: 36)
+                        .background(Color(.tertiarySystemFill), in: Circle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(
+                    favoriteTempos.contains(metronome.tempo) ? "Remove from Favorites" : "Add to Favorites"
+                )
             }
-            .accessibilityLabel(
-                favoriteTempos.contains(metronome.tempo) ? "Remove from Favorites" : "Add to Favorites"
-            )
+
+            HStack(alignment: .center, spacing: 16) {
+                tempoStepButton(delta: -1)
+                tempoDisplay
+                tempoStepButton(delta: 1)
+            }
 
             Button(action: toggleMetronomePlayback) {
-                Image(systemName: metronome.isPlaying ? "stop.circle.fill" : "play.circle.fill")
-                    .font(.system(size: isIPad ? 72 : 72, weight: .light))
-                    .foregroundStyle(metronome.isPlaying ? .red : themeManager.accentColor)
+                Label(
+                    metronome.isPlaying ? "Stop" : "Start",
+                    systemImage: metronome.isPlaying ? "stop.fill" : "play.fill"
+                )
+                .font(.headline)
+                .foregroundStyle(.white)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 14)
+                .background(
+                    metronome.isPlaying ? Color.red : themeManager.accentColor,
+                    in: RoundedRectangle(cornerRadius: 14, style: .continuous)
+                )
             }
+            .buttonStyle(.plain)
             .accessibilityLabel(metronome.isPlaying ? "Stop Metronome" : "Start Metronome")
+
+            tempoSliderControl
         }
-        .frame(maxWidth: .infinity)
+        .padding(20)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(panelBackground)
     }
 
-    private var tempoSliderControl: some View {
-        VStack(spacing: isIPad ? 8 : 6) {
-            HStack(alignment: .center, spacing: isIPad ? 12 : 10) {
-                Button {
-                    metronome.tempo = max(20, metronome.tempo - 1)
-                } label: {
-                    Image(systemName: "minus.circle.fill")
-                        .font(isIPad ? .title : .title2)
-                        .foregroundStyle(themeManager.accentColor)
-                }
-                .frame(width: isIPad ? 40 : 36, height: isIPad ? 40 : 36)
-                .offset(y: -13)
-
-                VStack(spacing: isIPad ? 8 : 6) {
-                    Slider(
-                        value: Binding(
-                            get: { Double(metronome.tempo) },
-                            set: { metronome.tempo = Int($0) }
-                        ),
-                        in: 20...300,
-                        step: 1
-                    )
-                    .tint(themeManager.accentColor)
-
-                    HStack {
-                        Text("20")
-                        Spacer()
-                        Text("300")
-                    }
-                    .font(isIPad ? .caption : .caption2)
-                    .foregroundStyle(.secondary)
-                }
-
-                Button {
-                    metronome.tempo = min(300, metronome.tempo + 1)
-                } label: {
-                    Image(systemName: "plus.circle.fill")
-                        .font(isIPad ? .title : .title2)
-                        .foregroundStyle(themeManager.accentColor)
-                }
-                .frame(width: isIPad ? 40 : 36, height: isIPad ? 40 : 36)
-                .offset(y: -13)
-            }
-        }
-        .padding(.horizontal, isIPad ? 0 : 20)
-    }
-
-    private var metronomeControlsBlock: some View {
-        VStack(spacing: 16) {
+    private var metronomeDetailsCard: some View {
+        VStack(alignment: .leading, spacing: 16) {
             HStack(spacing: 10) {
-                Button(action: tapTempo) {
-                    Label("Tap Tempo", systemImage: "hand.tap")
-                        .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.borderedProminent)
-                .tint(themeManager.accentColor)
-
+                compactMetronomeButton(title: "Tap Tempo", systemImage: "hand.tap", action: tapTempo)
                 timeSignatureMenu
             }
 
@@ -250,7 +193,77 @@ extension MetronomeView {
                 favoriteTemposSection
             }
         }
-        .padding(.horizontal, isIPad ? 0 : 20)
+        .padding(20)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(panelBackground)
+    }
+
+    private func compactMetronomeButton(title: String, systemImage: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Label(title, systemImage: systemImage)
+                .font(.subheadline.weight(.semibold))
+                .lineLimit(1)
+                .minimumScaleFactor(0.85)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 12)
+                .padding(.horizontal, 10)
+                .background(Color(.tertiarySystemFill), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func tempoStepButton(delta: Int) -> some View {
+        Button {
+            HapticFeedback.lightImpact()
+            metronome.tempo = max(20, min(300, metronome.tempo + delta))
+        } label: {
+            Image(systemName: delta < 0 ? "minus" : "plus")
+                .font(.title3.weight(.semibold))
+                .foregroundStyle(themeManager.accentColor)
+                .frame(width: 44, height: 44)
+                .background(Color(.tertiarySystemFill), in: Circle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(delta < 0 ? "Decrease tempo" : "Increase tempo")
+    }
+
+    // MARK: - Shared metronome blocks
+
+    private var tempoDisplay: some View {
+        VStack(spacing: 2) {
+            Text("\(metronome.tempo)")
+                .font(.system(size: isIPad ? 88 : 64, weight: .light, design: .rounded))
+                .foregroundStyle(.primary)
+                .monospacedDigit()
+                .contentTransition(.numericText())
+
+            Text("BPM")
+                .font(.subheadline.weight(.medium))
+                .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity)
+    }
+
+    private var tempoSliderControl: some View {
+        VStack(spacing: 6) {
+            Slider(
+                value: Binding(
+                    get: { Double(metronome.tempo) },
+                    set: { metronome.tempo = Int($0) }
+                ),
+                in: 20...300,
+                step: 1
+            )
+            .tint(themeManager.accentColor)
+
+            HStack {
+                Text("20")
+                Spacer()
+                Text("300")
+            }
+            .font(.caption2)
+            .foregroundStyle(.secondary)
+        }
     }
 
     private var timeSignatureMenu: some View {
@@ -292,70 +305,122 @@ extension MetronomeView {
             }
         } label: {
             Label(metronome.displayTimeSignature, systemImage: "music.note")
+                .font(.subheadline.weight(.semibold))
+                .lineLimit(1)
+                .minimumScaleFactor(0.85)
                 .frame(maxWidth: .infinity)
+                .padding(.vertical, 12)
+                .padding(.horizontal, 10)
+                .background(Color(.tertiarySystemFill), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
         }
-        .buttonStyle(.bordered)
+        .buttonStyle(.plain)
     }
 
     private var beatPatternSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 10) {
             Label("Beat Pattern", systemImage: "circle.grid.3x3")
                 .font(.subheadline.weight(.semibold))
                 .foregroundStyle(.secondary)
 
-            let columns = [GridItem(.adaptive(minimum: isIPad ? 56 : 52), spacing: 12)]
-            LazyVGrid(columns: columns, alignment: .leading, spacing: 12) {
-                ForEach(0..<metronome.beatPattern.count, id: \.self) { index in
+            let columns = Array(
+                repeating: GridItem(.flexible(), spacing: 10),
+                count: max(metronome.beatPattern.count, 1)
+            )
+            LazyVGrid(columns: columns, spacing: 10) {
+                ForEach(Array(metronome.beatPattern.enumerated()), id: \.offset) { index, isAccented in
                     Button {
                         toggleBeat(index)
                     } label: {
-                        Circle()
-                            .fill(beatFillColor(for: index))
-                            .frame(width: isIPad ? 56 : 52, height: isIPad ? 56 : 52)
-                            .overlay {
-                                Text("\(index + 1)")
-                                    .font(.caption2.weight(.semibold))
-                                    .foregroundStyle(beatLabelColor(for: index))
-                            }
+                        beatPatternCell(index: index, isAccented: isAccented)
                     }
                     .buttonStyle(.plain)
+                    .contentShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                    .accessibilityLabel("Beat \(index + 1)")
+                    .accessibilityValue(beatAccessibilityValue(index: index, isAccented: isAccented))
+                    .accessibilityAddTraits(isAccented ? .isSelected : [])
                 }
             }
         }
     }
 
+    private func beatPatternCell(index: Int, isAccented: Bool) -> some View {
+        let isActive = metronome.isPlaying && index == metronome.currentBeat
+        let shape = RoundedRectangle(cornerRadius: 12, style: .continuous)
+
+        return ZStack {
+            shape
+                .fill(beatCellFill(isAccented: isAccented, isActive: isActive))
+
+            if !isActive {
+                shape
+                    .strokeBorder(
+                        isAccented ? themeManager.accentColor : Color(.systemGray4),
+                        lineWidth: isAccented ? 2.5 : 2
+                    )
+            }
+
+            Text("\(index + 1)")
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(beatCellNumberColor(isAccented: isAccented, isActive: isActive))
+        }
+        .frame(maxWidth: .infinity)
+        .frame(height: 44)
+        .scaleEffect(isActive ? 1.03 : 1.0)
+        .animation(.spring(response: 0.16, dampingFraction: 0.62), value: isActive)
+        .animation(.spring(response: 0.16, dampingFraction: 0.62), value: metronome.currentBeat)
+    }
+
+    private func beatCellFill(isAccented: Bool, isActive: Bool) -> Color {
+        if isActive {
+            return themeManager.accentColor
+        }
+        if isAccented {
+            return themeManager.accentColor.opacity(colorScheme == .dark ? 0.24 : 0.14)
+        }
+        return Color(.tertiarySystemFill)
+    }
+
+    private func beatCellNumberColor(isAccented: Bool, isActive: Bool) -> Color {
+        if isActive {
+            return .white
+        }
+        return isAccented ? themeManager.accentColor : .secondary
+    }
+
+    private func beatAccessibilityValue(index: Int, isAccented: Bool) -> String {
+        if metronome.isPlaying && index == metronome.currentBeat {
+            return isAccented ? "Accented, playing" : "Playing"
+        }
+        return isAccented ? "Accented" : "Normal"
+    }
+
     private var favoriteTemposSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 10) {
             Label("Favorite Tempos", systemImage: "star.fill")
                 .font(.subheadline.weight(.semibold))
                 .foregroundStyle(.secondary)
 
             ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 12) {
+                HStack(spacing: 8) {
                     ForEach(favoriteTempos, id: \.self) { tempo in
                         Button {
+                            HapticFeedback.lightImpact()
                             metronome.tempo = tempo
                         } label: {
-                            HStack(spacing: 6) {
-                                Text("\(tempo)")
-                                    .font(.body.weight(.semibold).monospacedDigit())
-                                Text("BPM")
-                                    .font(.caption2.weight(.medium))
-                                    .opacity(0.8)
-                            }
-                            .foregroundStyle(metronome.tempo == tempo ? .white : .primary)
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 10)
-                            .background {
-                                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                    .fill(
-                                        metronome.tempo == tempo
-                                            ? themeManager.accentColor
-                                            : Color(.systemGray6)
-                                    )
-                            }
+                            Text("\(tempo)")
+                                .font(.subheadline.weight(.semibold).monospacedDigit())
+                                .foregroundStyle(metronome.tempo == tempo ? .white : .primary)
+                                .padding(.horizontal, 14)
+                                .padding(.vertical, 8)
+                                .background {
+                                    Capsule(style: .continuous)
+                                        .fill(
+                                            metronome.tempo == tempo
+                                                ? themeManager.accentColor
+                                                : Color(.tertiarySystemFill)
+                                        )
+                                }
                         }
-                        .buttonStyle(.plain)
                         .contextMenu {
                             Button(role: .destructive) {
                                 removeFavoriteTempo(tempo)
@@ -367,7 +432,6 @@ extension MetronomeView {
                 }
             }
         }
-        .padding(.vertical, isIPad ? 0 : 8)
     }
 
     // MARK: - Tone generator
@@ -375,15 +439,11 @@ extension MetronomeView {
     private func toneGeneratorSection(compact: Bool) -> some View {
         Group {
             if compact {
-                VStack(alignment: .leading, spacing: 16) {
-                    Divider()
-                        .padding(.top, 20)
-                        .padding(.bottom, 4)
-
-                    toneSectionHeader
-
-                    toneGeneratorControlsColumn
-                    toneGeneratorKeyboardColumn
+                toneGeneratorPanel {
+                    VStack(alignment: .leading, spacing: 16) {
+                        toneGeneratorControlsColumn
+                        toneGeneratorKeyboardColumn
+                    }
                 }
             } else {
                 EmptyView()
@@ -391,23 +451,8 @@ extension MetronomeView {
         }
     }
 
-    private var toneSectionHeader: some View {
-        HStack(spacing: 8) {
-            Image(systemName: "waveform.path")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-            Text("Tone Generator")
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(.secondary)
-            Spacer()
-        }
-        .padding(.horizontal, 20)
-    }
-
     private var toneGeneratorControlsColumn: some View {
-        let a4 = settingsManager.settings.a4ReferenceFrequency
-
-        return VStack(spacing: 20) {
+        VStack(spacing: 20) {
             Text(String(format: "%.1f Hz", toneGenerator.frequency))
                 .font(.system(size: isIPad ? 36 : 28, weight: .medium, design: .rounded))
                 .monospacedDigit()
@@ -416,7 +461,7 @@ extension MetronomeView {
             HStack(spacing: 8) {
                 TextField("Manual Hz", text: $manualToneFrequencyText)
                     .keyboardType(.decimalPad)
-                    .textFieldStyle(.roundedBorder)
+                    .textFieldStyle(.claveoInset)
                     .font(.body.monospacedDigit())
                     .focused($isToneFrequencyFocused)
                     .onSubmit { commitManualToneFrequency() }
@@ -431,6 +476,7 @@ extension MetronomeView {
                     }
 
                 Button("Apply") {
+                    HapticFeedback.lightImpact()
                     commitManualToneFrequency()
                 }
                 .buttonStyle(.bordered)
@@ -438,6 +484,7 @@ extension MetronomeView {
             }
 
             Button {
+                HapticFeedback.lightImpact()
                 if toneGenerator.isPlaying {
                     toneGenerator.stop()
                 } else {
@@ -452,13 +499,7 @@ extension MetronomeView {
             }
             .buttonStyle(.borderedProminent)
             .tint(themeManager.accentColor)
-
-            if !isIPad {
-                toneNoteKeyboard(a4: a4)
-                toneOctavePicker(a4: a4)
-            }
         }
-        .padding(.horizontal, isIPad ? 0 : 20)
     }
 
     private var toneGeneratorKeyboardColumn: some View {
@@ -513,7 +554,6 @@ extension MetronomeView {
                                 }
                                 .foregroundStyle(selected ? .white : .primary)
                         }
-                        .buttonStyle(.plain)
                     }
                 }
             }
@@ -536,20 +576,6 @@ extension MetronomeView {
         } else {
             metronome.start()
         }
-    }
-
-    private func beatFillColor(for index: Int) -> Color {
-        if index == metronome.currentBeat, metronome.isPlaying {
-            return .red
-        }
-        return metronome.beatPattern[index] ? themeManager.accentColor : Color(.systemGray5)
-    }
-
-    private func beatLabelColor(for index: Int) -> Color {
-        if index == metronome.currentBeat, metronome.isPlaying {
-            return .white
-        }
-        return metronome.beatPattern[index] ? .white : .secondary
     }
 
     private static let toneChromaticShortNames = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
@@ -579,7 +605,6 @@ extension MetronomeView {
                 }
                 .foregroundStyle(isSelected ? .white : .primary)
         }
-        .buttonStyle(.plain)
     }
 
     func commitManualToneFrequency() {

@@ -9,11 +9,37 @@
 /* Begin PBXBuildFile section */
 		4AA528B72ED6D75500CAD0E1 /* Tuna in Frameworks */ = {isa = PBXBuildFile; productRef = 4AA528B62ED6D75500CAD0E1 /* Tuna */; };
 		4AA528BA2ED6D75500CAD0E2 /* Inject in Frameworks */ = {isa = PBXBuildFile; productRef = 4AA528B92ED6D75500CAD0E2 /* Inject */; };
+		4B1000032FE0AA0000000000 /* ClaveoRecordingActivityWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 4B1000012FE0AA0000000000 /* ClaveoRecordingActivityWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		4CC728C12ED6D75500CAD0E1 /* VexFoundation in Frameworks */ = {isa = PBXBuildFile; productRef = 4CC728C22ED6D75500CAD0E1 /* VexFoundation */; };
 /* End PBXBuildFile section */
 
+/* Begin PBXContainerItemProxy section */
+		4B10000C2FE0AA0000000000 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 4AA78F952ED028BF009BDB04 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 4B1000072FE0AA0000000000;
+			remoteInfo = ClaveoRecordingActivityWidget;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		4B10000B2FE0AA0000000000 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				4B1000032FE0AA0000000000 /* ClaveoRecordingActivityWidget.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
 		4AA78F9D2ED028BF009BDB04 /* Claveo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Claveo.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		4B1000012FE0AA0000000000 /* ClaveoRecordingActivityWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = ClaveoRecordingActivityWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -35,6 +61,11 @@
 			path = Claveo;
 			sourceTree = "<group>";
 		};
+		4B1000022FE0AA0000000000 /* ClaveoRecordingActivityWidget */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = ClaveoRecordingActivityWidget;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -48,6 +79,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		4B1000042FE0AA0000000000 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -55,6 +93,7 @@
 			isa = PBXGroup;
 			children = (
 				4AA78F9F2ED028BF009BDB04 /* Claveo */,
+				4B1000022FE0AA0000000000 /* ClaveoRecordingActivityWidget */,
 				4AA78F9E2ED028BF009BDB04 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -63,6 +102,7 @@
 			isa = PBXGroup;
 			children = (
 				4AA78F9D2ED028BF009BDB04 /* Claveo.app */,
+				4B1000012FE0AA0000000000 /* ClaveoRecordingActivityWidget.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -77,10 +117,12 @@
 				4AA78F992ED028BF009BDB04 /* Sources */,
 				4AA78F9A2ED028BF009BDB04 /* Frameworks */,
 				4AA78F9B2ED028BF009BDB04 /* Resources */,
+				4B10000B2FE0AA0000000000 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				4B10000D2FE0AA0000000000 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				4AA78F9F2ED028BF009BDB04 /* Claveo */,
@@ -95,6 +137,28 @@
 			productReference = 4AA78F9D2ED028BF009BDB04 /* Claveo.app */;
 			productType = "com.apple.product-type.application";
 		};
+		4B1000072FE0AA0000000000 /* ClaveoRecordingActivityWidget */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 4B1000082FE0AA0000000000 /* Build configuration list for PBXNativeTarget "ClaveoRecordingActivityWidget" */;
+			buildPhases = (
+				4B1000062FE0AA0000000000 /* Sources */,
+				4B1000042FE0AA0000000000 /* Frameworks */,
+				4B1000052FE0AA0000000000 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				4B1000022FE0AA0000000000 /* ClaveoRecordingActivityWidget */,
+			);
+			name = ClaveoRecordingActivityWidget;
+			packageProductDependencies = (
+			);
+			productName = ClaveoRecordingActivityWidget;
+			productReference = 4B1000012FE0AA0000000000 /* ClaveoRecordingActivityWidget.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -103,9 +167,12 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 2610;
-				LastUpgradeCheck = 2610;
+				LastUpgradeCheck = 2650;
 				TargetAttributes = {
 					4AA78F9C2ED028BF009BDB04 = {
+						CreatedOnToolsVersion = 26.1.1;
+					};
+					4B1000072FE0AA0000000000 = {
 						CreatedOnToolsVersion = 26.1.1;
 					};
 				};
@@ -130,12 +197,20 @@
 			projectRoot = "";
 			targets = (
 				4AA78F9C2ED028BF009BDB04 /* Claveo */,
+				4B1000072FE0AA0000000000 /* ClaveoRecordingActivityWidget */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
 		4AA78F9B2ED028BF009BDB04 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		4B1000052FE0AA0000000000 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -152,7 +227,22 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		4B1000062FE0AA0000000000 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		4B10000D2FE0AA0000000000 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 4B1000072FE0AA0000000000 /* ClaveoRecordingActivityWidget */;
+			targetProxy = 4B10000C2FE0AA0000000000 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		4AA78FA62ED028C0009BDB04 /* Debug */ = {
@@ -319,7 +409,7 @@
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 15.0;
-				MARKETING_VERSION = 2.1;
+				MARKETING_VERSION = 2.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.olivertran.Claveo;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
@@ -377,7 +467,7 @@
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 15.0;
-				MARKETING_VERSION = 2.1;
+				MARKETING_VERSION = 2.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.olivertran.Claveo;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
@@ -392,6 +482,72 @@
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				XROS_DEPLOYMENT_TARGET = 26.1;
+			};
+			name = Release;
+		};
+		4B1000092FE0AA0000000000 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 2;
+				DEVELOPMENT_TEAM = 737XLL52JV;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "ClaveoRecordingActivityWidget-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = "Recording Activity";
+				INFOPLIST_KEY_CFBundleShortVersionString = "$(MARKETING_VERSION)";
+				INFOPLIST_KEY_CFBundleVersion = "$(CURRENT_PROJECT_VERSION)";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.6;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 2.2;
+				PRODUCT_BUNDLE_IDENTIFIER = com.olivertran.Claveo.RecordingActivityWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = auto;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		4B10000A2FE0AA0000000000 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 2;
+				DEVELOPMENT_TEAM = 737XLL52JV;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "ClaveoRecordingActivityWidget-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = "Recording Activity";
+				INFOPLIST_KEY_CFBundleShortVersionString = "$(MARKETING_VERSION)";
+				INFOPLIST_KEY_CFBundleVersion = "$(CURRENT_PROJECT_VERSION)";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.6;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 2.2;
+				PRODUCT_BUNDLE_IDENTIFIER = com.olivertran.Claveo.RecordingActivityWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = auto;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Release;
 		};
@@ -412,6 +568,15 @@
 			buildConfigurations = (
 				4AA78FA92ED028C0009BDB04 /* Debug */,
 				4AA78FAA2ED028C0009BDB04 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		4B1000082FE0AA0000000000 /* Build configuration list for PBXNativeTarget "ClaveoRecordingActivityWidget" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				4B1000092FE0AA0000000000 /* Debug */,
+				4B10000A2FE0AA0000000000 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

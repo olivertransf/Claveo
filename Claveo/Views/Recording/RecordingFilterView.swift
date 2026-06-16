@@ -78,14 +78,7 @@ struct RecordingFilterView: View {
     var body: some View {
         VStack(spacing: 0) {
             // Search bar
-            HStack {
-                Image(systemName: "magnifyingglass")
-                    .foregroundColor(.secondary)
-                TextField("Search recordings...", text: $filter.searchText)
-            }
-            .padding(8)
-            .background(Color(.systemGray6))
-            .cornerRadius(8)
+            ClaveoSearchField(text: $filter.searchText, prompt: "Search recordings...")
             .padding(.horizontal, 16)
             .padding(.vertical, 8)
             
@@ -132,8 +125,8 @@ struct RecordingFilterView: View {
                         .font(.caption)
                         .padding(.horizontal, 12)
                         .padding(.vertical, 6)
-                        .background(Color(.systemBlue))
-                        .foregroundColor(.white)
+                        .background(Color(.systemGray5))
+                        .foregroundStyle(.primary)
                         .cornerRadius(12)
                     }
                 }
@@ -248,8 +241,9 @@ struct FilterOptionsView: View {
                         Spacer()
                         TextField("0", text: $minMinutes)
                             .keyboardType(.decimalPad)
-                            .frame(width: 100)
+                            .textFieldStyle(.claveoCompact)
                             .multilineTextAlignment(.trailing)
+                            .frame(width: 88)
                             .onChange(of: minMinutes) { _, newValue in
                                 if let minutes = Double(newValue) {
                                     filter.minDuration = minutes * 60
@@ -264,8 +258,9 @@ struct FilterOptionsView: View {
                         Spacer()
                         TextField("∞", text: $maxMinutes)
                             .keyboardType(.decimalPad)
-                            .frame(width: 100)
+                            .textFieldStyle(.claveoCompact)
                             .multilineTextAlignment(.trailing)
+                            .frame(width: 88)
                             .onChange(of: maxMinutes) { _, newValue in
                                 if let minutes = Double(newValue) {
                                     filter.maxDuration = minutes * 60

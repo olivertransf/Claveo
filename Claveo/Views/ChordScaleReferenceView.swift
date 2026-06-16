@@ -10,52 +10,98 @@ struct ChordScaleReferenceView: View {
     @EnvironmentObject var themeManager: ThemeManager
     @State private var selectedRoot = 0
     @State private var useFlats = false
+    @State private var keyMode: KeyReferenceMode = .major
+
+    private enum KeyReferenceMode: String, CaseIterable, Identifiable {
+        case major = "Major"
+        case relativeMinor = "Minor"
+
+        var id: String { rawValue }
+    }
 
     // MARK: - Derived
 
-    /// Root of the relative minor key (major 6th = +9 semitones).
     private var relativeMinorRoot: Int { (selectedRoot + 9) % 12 }
 
     private var rootName: String { noteNameFor(selectedRoot) }
     private var relativeMinorName: String { noteNameFor(relativeMinorRoot) }
 
+    private var activeScaleRoot: Int {
+        keyMode == .major ? selectedRoot : relativeMinorRoot
+    }
+
+    private var activeIntervals: [Int] {
+        keyMode == .major ? Self.majorIntervals : Self.minorIntervals
+    }
+
+    private var activeDiatonicQualities: [ChordQuality] {
+        keyMode == .major ? Self.majorDiatonic : Self.minorDiatonic
+    }
+
+    private var activeKeyTitle: String {
+        keyMode == .major ? "\(rootName) Major" : "\(relativeMinorName) Natural Minor"
+    }
+
+    private var activeKeySubtitle: String {
+        if keyMode == .major {
+            return "Relative minor: \(relativeMinorName) minor — same notes, different tonic."
+        }
+        return "Relative major: \(rootName) major — same notes, different tonic."
+    }
+
+    private var scaleSectionTitle: String {
+        "Scale notes"
+    }
+
+    private var scaleSectionFooter: String {
+        if keyMode == .major {
+            return "1 is the tonic (home note). 5 is the dominant — it often leads back to 1. 7 is the leading tone, a half step below the tonic."
+        }
+        return "Natural minor lowers the 3rd, 6th, and 7th compared to major. Same letter names as \(rootName) major, different tonic."
+    }
+
+    private var chordSectionTitle: String {
+        "Chords in this key"
+    }
+
+    private var chordSectionFooter: String {
+        "Each chord is built by stacking thirds on a scale degree. Roman numerals show its role in the key."
+    }
+
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(alignment: .leading, spacing: 28) {
+                VStack(alignment: .leading, spacing: 20) {
                     accidentalPicker
                     rootPicker
-                    scaleSection(
-                        title: "\(rootName) Major Scale",
-                        notes: scaleNotes(from: selectedRoot, intervals: Self.majorIntervals),
-                        degrees: Self.scaleDegreeNumerals
-                    )
-                    scaleSection(
-                        title: "\(relativeMinorName) Natural Minor Scale  ·  relative minor of \(rootName)",
-                        notes: scaleNotes(from: relativeMinorRoot, intervals: Self.minorIntervals),
-                        degrees: Self.scaleDegreeNumerals
-                    )
-                    chordSection(
-                        title: "\(rootName) Major — Diatonic Chords",
-                        root: selectedRoot,
-                        intervals: Self.majorIntervals,
-                        qualities: Self.majorDiatonic
-                    )
-                    chordSection(
-                        title: "\(relativeMinorName) Minor — Diatonic Chords  ·  relative minor",
-                        root: relativeMinorRoot,
-                        intervals: Self.minorIntervals,
-                        qualities: Self.minorDiatonic
-                    )
+                    keySummaryCard
+                    modePicker
+
+                    referenceCard(title: scaleSectionTitle, footer: scaleSectionFooter) {
+                        scaleRow(
+                            notes: scaleNotes(from: activeScaleRoot, intervals: activeIntervals)
+                        )
+                    }
+
+                    referenceCard(title: chordSectionTitle, footer: chordSectionFooter) {
+                        chordGrid(
+                            root: activeScaleRoot,
+                            intervals: activeIntervals,
+                            qualities: activeDiatonicQualities
+                        )
+                    }
                 }
-                .padding(.vertical, 20)
+                .padding(.vertical, 16)
+                .animation(.easeInOut(duration: 0.2), value: selectedRoot)
+                .animation(.easeInOut(duration: 0.2), value: keyMode)
             }
-            .navigationTitle("Chord & Scale Reference")
+            .background(Color(.systemGroupedBackground))
+            .navigationTitle("Chords & Scales")
             .navigationBarTitleDisplayMode(.inline)
         }
     }
 
-    // MARK: - Accidental toggle
+    // MARK: - Pickers
 
     private var accidentalPicker: some View {
         HStack(spacing: 0) {
@@ -72,7 +118,6 @@ struct ChordScaleReferenceView: View {
                         )
                         .foregroundStyle(isSelected ? .white : .primary)
                 }
-                .buttonStyle(.plain)
             }
         }
         .padding(3)
@@ -80,104 +125,149 @@ struct ChordScaleReferenceView: View {
             RoundedRectangle(cornerRadius: 10, style: .continuous)
                 .fill(Color(.tertiarySystemFill))
         )
-        .padding(.horizontal, 20)
+        .padding(.horizontal, 16)
     }
-
-    // MARK: - Root picker
 
     private var rootPicker: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 8) {
-                ForEach(0..<12, id: \.self) { root in
-                    let isSelected = selectedRoot == root
-                    let relMinor = (root + 9) % 12
-                    Button {
-                        selectedRoot = root
-                    } label: {
-                        VStack(spacing: 2) {
-                            Text(noteNameFor(root))
-                                .font(.subheadline.weight(.semibold))
-                            Text("\(noteNameFor(relMinor))m")
-                                .font(.caption2)
-                                .foregroundStyle(isSelected ? .white.opacity(0.8) : .secondary)
-                        }
-                        .frame(minWidth: 52, minHeight: 52)
-                        .padding(.horizontal, 4)
-                        .background(
-                            Capsule(style: .continuous)
-                                .fill(isSelected ? themeManager.accentColor : Color(.tertiarySystemFill))
-                        )
-                        .foregroundStyle(isSelected ? .white : .primary)
-                    }
-                    .buttonStyle(.plain)
-                }
-            }
-            .padding(.horizontal, 20)
-        }
-    }
-
-    // MARK: - Scale section
-
-    private func scaleSection(title: String, notes: [Int], degrees: [String]) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text(title)
-                .font(.headline)
-                .padding(.horizontal, 20)
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Choose a key")
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(.secondary)
+                .padding(.horizontal, 16)
 
             ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 10) {
-                    ForEach(Array(notes.enumerated()), id: \.offset) { i, pitch in
-                        VStack(spacing: 5) {
-                            Text(noteNameFor(pitch))
+                HStack(spacing: 8) {
+                    ForEach(0..<12, id: \.self) { root in
+                        let isSelected = selectedRoot == root
+                        Button {
+                            selectedRoot = root
+                            if Self.flatRoots.contains(root) {
+                                useFlats = true
+                            }
+                        } label: {
+                            Text(noteNameFor(root))
                                 .font(.subheadline.weight(.semibold))
-                                .frame(width: 44, height: 44)
+                                .frame(minWidth: 44, minHeight: 44)
+                                .padding(.horizontal, 6)
                                 .background(
-                                    Circle()
-                                        .fill(i == 0
-                                              ? themeManager.accentColor
-                                              : Color(.secondarySystemFill))
+                                    Capsule(style: .continuous)
+                                        .fill(isSelected ? themeManager.accentColor : Color(.tertiarySystemFill))
                                 )
-                                .foregroundStyle(i == 0 ? .white : .primary)
-
-                            Text(degrees[i])
-                                .font(.caption2)
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(isSelected ? .white : .primary)
                         }
+                        .accessibilityLabel("\(noteNameFor(root)) major")
+                        .accessibilityAddTraits(isSelected ? .isSelected : [])
                     }
                 }
-                .padding(.horizontal, 20)
-                .padding(.vertical, 4)
+                .padding(.horizontal, 16)
             }
         }
     }
 
-    // MARK: - Chord section
+    private var keySummaryCard: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(activeKeyTitle)
+                .font(.title2.weight(.bold))
+                .contentTransition(.numericText())
 
-    private func chordSection(
+            Text(activeKeySubtitle)
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(16)
+        .background(cardBackground)
+        .padding(.horizontal, 16)
+    }
+
+    private var modePicker: some View {
+        Picker("Key type", selection: $keyMode) {
+            Text("\(rootName) Major").tag(KeyReferenceMode.major)
+            Text("\(relativeMinorName) Minor").tag(KeyReferenceMode.relativeMinor)
+        }
+        .pickerStyle(.segmented)
+        .padding(.horizontal, 16)
+    }
+
+    // MARK: - Cards
+
+    private func referenceCard<Content: View>(
         title: String,
+        footer: String,
+        @ViewBuilder content: () -> Content
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text(title)
+                .font(.headline)
+
+            content()
+
+            Text(footer)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(16)
+        .background(cardBackground)
+        .padding(.horizontal, 16)
+    }
+
+    private var cardBackground: some View {
+        RoundedRectangle(cornerRadius: 16, style: .continuous)
+            .fill(Color(.secondarySystemGroupedBackground))
+    }
+
+    // MARK: - Scale
+
+    private func scaleRow(notes: [Int]) -> some View {
+        HStack(spacing: 6) {
+            ForEach(Array(notes.enumerated()), id: \.offset) { index, pitch in
+                VStack(spacing: 4) {
+                    Text(noteNameFor(pitch))
+                        .font(.subheadline.weight(.semibold))
+                        .minimumScaleFactor(0.7)
+                        .lineLimit(1)
+                        .aspectRatio(1, contentMode: .fit)
+                        .frame(maxWidth: .infinity)
+                        .background(
+                            Circle()
+                                .fill(index == 0
+                                      ? themeManager.accentColor
+                                      : Color(.tertiarySystemFill))
+                        )
+                        .foregroundStyle(index == 0 ? .white : .primary)
+
+                    Text("\(index + 1)")
+                        .font(.caption2.weight(.medium))
+                        .foregroundStyle(index == 0 ? themeManager.accentColor : .secondary)
+                        .frame(height: 14)
+                }
+                .frame(maxWidth: .infinity)
+            }
+        }
+    }
+
+    // MARK: - Chords
+
+    private func chordGrid(
         root: Int,
         intervals: [Int],
         qualities: [ChordQuality]
     ) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text(title)
-                .font(.headline)
-                .padding(.horizontal, 20)
-
-            LazyVGrid(
-                columns: [GridItem(.flexible()), GridItem(.flexible())],
-                spacing: 10
-            ) {
-                ForEach(0..<7, id: \.self) { i in
-                    chordCard(
-                        degreeIndex: i,
-                        scaleRoot: root,
-                        scaleIntervals: intervals,
-                        quality: qualities[i]
-                    )
-                }
+        LazyVGrid(
+            columns: [GridItem(.flexible()), GridItem(.flexible())],
+            spacing: 10
+        ) {
+            ForEach(0..<7, id: \.self) { degreeIndex in
+                chordCard(
+                    degreeIndex: degreeIndex,
+                    scaleRoot: root,
+                    scaleIntervals: intervals,
+                    quality: qualities[degreeIndex]
+                )
             }
-            .padding(.horizontal, 20)
         }
     }
 
@@ -190,26 +280,35 @@ struct ChordScaleReferenceView: View {
         let degreeRoot = (scaleRoot + scaleIntervals[degreeIndex]) % 12
         let triad = quality.triad(from: degreeRoot)
         let numeral = quality.numeral(for: degreeIndex, isMajorContext: scaleIntervals == Self.majorIntervals)
+        let chordName = noteNameFor(degreeRoot) + quality.suffix
 
-        return VStack(alignment: .leading, spacing: 6) {
-            Text(numeral)
-                .font(.caption.weight(.semibold))
+        return VStack(alignment: .leading, spacing: 8) {
+            HStack(alignment: .firstTextBaseline) {
+                Text(chordName)
+                    .font(.title3.weight(.bold))
+                Spacer(minLength: 4)
+                Text(numeral)
+                    .font(.caption.weight(.bold))
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(themeManager.accentColor.opacity(0.15), in: Capsule())
+                    .foregroundStyle(themeManager.accentColor)
+            }
+
+            Text("Scale degree \(degreeIndex + 1)")
+                .font(.caption)
                 .foregroundStyle(.secondary)
 
-            Text(noteNameFor(degreeRoot) + quality.suffix)
-                .font(.title3.weight(.bold))
-
             HStack(spacing: 4) {
+                Text("Notes")
+                    .font(.caption2.weight(.semibold))
+                    .foregroundStyle(.tertiary)
                 ForEach(triad, id: \.self) { pitch in
                     Text(noteNameFor(pitch))
-                        .font(.caption2.weight(.medium))
-                        .padding(.horizontal, 5)
+                        .font(.caption.weight(.medium))
+                        .padding(.horizontal, 6)
                         .padding(.vertical, 3)
-                        .background(
-                            Capsule(style: .continuous)
-                                .fill(Color(.tertiarySystemFill))
-                        )
-                        .foregroundStyle(.secondary)
+                        .background(Color(.tertiarySystemFill), in: Capsule())
                 }
             }
         }
@@ -217,13 +316,12 @@ struct ChordScaleReferenceView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
             RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .fill(Color(.secondarySystemGroupedBackground))
+                .fill(Color(.tertiarySystemGroupedBackground))
         )
     }
 
     // MARK: - Helpers
 
-    /// Returns the display name for a pitch respecting the current sharps/flats setting.
     private func noteNameFor(_ pitch: Int) -> String {
         useFlats ? Self.flatNames[pitch] : Self.sharpNames[pitch]
     }
@@ -234,15 +332,12 @@ struct ChordScaleReferenceView: View {
 
     // MARK: - Static data
 
-    static let sharpNames = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"]
-    static let flatNames  = ["C","Db","D","Eb","E","F","Gb","G","Ab","A","Bb","B"]
-    /// Roots that conventionally use flat notation.
-    static let flatRoots: Set<Int> = [5, 10, 3, 8, 1, 6] // F Bb Eb Ab Db Gb
+    static let sharpNames = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
+    static let flatNames = ["C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B"]
+    static let flatRoots: Set<Int> = [5, 10, 3, 8, 1, 6]
 
     static let majorIntervals = [0, 2, 4, 5, 7, 9, 11]
     static let minorIntervals = [0, 2, 3, 5, 7, 8, 10]
-
-    static let scaleDegreeNumerals = ["1", "2", "3", "4", "5", "6", "7"]
 
     fileprivate static let majorDiatonic: [ChordQuality] = [
         .major, .minor, .minor, .major, .major, .minor, .diminished
@@ -259,25 +354,23 @@ fileprivate enum ChordQuality: Equatable {
 
     var suffix: String {
         switch self {
-        case .major:      return ""
-        case .minor:      return "m"
+        case .major: return ""
+        case .minor: return "m"
         case .diminished: return "°"
         }
     }
 
-    /// Root position triad (root, third, fifth).
     func triad(from root: Int) -> [Int] {
         switch self {
-        case .major:      return [root, (root + 4) % 12, (root + 7) % 12]
-        case .minor:      return [root, (root + 3) % 12, (root + 7) % 12]
+        case .major: return [root, (root + 4) % 12, (root + 7) % 12]
+        case .minor: return [root, (root + 3) % 12, (root + 7) % 12]
         case .diminished: return [root, (root + 3) % 12, (root + 6) % 12]
         }
     }
 
-    /// Roman numeral label for the given scale degree.
     func numeral(for degree: Int, isMajorContext: Bool) -> String {
-        let majorNumerals = ["I", "ii", "iii", "IV",  "V",  "vi",  "vii°"]
-        let minorNumerals = ["i", "ii°", "III", "iv", "v",  "VI",  "VII"]
+        let majorNumerals = ["I", "ii", "iii", "IV", "V", "vi", "vii°"]
+        let minorNumerals = ["i", "ii°", "III", "iv", "v", "VI", "VII"]
         return isMajorContext ? majorNumerals[degree] : minorNumerals[degree]
     }
 }

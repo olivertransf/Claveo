@@ -168,7 +168,6 @@ struct IntervalEarTrainingExerciseView: View {
                         .stroke(on ? Color.clear : Color.primary.opacity(0.12), lineWidth: 1)
                 )
         }
-        .buttonStyle(.plain)
         .accessibilityAddTraits(on ? .isSelected : [])
     }
 
@@ -194,7 +193,6 @@ struct IntervalEarTrainingExerciseView: View {
                     .fill(Color(.secondarySystemGroupedBackground))
             )
         }
-        .buttonStyle(.plain)
     }
 
     private var answerCard: some View {
@@ -301,6 +299,7 @@ private struct IntervalExerciseButtonStyle: ButtonStyle {
             .scaleEffect(configuration.isPressed ? 0.96 : 1)
             .opacity(configuration.isPressed ? 0.92 : 1)
             .animation(.easeOut(duration: 0.12), value: configuration.isPressed)
+            .hapticButtonPress(trigger: configuration.isPressed)
     }
 }
 

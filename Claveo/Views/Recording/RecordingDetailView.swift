@@ -94,8 +94,9 @@ struct RecordingDetailView: View {
                         Spacer()
                         TextField("mm.", text: $measureStartText)
                             .keyboardType(.numberPad)
+                            .textFieldStyle(.claveoCompact)
                             .multilineTextAlignment(.trailing)
-                            .frame(width: 80)
+                            .frame(width: 72)
                             .onChange(of: measureStartText) { _, newValue in
                                 recording.measureStart = Int(newValue)
                             }
@@ -106,8 +107,9 @@ struct RecordingDetailView: View {
                         Spacer()
                         TextField("mm.", text: $measureEndText)
                             .keyboardType(.numberPad)
+                            .textFieldStyle(.claveoCompact)
                             .multilineTextAlignment(.trailing)
-                            .frame(width: 80)
+                            .frame(width: 72)
                             .onChange(of: measureEndText) { _, newValue in
                                 recording.measureEnd = Int(newValue)
                             }
@@ -164,7 +166,7 @@ struct RecordingDetailView: View {
                 
                 Section {
                     TextEditor(text: $recording.notes)
-                        .frame(minHeight: 100)
+                        .claveoFormTextEditor(minHeight: 100)
                 } header: {
                     Text("Notes")
                 }

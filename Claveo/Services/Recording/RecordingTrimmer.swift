@@ -28,6 +28,14 @@ enum RecordingTrimmerError: LocalizedError {
 }
 
 enum RecordingTrimmer {
+    private final class ExportSessionHolder: @unchecked Sendable {
+        let session: AVAssetExportSession
+
+        init(_ session: AVAssetExportSession) {
+            self.session = session
+        }
+    }
+
     static func trimNonDestructive(recordingURL: URL, startTime: TimeInterval, endTime: TimeInterval) async throws -> (trimmedURL: URL, backupURL: URL, originalDuration: TimeInterval) {
         guard FileManager.default.fileExists(atPath: recordingURL.path) else {
             throw RecordingTrimmerError.fileNotFound
@@ -104,10 +112,12 @@ enum RecordingTrimmer {
         let end = CMTime(seconds: clampedEnd, preferredTimescale: timescale)
         exporter.timeRange = CMTimeRangeFromTimeToTime(start: start, end: end)
 
+        let exportHolder = ExportSessionHolder(exporter)
+
         try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
-            exporter.exportAsynchronously {
-                let status = exporter.status
-                let exportError = exporter.error
+            exportHolder.session.exportAsynchronously {
+                let status = exportHolder.session.status
+                let exportError = exportHolder.session.error
                 switch status {
                 case .completed:
                     continuation.resume()

@@ -49,7 +49,7 @@ struct AddPracticeView: View {
                 // Notes
                 Section("Journal Entry") {
                     TextEditor(text: $notes)
-                        .frame(minHeight: 100)
+                        .claveoFormTextEditor(minHeight: 100)
                         .placeholder(when: notes.isEmpty) {
                             Text("What did you practice today? Any goals, challenges, or progress notes...")
                                 .foregroundColor(.secondary)
@@ -116,7 +116,6 @@ struct AddPracticeView: View {
                                         .frame(width: 44, height: 44)
                                         .contentShape(Rectangle())
                                 }
-                                .buttonStyle(.plain)
                             }
                         }
 
@@ -228,7 +227,6 @@ struct RecordingPickerView: View {
                     }
                     .contentShape(Rectangle())
                 }
-                .buttonStyle(.plain)
             }
             .navigationTitle("Select Recordings")
             .navigationBarTitleDisplayMode(.inline)

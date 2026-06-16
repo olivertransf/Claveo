@@ -16,8 +16,8 @@ struct AppSettings: Codable, Sendable {
     // Metronome Settings
     var lastMetronomeTempo: Int = 120
     var metronomeSound: String = MetronomeSound.click.rawValue
-    var metronomeEmphasizedSound: String = MetronomeSound.click.rawValue
-    var metronomeNonEmphasizedSound: String = MetronomeSound.tick.rawValue
+    var metronomeEmphasizedSound: String = MetronomeSound.tick.rawValue
+    var metronomeNonEmphasizedSound: String = MetronomeSound.click.rawValue
     var metronomeVolume: Double = 0.7
     var metronomeHapticEnabled: Bool = true
     var metronomeAutoStopOnTabSwitch: Bool = false
@@ -30,11 +30,17 @@ struct AppSettings: Codable, Sendable {
     // Practice Settings
     var defaultPracticeTime: Int = 30 // minutes
     var practiceDurationOptions: [Int] = [15, 30, 45, 60] // minutes
+    var practiceReminderEnabled: Bool = false
+    var practiceReminderHour: Int = 18
+    var practiceReminderMinute: Int = 0
     
     // Theme Settings
     var accentColor: String = AccentColorOption.blue.rawValue
     var colorScheme: String = ColorSchemeOption.system.rawValue
     var showTabBarText: Bool = false
+
+    // Storage — default false uses iCloud Drive when available
+    var storeFilesOnDeviceOnly: Bool = false
 
     // Navigation
     var lastSelectedTab: Int = 0
@@ -68,7 +74,9 @@ struct AppSettings: Codable, Sendable {
         case metronomeAutoStopOnTabSwitch, stopToneWhenLeavingMetronomeTab, favoriteTempos
         case customTimeSignatureTop, customTimeSignatureBottom
         case defaultPracticeTime, practiceDurationOptions
+        case practiceReminderEnabled, practiceReminderHour, practiceReminderMinute
         case accentColor, colorScheme, showTabBarText
+        case storeFilesOnDeviceOnly
         case lastSelectedTab, tabBarCustomizationOrder
         case metronomeTimeSignature, metronomeBeatPattern
         case noteIdentificationEnabledClefRawValues
@@ -83,8 +91,8 @@ extension AppSettings {
         showFrequencyDisplay = try c.decodeIfPresent(Bool.self, forKey: .showFrequencyDisplay) ?? true
         lastMetronomeTempo = try c.decodeIfPresent(Int.self, forKey: .lastMetronomeTempo) ?? 120
         metronomeSound = try c.decodeIfPresent(String.self, forKey: .metronomeSound) ?? MetronomeSound.click.rawValue
-        metronomeEmphasizedSound = try c.decodeIfPresent(String.self, forKey: .metronomeEmphasizedSound) ?? MetronomeSound.click.rawValue
-        metronomeNonEmphasizedSound = try c.decodeIfPresent(String.self, forKey: .metronomeNonEmphasizedSound) ?? MetronomeSound.tick.rawValue
+        metronomeEmphasizedSound = try c.decodeIfPresent(String.self, forKey: .metronomeEmphasizedSound) ?? MetronomeSound.tick.rawValue
+        metronomeNonEmphasizedSound = try c.decodeIfPresent(String.self, forKey: .metronomeNonEmphasizedSound) ?? MetronomeSound.click.rawValue
         metronomeVolume = try c.decodeIfPresent(Double.self, forKey: .metronomeVolume) ?? 0.7
         metronomeHapticEnabled = try c.decodeIfPresent(Bool.self, forKey: .metronomeHapticEnabled) ?? true
         metronomeAutoStopOnTabSwitch = try c.decodeIfPresent(Bool.self, forKey: .metronomeAutoStopOnTabSwitch) ?? false
@@ -94,9 +102,13 @@ extension AppSettings {
         customTimeSignatureBottom = try c.decodeIfPresent(Int.self, forKey: .customTimeSignatureBottom)
         defaultPracticeTime = try c.decodeIfPresent(Int.self, forKey: .defaultPracticeTime) ?? 30
         practiceDurationOptions = try c.decodeIfPresent([Int].self, forKey: .practiceDurationOptions) ?? [15, 30, 45, 60]
+        practiceReminderEnabled = try c.decodeIfPresent(Bool.self, forKey: .practiceReminderEnabled) ?? false
+        practiceReminderHour = try c.decodeIfPresent(Int.self, forKey: .practiceReminderHour) ?? 18
+        practiceReminderMinute = try c.decodeIfPresent(Int.self, forKey: .practiceReminderMinute) ?? 0
         accentColor = try c.decodeIfPresent(String.self, forKey: .accentColor) ?? AccentColorOption.blue.rawValue
         colorScheme = try c.decodeIfPresent(String.self, forKey: .colorScheme) ?? ColorSchemeOption.system.rawValue
         showTabBarText = try c.decodeIfPresent(Bool.self, forKey: .showTabBarText) ?? false
+        storeFilesOnDeviceOnly = try c.decodeIfPresent(Bool.self, forKey: .storeFilesOnDeviceOnly) ?? false
         lastSelectedTab = try c.decodeIfPresent(Int.self, forKey: .lastSelectedTab) ?? 0
         let rawOrder = try c.decodeIfPresent([Int].self, forKey: .tabBarCustomizationOrder)
         tabBarCustomizationOrder = AppSettings.normalizedTabBarOrder(rawOrder ?? AppSettings.defaultTabBarCustomizationOrder)

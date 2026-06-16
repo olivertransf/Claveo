@@ -26,13 +26,16 @@ struct LiveWaveformView: View {
             let barWidth: CGFloat = 3
             let spacing: CGFloat = 2.5
             let step = barWidth + spacing
-            let maxFit = max(1, Int((size.width - spacing) / step))
+            let maxFit = max(1, Int((size.width + spacing) / step))
             let barsToShow = min(maxBars, maxFit)
+            let contentWidth = CGFloat(barsToShow) * step - spacing
+            let startX = max(0, (size.width - contentWidth) / 2)
+            let midY = size.height / 2
 
             if audioLevels.isEmpty {
                 for index in 0..<barsToShow {
-                    let x = CGFloat(index) * step
-                    let rect = CGRect(x: x, y: size.height / 2 - 1.5, width: barWidth, height: 3)
+                    let x = startX + CGFloat(index) * step
+                    let rect = CGRect(x: x, y: midY - 1.5, width: barWidth, height: 3)
                     context.fill(
                         Path(roundedRect: rect, cornerRadius: 2),
                         with: .color(.white.opacity(0.2))
@@ -42,20 +45,17 @@ struct LiveWaveformView: View {
             }
 
             let levels = Array(audioLevels.suffix(barsToShow))
-            let maxAmp = max(levels.max() ?? 0.001, 0.001)
-            let midY = size.height / 2
 
             for (index, level) in levels.enumerated() {
-                let amplified = pow(CGFloat(level / maxAmp), 0.4) * 2.5
-                let height = min(size.height, max(3, amplified * size.height))
-                let x = CGFloat(index) * step
+                let height = barHeight(for: level, in: size.height)
+                let x = startX + CGFloat(index) * step
                 let rect = CGRect(x: x, y: midY - height / 2, width: barWidth, height: height)
                 context.fill(Path(roundedRect: rect, cornerRadius: 2), with: .color(.white))
             }
 
             if levels.count < barsToShow {
                 for index in levels.count..<barsToShow {
-                    let x = CGFloat(index) * step
+                    let x = startX + CGFloat(index) * step
                     let rect = CGRect(x: x, y: midY - 1.5, width: barWidth, height: 3)
                     context.fill(
                         Path(roundedRect: rect, cornerRadius: 2),
@@ -64,5 +64,13 @@ struct LiveWaveformView: View {
                 }
             }
         }
+        .frame(maxWidth: .infinity)
+    }
+
+    private func barHeight(for level: Float, in totalHeight: CGFloat) -> CGFloat {
+        let clamped = CGFloat(max(0, min(1, level)))
+        guard clamped > 0.06 else { return 3 }
+        let curved = pow(clamped, 0.8)
+        return max(3, curved * totalHeight)
     }
 }

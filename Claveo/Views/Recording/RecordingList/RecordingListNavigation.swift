@@ -12,38 +12,39 @@ extension RecordingListView {
     var unifiedView: some View {
         NavigationStack {
             ZStack {
+                Color(.systemGroupedBackground)
+                    .ignoresSafeArea()
+
                 mainContentView
                     .refreshable {
                         await recorder.refreshRecordings()
                     }
-                
+            }
+            .overlay {
                 if recorder.isRecording {
-                    LinearGradient(
-                        colors: [
-                            Color.black.opacity(0.0),
-                            Color.black.opacity(0.5),
-                            Color.black.opacity(0.7)
-                        ],
-                        startPoint: .top,
-                        endPoint: .bottom
-                    )
-                    .ignoresSafeArea()
-                    .allowsHitTesting(false)
-                }
-                
-                if recorder.isRecording {
-                    VStack {
-                        Spacer()
+                    ZStack(alignment: .bottom) {
+                        LinearGradient(
+                            colors: [
+                                Color.black.opacity(0.0),
+                                Color.black.opacity(0.5),
+                                Color.black.opacity(0.7)
+                            ],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+                        .ignoresSafeArea()
+
                         recordingIndicatorView
                             .padding(.bottom, 100)
                     }
+                    .allowsHitTesting(false)
                 }
-                
-                VStack {
-                    Spacer()
-                    recordingButtonOverlay
-                        .padding(.bottom, 10)
-                }
+            }
+            .safeAreaInset(edge: .bottom, spacing: 0) {
+                recordingButtonOverlay
+                    .padding(.top, 8)
+                    .padding(.bottom, 10)
+                    .frame(maxWidth: .infinity)
             }
             .toolbar {
                 if isSelectingRecordings {
@@ -69,19 +70,17 @@ extension RecordingListView {
                         Button {
                             showingOMRScanner = true
                         } label: {
-                            HStack(spacing: 4) {
-                                Label("OMR", systemImage: "doc.text.viewfinder")
-                                Text("BETA")
-                                    .font(.caption2.bold())
-                                    .foregroundColor(.orange)
-                            }
+                            Image(systemName: "doc.text.viewfinder")
+                                .symbolRenderingMode(.monochrome)
                         }
+                        .accessibilityLabel("OMR Scanner")
 
                         Button {
                             availablePieces = loadAvailablePieces()
                             showingPiecesManagement = true
                         } label: {
                             Label("Pieces", systemImage: "music.note.list")
+                                .symbolRenderingMode(.monochrome)
                         }
                     }
                     
@@ -142,13 +141,15 @@ extension RecordingListView {
                                 }
                             }
                         } label: {
-                            Label("Filter", systemImage: selectedTag != nil || selectedPiece != nil ? "line.3.horizontal.decrease.circle.fill" : "line.3.horizontal.decrease.circle")
+                            Label("Filter", systemImage: filterToolbarIcon)
+                                .symbolRenderingMode(.monochrome)
                         }
 
                         Button {
                             beginRecordingSelectionMode()
                         } label: {
                             Label("Select", systemImage: "checkmark.circle")
+                                .symbolRenderingMode(.monochrome)
                         }
 
                     }
@@ -156,6 +157,7 @@ extension RecordingListView {
             }
             .navigationTitle("Recordings")
             .navigationBarTitleDisplayMode(.inline)
+            .tint(themeManager.accentColor)
             .searchable(text: $searchText, isPresented: $isSearchFocused, prompt: "Search recordings")
         }
 
@@ -173,6 +175,7 @@ extension RecordingListView {
     struct StorageInfoView: View {
         @Environment(\.dismiss) private var dismiss
         @EnvironmentObject var themeManager: ThemeManager
+        @StateObject private var settingsManager = SettingsManager.shared
 
         var body: some View {
             NavigationStack {
@@ -186,7 +189,10 @@ extension RecordingListView {
                         .background(Color.themeTertiaryBackground)
                         .cornerRadius(8)
 
-                    if iCloudManager.shared.isAvailable {
+                    if settingsManager.settings.storeFilesOnDeviceOnly {
+                        Label("Files are stored on this iPhone only", systemImage: "iphone")
+                            .foregroundColor(.secondary)
+                    } else if iCloudManager.shared.isAvailable {
                         Label("Files will automatically sync to iCloud Drive", systemImage: "icloud.fill")
                             .foregroundColor(themeManager.accentColor)
                     } else {
@@ -194,15 +200,17 @@ extension RecordingListView {
                             .foregroundColor(.orange)
                     }
 
-                    Text("You can access your recordings in the Files app under:")
-                        .font(.subheadline)
-                        .foregroundColor(.themeSecondaryLabel)
+                    if !settingsManager.settings.storeFilesOnDeviceOnly && iCloudManager.shared.isAvailable {
+                        Text("You can access your recordings in the Files app under:")
+                            .font(.subheadline)
+                            .foregroundColor(.themeSecondaryLabel)
 
-                    Text("iCloud Drive → Claveo → Documents")
-                        .font(.system(.body, design: .monospaced))
-                        .padding()
-                        .background(Color.themeTertiaryBackground)
-                        .cornerRadius(8)
+                        Text("iCloud Drive → Claveo → Documents")
+                            .font(.system(.body, design: .monospaced))
+                            .padding()
+                            .background(Color.themeTertiaryBackground)
+                            .cornerRadius(8)
+                    }
 
                     Spacer()
                 }
@@ -223,13 +231,24 @@ extension RecordingListView {
     func recordingCount(for pieceName: String) -> Int {
         recorder.recordings.filter { $0.piece == pieceName }.count
     }
+
+    private var filterToolbarIcon: String {
+        selectedTag != nil || selectedPiece != nil
+            ? "line.3.horizontal.decrease.circle.fill"
+            : "line.3.horizontal.decrease.circle"
+    }
     
     var recordingIndicatorView: some View {
         GeometryReader { geometry in
             let isPhone = UIDevice.current.userInterfaceIdiom == .phone
-            let waveformHeight = isPhone ? min(geometry.size.width * 0.12, 50) : 60
-            let maxBars = isPhone ? 60 : 80
-            
+            let horizontalPadding: CGFloat = 48
+            let waveformWidth = isPhone
+                ? geometry.size.width - horizontalPadding
+                : (geometry.size.width - horizontalPadding) * 0.5
+            let waveformHeight = isPhone ? min(waveformWidth * 0.12, 50) : 60
+            let barPitch: CGFloat = 5.5
+            let maxBars = max(isPhone ? 60 : 70, Int(waveformWidth / barPitch))
+
             VStack(spacing: 16) {
                 HStack(spacing: 10) {
                     Circle()
@@ -237,16 +256,16 @@ extension RecordingListView {
                         .frame(width: 10, height: 10)
                         .opacity(recorder.isRecording ? 1 : 0.45)
                         .symbolEffect(.pulse, options: .repeating, isActive: recorder.isRecording)
-                    
+
                     Text(formatTime(recorder.recordingTime))
                         .font(.system(.title3, design: .monospaced))
                         .fontWeight(.semibold)
                         .foregroundColor(.white)
                 }
-                
+
                 LiveWaveformView(audioLevels: recorder.waveformLevels, maxBars: maxBars)
-                    .frame(height: waveformHeight)
-                    .padding(.horizontal, 8)
+                    .frame(width: waveformWidth, height: waveformHeight)
+                    .frame(maxWidth: .infinity)
             }
             .padding(.horizontal, 24)
             .padding(.vertical, 20)
@@ -286,11 +305,9 @@ extension RecordingListView {
             }
             .frame(width: 76, height: 76)
         }
-        .buttonStyle(.plain)
         .shadow(color: .black.opacity(0.15), radius: 6, y: 3)
     }
 
-    @ViewBuilder
     func filterMenuRow(title: String, selected: Bool) -> some View {
         HStack(alignment: .firstTextBaseline) {
             Text(title)

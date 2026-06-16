@@ -17,8 +17,18 @@ extension Metronome {
     }
     
     func updateBeatPattern() {
-        beatPattern = Array(repeating: false, count: max(1, beatsPerMeasure))
-        beatPattern[0] = true
+        var pattern = Array(repeating: false, count: max(1, beatsPerMeasure))
+        pattern[0] = true
+        beatPattern = pattern
+    }
+
+    func toggleBeatAccent(at index: Int) {
+        guard beatPattern.indices.contains(index) else { return }
+
+        var updated = beatPattern
+        updated[index].toggle()
+        beatPattern = updated
+        SettingsManager.shared.update(\.metronomeBeatPattern, value: updated)
     }
     
     func start() {
@@ -44,20 +54,17 @@ extension Metronome {
         scheduledBeatCount = 0
         let now = CACurrentMediaTime()
         startTime = now
-        nextBeatTime = now
+        nextBeatTime = now + audioOutputLatency
         lastBeatTime = 0
         
         scheduleBeatsAhead()
         startTimer()
-
-        // Immediately align UI/haptics to the first scheduled beat without re-scheduling audio.
         checkAndPlayBeat()
     }
     
     func stop() {
         isPlaying = false
-        timer?.invalidate()
-        timer = nil
+        stopBeatTimer()
         currentBeat = 0
         beatCount = 0
         scheduledBeatCount = 0
@@ -101,17 +108,22 @@ extension Metronome {
     }
     
     func startTimer() {
+        stopBeatTimer()
+
+        let target = MetronomeDisplayLinkTarget(metronome: self)
+        displayLinkTarget = target
+        let link = CADisplayLink(target: target, selector: #selector(MetronomeDisplayLinkTarget.tick(_:)))
+        link.preferredFrameRateRange = CAFrameRateRange(minimum: 30, maximum: 120, preferred: 60)
+        link.add(to: .main, forMode: .common)
+        displayLink = link
+    }
+
+    func stopBeatTimer() {
+        displayLink?.invalidate()
+        displayLink = nil
+        displayLinkTarget = nil
         timer?.invalidate()
-        let timerInterval = min(interval / 20.0, 0.025)
-        timer = Timer(timeInterval: timerInterval, repeats: true) { [weak self] _ in
-            Task { @MainActor [weak self] in
-                guard let self = self, self.isPlaying else { return }
-                self.checkAndPlayBeat()
-            }
-        }
-        
-        guard let timer else { return }
-        RunLoop.current.add(timer, forMode: .common)
+        timer = nil
     }
     
     func scheduleBeatsAhead() {
@@ -143,37 +155,70 @@ extension Metronome {
     }
 
     func checkAndPlayBeat() {
+        guard isPlaying else { return }
+
         let currentTime = CACurrentMediaTime()
         scheduleBeatsAhead()
 
-        // Catch up UI/haptics if the timer was delayed (cap avoids a long main-thread loop).
-        var catchUpCount = 0
-        while currentTime >= nextBeatTime - 0.001, catchUpCount < 8 {
-            lastBeatTime = currentTime
-            beatCount += 1
-            currentBeat = (beatCount - 1) % beatsPerMeasure
-
-            if hapticEnabled {
-                let isAccent = currentBeat < beatPattern.count && beatPattern[currentBeat]
-                if isAccent {
-                    hapticGenerator.prepare()
-                    hapticGenerator.impactOccurred(intensity: 1.0)
-                } else {
-                    hapticGeneratorLight.prepare()
-                    hapticGeneratorLight.impactOccurred(intensity: 0.5)
-                }
-            }
-
-            nextBeatTime = startTime + (Double(beatCount) * interval)
-            catchUpCount += 1
+        let latency = audioOutputLatency
+        let elapsed = currentTime - startTime - latency
+        guard elapsed >= -0.001 else {
+            prepareHapticsIfNeeded(timeUntilNextBeat: startTime + latency - currentTime)
+            return
         }
+
+        let latestBeatNumber = Int(floor(elapsed / interval))
+        let lastFiredBeatNumber = beatCount > 0 ? beatCount - 1 : -1
+        guard latestBeatNumber > lastFiredBeatNumber else {
+            let nextBeatNumber = lastFiredBeatNumber + 1
+            let timeUntilNext = startTime + (Double(nextBeatNumber) * interval) + latency - currentTime
+            prepareHapticsIfNeeded(timeUntilNextBeat: timeUntilNext)
+            return
+        }
+
+        let maxCatchUp = 8
+        var fireUpTo = latestBeatNumber
+        if fireUpTo - lastFiredBeatNumber > maxCatchUp {
+            fireUpTo = lastFiredBeatNumber + maxCatchUp
+        }
+
+        for beatNumber in (lastFiredBeatNumber + 1)...fireUpTo {
+            beatCount = beatNumber + 1
+            currentBeat = beatNumber % beatsPerMeasure
+            lastBeatTime = startTime + (Double(beatNumber) * interval) + latency
+
+            if beatNumber == fireUpTo {
+                triggerHapticForCurrentBeat()
+            }
+        }
+
+        nextBeatTime = startTime + (Double(beatCount) * interval) + latency
+        prepareHapticsIfNeeded(timeUntilNextBeat: nextBeatTime - currentTime)
+    }
+
+    func triggerHapticForCurrentBeat() {
+        guard hapticEnabled else { return }
+        let isAccent = currentBeat < beatPattern.count && beatPattern[currentBeat]
+        if isAccent {
+            hapticGenerator.impactOccurred(intensity: 1.0)
+            hapticGenerator.prepare()
+        } else {
+            hapticGeneratorLight.impactOccurred(intensity: 0.5)
+            hapticGeneratorLight.prepare()
+        }
+    }
+
+    func prepareHapticsIfNeeded(timeUntilNextBeat: TimeInterval) {
+        guard hapticEnabled, timeUntilNextBeat > 0, timeUntilNextBeat < 0.05 else { return }
+        hapticGenerator.prepare()
+        hapticGeneratorLight.prepare()
     }
     
     func restartTimer() {
         guard isPlaying else { return }
         let currentTime = CACurrentMediaTime()
         startTime = currentTime
-        nextBeatTime = currentTime
+        nextBeatTime = currentTime + audioOutputLatency
         beatCount = 0
         scheduledBeatCount = 0
         lastBeatTime = 0
@@ -183,31 +228,7 @@ extension Metronome {
         
         scheduleBeatsAhead()
         startTimer()
-
-        // Immediately align UI/haptics to the first scheduled beat without re-scheduling audio.
         checkAndPlayBeat()
-    }
-    
-    func playBeat() {
-        currentBeat = (currentBeat + 1) % beatsPerMeasure
-        
-        let isAccent = currentBeat < beatPattern.count && beatPattern[currentBeat]
-        
-        if hapticEnabled {
-            // Prepare generators right before use for better reliability
-            if isAccent {
-                hapticGenerator.prepare()
-                hapticGenerator.impactOccurred(intensity: 1.0)
-            } else {
-                hapticGeneratorLight.prepare()
-                hapticGeneratorLight.impactOccurred(intensity: 0.5)
-            }
-        }
-        
-        guard let player = playerNode else { return }
-        let audioBuffer = isAccent ? accentBufferConverted : normalBufferConverted
-        guard let buffer = audioBuffer else { return }
-        player.scheduleBuffer(buffer, at: nil, options: [], completionHandler: nil)
     }
 }
 

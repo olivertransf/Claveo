@@ -78,14 +78,10 @@ class MusicDictionaryService: ObservableObject {
         }
     }
     
-    /// Search all terms (including theory concepts)
+    /// Search terms matching the query. Returns nothing when the query is empty.
     func searchAllTerms(query: String) -> [MusicTerm] {
-        guard let dictionary = dictionary, !query.isEmpty else {
-            // When no query, return all terms sorted by priority
-            let terms = dictionary?.terms ?? []
-            return terms.sorted(by: { termPriority($0) > termPriority($1) })
-        }
-        
+        guard let dictionary = dictionary, !query.isEmpty else { return [] }
+
         let lowercasedQuery = query.lowercased()
         let filtered = dictionary.terms.filter { term in
             term.term.lowercased().contains(lowercasedQuery) ||
@@ -232,6 +228,38 @@ class MusicDictionaryService: ObservableObject {
         }
         
         return priority
+    }
+
+    static let allCategoryToken = "__all__"
+
+    /// Browse topics use categories assigned in musicDictionary.json.
+    static let browseCategories: [(title: String, icon: String, category: String)] = [
+        ("All", "books.vertical", allCategoryToken),
+        ("Tempo", "metronome", "Tempo"),
+        ("Dynamics", "speaker.wave.2.fill", "Dynamics"),
+        ("Articulation", "waveform.path", "Articulation"),
+        ("Ornamentation", "sparkles", "Ornamentation"),
+        ("Expression", "face.smiling", "Expression"),
+        ("Rhythm", "figure.wave", "Rhythm"),
+        ("Theory", "music.note", "Theory"),
+        ("Notation", "music.note.list", "Notation"),
+        ("Form", "square.grid.2x2", "Form"),
+        ("Performance", "person.3", "Performance"),
+        ("General", "text.book.closed", "General")
+    ]
+
+    func allTerms() -> [MusicTerm] {
+        guard let dictionary = dictionary else { return [] }
+        return dictionary.terms.sorted {
+            $0.term.localizedCaseInsensitiveCompare($1.term) == .orderedAscending
+        }
+    }
+
+    func terms(inCategory category: String) -> [MusicTerm] {
+        guard let dictionary = dictionary else { return [] }
+        return dictionary.terms
+            .filter { $0.category == category }
+            .sorted { $0.term.localizedCaseInsensitiveCompare($1.term) == .orderedAscending }
     }
     
     func getTermsByCategory(_ category: String) -> [MusicTerm] {
