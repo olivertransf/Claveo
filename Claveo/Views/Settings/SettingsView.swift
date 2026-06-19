@@ -377,7 +377,7 @@ struct SettingsView: View {
     }
 
     /// Marketing site (contact, privacy, support). Update if the canonical URL changes.
-    private static let claveoWebsiteURL = URL(string: "https://claveo.netlify.app")!
+    private static let claveoWebsiteURL = URL(string: "https://claveo-app.vercel.app/")!
 
     var contactSection: some View {
         Section {
@@ -385,7 +385,7 @@ struct SettingsView: View {
                 Label("Website & contact", systemImage: "safari")
             }
         } footer: {
-            Text("Visit claveo.netlify.app for help, feedback, and product updates.")
+            Text("Visit https://claveo-app.vercel.app/ for help, feedback, and product updates.")
         }
     }
 }

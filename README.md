@@ -16,7 +16,7 @@ A free music practice companion for **iPhone** and **iPad**: record sessions, ru
 - **Layout** — Reorder tabs (four on the bar, rest in More), accent colors, light/dark mode  
 - **OMR (beta)** — Scan sheet music from photos or PDFs for experimental digitization workflows  
 
-Roadmap and web copy live in the repo; see the [site roadmap](https://claveo.app/roadmap) for planned work.
+Roadmap and web copy live in the repo; see the [site roadmap](https://claveo-app.vercel.app/roadmap) for planned work.
 
 ## Repository layout
 
@@ -77,7 +77,7 @@ Copyright (c) 2025 Oliver Tran. See [LICENSE](LICENSE).
 
 ## Links
 
-- **Website** — [claveo.app](https://claveo.app/)  
+- **Website** — [claveo-app.vercel.app](https://claveo-app.vercel.app/)  
 - **App Store** — [Claveo](https://apps.apple.com/us/app/claveo-music-companion/id6755795790)  
-- **Privacy policy** — [claveo.app/privacy-policy](https://claveo.app/privacy-policy.html)  
+- **Privacy policy** — [claveo-app.vercel.app/privacy-policy](https://claveo-app.vercel.app/privacy-policy.html)  
 - **Source** — [github.com/olivertransf/Claveo](https://github.com/olivertransf/Claveo)
