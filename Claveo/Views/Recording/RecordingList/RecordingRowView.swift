@@ -125,12 +125,12 @@ struct RecordingRowView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
         }
+        .claveoListRowChrome(hideSeparator: isExpanded, showsBackground: false)
         .modifier(RecordingRowBackgroundModifier(
             isPlaying: isPlaying,
             isExpanded: isExpanded,
             fillColor: rowFillColor
         ))
-        .listRowSeparator(isExpanded ? .hidden : .automatic)
     }
 
     private var rowFillColor: Color {
@@ -463,11 +463,14 @@ private struct RecordingRowBackgroundModifier: ViewModifier {
     let fillColor: Color
 
     func body(content: Content) -> some View {
-        if isPlaying || isExpanded {
-            content.listRowBackground(fillColor)
-        } else {
-            content
-        }
+        content.listRowBackground(
+            ZStack {
+                Color(.secondarySystemGroupedBackground)
+                if isPlaying || isExpanded {
+                    fillColor
+                }
+            }
+        )
     }
 }
 

@@ -28,8 +28,13 @@ struct RecordingActivityWidget: Widget {
         } dynamicIsland: { context in
             DynamicIsland {
                 DynamicIslandExpandedRegion(.leading) {
-                    Label("Recording", systemImage: "waveform")
-                        .font(.caption)
+                    HStack(spacing: 6) {
+                        Circle()
+                            .fill(Color.red)
+                            .frame(width: 8, height: 8)
+                        Text("Recording")
+                            .font(.subheadline.weight(.semibold))
+                    }
                 }
 
                 DynamicIslandExpandedRegion(.trailing) {
@@ -38,20 +43,19 @@ struct RecordingActivityWidget: Widget {
                 }
 
                 DynamicIslandExpandedRegion(.bottom) {
-                    Text(context.attributes.title)
+                    Text("Audio capture in progress")
                         .font(.caption)
-                        .lineLimit(1)
                         .foregroundStyle(.secondary)
                 }
             } compactLeading: {
-                Image(systemName: "waveform")
+                Image(systemName: "mic.fill")
                     .foregroundStyle(.red)
             } compactTrailing: {
                 RecordingElapsedTimeView(context: context)
                     .font(.caption2.monospacedDigit())
                     .frame(width: 46)
             } minimal: {
-                Image(systemName: "waveform")
+                Image(systemName: "mic.fill")
                     .foregroundStyle(.red)
             }
             .keylineTint(.red)
@@ -67,18 +71,17 @@ private struct RecordingActivityLockScreenView: View {
             ZStack {
                 Circle()
                     .fill(Color.red.opacity(0.16))
-                Image(systemName: "waveform")
+                Image(systemName: "mic.fill")
                     .font(.title3.weight(.semibold))
                     .foregroundStyle(.red)
             }
             .frame(width: 44, height: 44)
 
             VStack(alignment: .leading, spacing: 4) {
-                Text(context.attributes.title)
+                Text("Recording")
                     .font(.headline)
-                    .lineLimit(1)
 
-                Text(context.state.isRecording ? "Recording" : "Saved")
+                Text(context.attributes.title)
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }

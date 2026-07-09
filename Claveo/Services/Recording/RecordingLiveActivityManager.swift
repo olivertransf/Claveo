@@ -15,7 +15,7 @@ final class RecordingLiveActivityManager {
 
     private init() {}
 
-    func startRecordingActivity(startedAt: Date, title: String = "Recording") {
+    func startRecordingActivity(startedAt: Date, title: String = "Claveo") {
         guard ActivityAuthorizationInfo().areActivitiesEnabled else { return }
 
         if activity != nil {
@@ -42,7 +42,7 @@ final class RecordingLiveActivityManager {
         }
     }
 
-    func endRecordingActivity(finalDuration: TimeInterval, dismissalPolicy: ActivityUIDismissalPolicy = .default) {
+    func endRecordingActivity(finalDuration: TimeInterval, dismissalPolicy: ActivityUIDismissalPolicy = .immediate) {
         guard let activity else { return }
         self.activity = nil
 

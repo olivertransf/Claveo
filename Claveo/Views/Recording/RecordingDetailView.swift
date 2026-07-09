@@ -98,7 +98,10 @@ struct RecordingDetailView: View {
                             .multilineTextAlignment(.trailing)
                             .frame(width: 72)
                             .onChange(of: measureStartText) { _, newValue in
-                                recording.measureStart = Int(newValue)
+                                let digitsOnly = newValue.filter(\.isNumber)
+                                if digitsOnly != newValue {
+                                    measureStartText = digitsOnly
+                                }
                             }
                     }
                     
@@ -111,7 +114,10 @@ struct RecordingDetailView: View {
                             .multilineTextAlignment(.trailing)
                             .frame(width: 72)
                             .onChange(of: measureEndText) { _, newValue in
-                                recording.measureEnd = Int(newValue)
+                                let digitsOnly = newValue.filter(\.isNumber)
+                                if digitsOnly != newValue {
+                                    measureEndText = digitsOnly
+                                }
                             }
                     }
                 } header: {
@@ -204,8 +210,7 @@ struct RecordingDetailView: View {
             
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button("Save") {
-                    onSave(recording)
-                    dismiss()
+                    saveAndDismiss()
                 }
                 .fontWeight(.semibold)
             }
@@ -220,7 +225,7 @@ struct RecordingDetailView: View {
                 recording.duration = updatedRecording.duration
                 recording.originalFileName = updatedRecording.originalFileName
                 recording.originalDuration = updatedRecording.originalDuration
-                onSave(recording)
+                saveRecording()
             }
             .environmentObject(themeManager)
         }
@@ -266,6 +271,8 @@ struct RecordingDetailView: View {
             updated.duration = updated.originalDuration ?? recording.duration
             updated.originalFileName = nil
             updated.originalDuration = nil
+            updated.applyMeasureNumbers(startText: measureStartText, endText: measureEndText)
+            updated.name = updated.name.trimmingCharacters(in: .whitespacesAndNewlines)
             
             try? FileManager.default.removeItem(at: originalURL)
             
@@ -278,6 +285,30 @@ struct RecordingDetailView: View {
         }
         
         isRestoring = false
+    }
+
+    private func saveAndDismiss() {
+        commitEditableFields()
+        onSave(recording)
+        dismiss()
+    }
+
+    private func saveRecording() {
+        commitEditableFields()
+        onSave(recording)
+    }
+
+    private func commitEditableFields() {
+        recording.name = recording.name.trimmingCharacters(in: .whitespacesAndNewlines)
+        if let piece = recording.piece?.trimmingCharacters(in: .whitespacesAndNewlines), !piece.isEmpty {
+            recording.piece = piece
+        } else {
+            recording.piece = nil
+        }
+        recording.applyMeasureNumbers(startText: measureStartText, endText: measureEndText)
+
+        measureStartText = recording.measureStart.map(String.init) ?? ""
+        measureEndText = recording.measureEnd.map(String.init) ?? ""
     }
     
     private func formatDuration(_ duration: TimeInterval) -> String {

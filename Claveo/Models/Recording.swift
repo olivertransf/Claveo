@@ -136,6 +136,23 @@ struct Recording: Identifiable, Codable, Sendable {
         }
         return "mm. \(start)"
     }
+
+    /// Parses measure text from the detail editor. Returns nil for empty or invalid input.
+    static func measureNumber(from text: String) -> Int? {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty, let value = Int(trimmed), value > 0 else { return nil }
+        return value
+    }
+
+    /// Applies parsed measure fields and normalizes end ≥ start when both are set.
+    mutating func applyMeasureNumbers(startText: String, endText: String) {
+        measureStart = Self.measureNumber(from: startText)
+        measureEnd = Self.measureNumber(from: endText)
+
+        if let start = measureStart, let end = measureEnd, end < start {
+            measureEnd = start
+        }
+    }
     
     var fileURL: URL {
         return iCloudManager.shared.getDocumentsURL().appendingPathComponent(fileName)

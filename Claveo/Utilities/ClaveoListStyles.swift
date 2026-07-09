@@ -1,0 +1,39 @@
+//
+//  ClaveoListStyles.swift
+//  Claveo
+//
+//  Shared list styling for native grouped separators and surfaces.
+//
+//  Copyright (c) 2025 Oliver Tran
+
+import SwiftUI
+
+extension View {
+    func claveoInsetGroupedListStyle() -> some View {
+        listStyle(.insetGrouped)
+            .listSectionSeparator(.visible, edges: .all)
+    }
+
+    func claveoListRowChrome(hideSeparator: Bool = false, showsBackground: Bool = true) -> some View {
+        modifier(ClaveoListRowChromeModifier(hideSeparator: hideSeparator, showsBackground: showsBackground))
+    }
+}
+
+private struct ClaveoListRowChromeModifier: ViewModifier {
+    let hideSeparator: Bool
+    let showsBackground: Bool
+
+    @ViewBuilder
+    func body(content: Content) -> some View {
+        if showsBackground {
+            content
+                .listRowBackground(Color(.secondarySystemGroupedBackground))
+                .listRowSeparator(hideSeparator ? .hidden : .visible, edges: .bottom)
+                .listRowSeparatorTint(Color(.separator))
+        } else {
+            content
+                .listRowSeparator(hideSeparator ? .hidden : .visible, edges: .bottom)
+                .listRowSeparatorTint(Color(.separator))
+        }
+    }
+}

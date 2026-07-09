@@ -199,9 +199,10 @@ struct MusicDictionaryView: View {
                         } label: {
                             TermRowView(term: term)
                         }
+                        .claveoListRowChrome()
                     }
                 }
-                .listStyle(.insetGrouped)
+                .claveoInsetGroupedListStyle()
             }
         }
 

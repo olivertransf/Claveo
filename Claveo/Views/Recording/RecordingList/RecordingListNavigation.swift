@@ -22,29 +22,30 @@ extension RecordingListView {
             }
             .overlay {
                 if recorder.isRecording {
-                    ZStack(alignment: .bottom) {
-                        LinearGradient(
-                            colors: [
-                                Color.black.opacity(0.0),
-                                Color.black.opacity(0.5),
-                                Color.black.opacity(0.7)
-                            ],
-                            startPoint: .top,
-                            endPoint: .bottom
-                        )
-                        .ignoresSafeArea()
-
-                        recordingIndicatorView
-                            .padding(.bottom, 100)
-                    }
+                    LinearGradient(
+                        colors: [
+                            Color.black.opacity(0.0),
+                            Color.black.opacity(0.5),
+                            Color.black.opacity(0.7)
+                        ],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                    .ignoresSafeArea()
                     .allowsHitTesting(false)
                 }
             }
             .safeAreaInset(edge: .bottom, spacing: 0) {
-                recordingButtonOverlay
-                    .padding(.top, 8)
-                    .padding(.bottom, 10)
-                    .frame(maxWidth: .infinity)
+                VStack(spacing: 10) {
+                    if recorder.isRecording {
+                        recordingIndicatorView
+                    }
+
+                    recordingButtonOverlay
+                        .padding(.top, recorder.isRecording ? 0 : 8)
+                        .padding(.bottom, 10)
+                }
+                .frame(maxWidth: .infinity)
             }
             .toolbar {
                 if isSelectingRecordings {
@@ -249,7 +250,7 @@ extension RecordingListView {
             let barPitch: CGFloat = 5.5
             let maxBars = max(isPhone ? 60 : 70, Int(waveformWidth / barPitch))
 
-            VStack(spacing: 16) {
+            VStack(spacing: 12) {
                 HStack(spacing: 10) {
                     Circle()
                         .fill(Color.red)
@@ -267,11 +268,11 @@ extension RecordingListView {
                     .frame(width: waveformWidth, height: waveformHeight)
                     .frame(maxWidth: .infinity)
             }
-            .padding(.horizontal, 24)
-            .padding(.vertical, 20)
-            .frame(maxWidth: .infinity)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
         }
-        .frame(height: 120)
+        .frame(height: 96)
+        .padding(.horizontal, 24)
+        .padding(.top, 8)
     }
     
     var recordingButtonOverlay: some View {

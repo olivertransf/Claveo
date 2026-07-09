@@ -10,6 +10,7 @@ import SwiftUI
 
 struct SettingsView: View {
     @EnvironmentObject var themeManager: ThemeManager
+    @Environment(\.openURL) private var openURL
     @StateObject private var settingsManager = SettingsManager.shared
     @State private var manualFrequencyText = ""
     @FocusState private var isFrequencyFieldFocused: Bool
@@ -365,6 +366,8 @@ struct SettingsView: View {
 
     // MARK: - About
 
+    private static let appStoreReviewURL = URL(string: "https://apps.apple.com/app/id6755795790?action=write-review")!
+
     var aboutSection: some View {
         Section("About") {
             HStack {
@@ -373,7 +376,17 @@ struct SettingsView: View {
                 Text(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "—")
                     .foregroundColor(.secondary)
             }
+
+            Button {
+                openAppStoreReview()
+            } label: {
+                Label("Leave a Review", systemImage: "star")
+            }
         }
+    }
+
+    private func openAppStoreReview() {
+        openURL(Self.appStoreReviewURL)
     }
 
     /// Marketing site (contact, privacy, support). Update if the canonical URL changes.

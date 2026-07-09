@@ -25,18 +25,60 @@ struct PracticeView: View {
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(spacing: 28) {
+            List {
+                Section {
                     statsBar
-                    weekStrip
-                    journalSection
                 }
-                .padding(.top, 20)
-                .padding(.bottom, 40)
+
+                Section {
+                    weekStrip
+                }
+
+                Section("Journal") {
+                    if filteredEntries.isEmpty {
+                        if searchText.isEmpty {
+                            emptyState
+                                .listRowBackground(Color.clear)
+                        } else {
+                            ContentUnavailableView {
+                                Label("No matches", systemImage: "magnifyingglass")
+                            } description: {
+                                Text("Try a different search term.")
+                            }
+                            .listRowBackground(Color.clear)
+                        }
+                    } else {
+                        ForEach(filteredEntries) { entry in
+                            Button {
+                                selectedEntry = entry
+                            } label: {
+                                JournalEntryRow(entry: entry, accentColor: themeManager.accentColor)
+                            }
+                            .buttonStyle(.plain)
+                            .listRowInsets(EdgeInsets(top: 8, leading: 14, bottom: 8, trailing: 14))
+                            .claveoListRowChrome()
+                            .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                                Button(role: .destructive) {
+                                    practiceService.deleteEntry(entry)
+                                } label: {
+                                    Label("Delete", systemImage: "trash")
+                                }
+                                Button {
+                                    selectedEntry = entry
+                                } label: {
+                                    Label("Edit", systemImage: "pencil")
+                                }
+                                .tint(themeManager.accentColor)
+                            }
+                        }
+                    }
+                }
             }
+            .claveoInsetGroupedListStyle()
             .refreshable { await practiceService.refreshFromiCloud() }
             .navigationTitle("Practice")
             .navigationBarTitleDisplayMode(.inline)
+            .listSectionSpacing(12)
             .searchable(text: $searchText, prompt: "Search journal notes")
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
@@ -105,21 +147,16 @@ struct PracticeView: View {
                 )
             }
         }
-        .padding(.vertical, 18)
-        .background(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(Color(.secondarySystemGroupedBackground))
-        )
-        .padding(.horizontal, 20)
+        .padding(.vertical, 10)
     }
 
     private func statItem(value: String, label: String, icon: String, iconColor: Color) -> some View {
-        VStack(spacing: 6) {
+        VStack(spacing: 4) {
             Image(systemName: icon)
-                .font(.system(size: 14, weight: .semibold))
+                .font(.system(size: 13, weight: .semibold))
                 .foregroundStyle(iconColor)
             Text(value)
-                .font(.system(size: 22, weight: .bold, design: .rounded))
+                .font(.system(size: 20, weight: .bold, design: .rounded))
                 .monospacedDigit()
             Text(label)
                 .font(.caption2)
@@ -132,17 +169,17 @@ struct PracticeView: View {
     private var statDivider: some View {
         Rectangle()
             .fill(Color(.separator).opacity(0.5))
-            .frame(width: 1, height: 40)
+            .frame(width: 1, height: 34)
     }
 
     // MARK: - Week Strip
 
     private var weekStrip: some View {
-        VStack(alignment: .leading, spacing: 14) {
+        VStack(alignment: .leading, spacing: 10) {
             weekStripHeader
             weekDaysRow
         }
-        .padding(.horizontal, 20)
+        .listRowInsets(EdgeInsets(top: 8, leading: 12, bottom: 8, trailing: 12))
     }
 
     private var weekStripHeader: some View {
@@ -230,49 +267,7 @@ struct PracticeView: View {
         )
     }
 
-    // MARK: - Journal Section
-
-    private var journalSection: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            HStack {
-                Text("Journal")
-                    .font(.title3.weight(.bold))
-                Spacer()
-                if !practiceService.practiceEntries.isEmpty {
-                    Text("\(practiceService.practiceEntries.count) sessions")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                }
-            }
-            .padding(.horizontal, 20)
-
-            if filteredEntries.isEmpty {
-                emptyState
-            } else {
-                LazyVStack(spacing: 10) {
-                    ForEach(filteredEntries) { entry in
-                        SessionCard(entry: entry, accentColor: themeManager.accentColor)
-                            .padding(.horizontal, 20)
-                            .contentShape(Rectangle())
-                            .onTapGesture { selectedEntry = entry }
-                            .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                                Button(role: .destructive) {
-                                    practiceService.deleteEntry(entry)
-                                } label: {
-                                    Label("Delete", systemImage: "trash")
-                                }
-                                Button {
-                                    selectedEntry = entry
-                                } label: {
-                                    Label("Edit", systemImage: "pencil")
-                                }
-                                .tint(themeManager.accentColor)
-                            }
-                    }
-                }
-            }
-        }
-    }
+    // MARK: - Empty State
 
     private var emptyState: some View {
         VStack(spacing: 16) {
@@ -300,10 +295,9 @@ struct PracticeView: View {
                     .foregroundStyle(.white)
                     .clipShape(Capsule(style: .continuous))
             }
-            .padding(.bottom, 20)
+            .padding(.bottom, 8)
         }
         .frame(maxWidth: .infinity)
-        .padding(.horizontal, 20)
     }
 
     // MARK: - Helpers
@@ -427,9 +421,9 @@ private struct WeekDayCell: View {
     }
 }
 
-// MARK: - Session Card
+// MARK: - Journal Entry Row
 
-private struct SessionCard: View {
+private struct JournalEntryRow: View {
     let entry: PracticeEntry
     let accentColor: Color
 
@@ -440,88 +434,100 @@ private struct SessionCard: View {
     }
 
     private var monthAbbrev: String {
-        let f = DateFormatter()
-        f.dateFormat = "MMM"
-        return f.string(from: entry.date).uppercased()
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MMM"
+        return formatter.string(from: entry.date).uppercased()
     }
 
-    private var dayName: String {
-        let f = DateFormatter()
-        f.dateFormat = "EEE"
-        return f.string(from: entry.date).uppercased()
+    private var trimmedNotes: String? {
+        guard let notes = entry.notes?.trimmingCharacters(in: .whitespacesAndNewlines), !notes.isEmpty else {
+            return nil
+        }
+        return notes
     }
 
     var body: some View {
-        HStack(spacing: 0) {
-            // Date block
-            VStack(spacing: 1) {
-                Text(dayNumber)
-                    .font(.system(size: 22, weight: .bold, design: .rounded))
-                Text(monthAbbrev)
-                    .font(.system(size: 9, weight: .semibold))
-                    .foregroundStyle(.secondary)
-                    .kerning(0.5)
-                Text(dayName)
-                    .font(.system(size: 9, weight: .medium))
-                    .foregroundStyle(.tertiary)
-                    .kerning(0.3)
-            }
-            .frame(width: 52)
-            .padding(.vertical, 14)
-            .padding(.leading, 14)
+        HStack(alignment: .center, spacing: 12) {
+            dateBadge
 
-            // Separator
-            Rectangle()
-                .fill(Color(.separator).opacity(0.4))
-                .frame(width: 0.5)
-                .padding(.vertical, 16)
+            VStack(alignment: .leading, spacing: 4) {
+                Text(entry.formattedDuration)
+                    .font(.headline)
 
-            // Content
-            VStack(alignment: .leading, spacing: 6) {
-                HStack(alignment: .center) {
-                    Text(entry.formattedDuration)
-                        .font(.headline)
-                    Spacer()
-                    if let rating = entry.rating {
-                        HStack(spacing: 2) {
-                            ForEach(1...5, id: \.self) { star in
-                                Image(systemName: star <= rating ? "star.fill" : "star")
-                                    .font(.system(size: 10))
-                                    .foregroundStyle(star <= rating ? Color.orange : Color(.tertiaryLabel))
-                            }
-                        }
-                    }
-                }
-
-                if let notes = entry.notes, !notes.isEmpty {
+                if let notes = trimmedNotes {
                     Text(notes)
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                         .lineLimit(2)
+                } else {
+                    Text(entry.formattedDate)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
                 }
 
-                if !entry.linkedRecordingIds.isEmpty {
-                    HStack(spacing: 4) {
-                        Image(systemName: "waveform")
-                            .font(.caption2)
-                        Text("\(entry.linkedRecordingIds.count) recording\(entry.linkedRecordingIds.count == 1 ? "" : "s")")
-                            .font(.caption2)
-                    }
-                    .foregroundStyle(accentColor.opacity(0.8))
+                if trimmedNotes != nil || !entry.linkedRecordingIds.isEmpty {
+                    metadataRow
                 }
             }
-            .padding(.horizontal, 14)
-            .padding(.vertical, 14)
 
-            Image(systemName: "chevron.right")
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(.tertiary)
-                .padding(.trailing, 12)
+            Spacer(minLength: 6)
+
+            if let rating = entry.rating {
+                ratingStars(rating)
+            }
         }
+    }
+
+    private var dateBadge: some View {
+        VStack(spacing: 1) {
+            Text(dayNumber)
+                .font(.system(size: 17, weight: .bold, design: .rounded))
+            Text(monthAbbrev)
+                .font(.system(size: 9, weight: .semibold))
+                .foregroundStyle(.secondary)
+                .kerning(0.4)
+        }
+        .frame(width: 44, height: 44)
         .background(
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .fill(Color(.secondarySystemGroupedBackground))
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .fill(Color(.tertiarySystemFill))
         )
+    }
+
+    private var metadataRow: some View {
+        HStack(spacing: 6) {
+            if trimmedNotes != nil {
+                Text(entry.formattedDate)
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
+            }
+
+            if !entry.linkedRecordingIds.isEmpty {
+                if trimmedNotes != nil {
+                    Text("·")
+                        .font(.caption)
+                        .foregroundStyle(.tertiary)
+                }
+
+                HStack(spacing: 3) {
+                    Image(systemName: "waveform")
+                        .font(.caption2.weight(.semibold))
+                    Text("\(entry.linkedRecordingIds.count)")
+                        .font(.caption.weight(.medium))
+                }
+                .foregroundStyle(accentColor)
+            }
+        }
+    }
+
+    private func ratingStars(_ rating: Int) -> some View {
+        HStack(spacing: 2) {
+            ForEach(1...5, id: \.self) { star in
+                Image(systemName: star <= rating ? "star.fill" : "star")
+                    .font(.system(size: 10))
+                    .foregroundStyle(star <= rating ? .orange : Color(.tertiaryLabel))
+            }
+        }
     }
 }
 

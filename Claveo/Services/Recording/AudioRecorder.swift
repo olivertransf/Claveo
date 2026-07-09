@@ -80,30 +80,20 @@ class AudioRecorder: NSObject, ObservableObject {
     }
     
     private func syncRecordingsFromiCloud() {
-        // When coming back online, sync recordings from iCloud
-        // This ensures offline changes are preserved (they're already saved)
-        // and iCloud changes are merged in
         let documentsPath = iCloudManager.shared.getDocumentsURL()
         let fileURL = documentsPath.appendingPathComponent("recordings.json")
-        
+
         do {
             let data = try iCloudManager.shared.readFile(from: fileURL)
             if let decoded = try? JSONDecoder().decode([Recording].self, from: data) {
-                // Merge: keep local recordings that don't exist in iCloud, update existing ones
-                var mergedRecordings = decoded
+                var mergedByID = Dictionary(uniqueKeysWithValues: decoded.map { ($0.id, $0) })
                 for localRecording in recordings {
-                    if !mergedRecordings.contains(where: { $0.id == localRecording.id }) {
-                        mergedRecordings.append(localRecording)
-                    }
+                    mergedByID[localRecording.id] = localRecording
                 }
-                recordings = mergedRecordings.sorted { $0.createdAt > $1.createdAt }
-                // Update local cache
-                UserDefaults.standard.set(data, forKey: "recordings_cache")
-                // Save merged version back to iCloud
+                recordings = mergedByID.values.sorted { $0.createdAt > $1.createdAt }
                 saveRecordings()
             }
         } catch {
-            // If iCloud file doesn't exist, ensure local recordings are synced to iCloud
             saveRecordings()
         }
     }

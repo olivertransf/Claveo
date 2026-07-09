@@ -87,6 +87,7 @@ struct PieceManagementView: View {
                             } label: {
                                 pieceRow(piece)
                             }
+                            .claveoListRowChrome()
                             .swipeActions(edge: .trailing, allowsFullSwipe: true) {
                                 Button(role: .destructive) {
                                     deletePiece(id: piece.id)
@@ -111,7 +112,7 @@ struct PieceManagementView: View {
                     }
                 }
             }
-            .listStyle(.insetGrouped)
+            .claveoInsetGroupedListStyle()
             .scrollContentBackground(.hidden)
             .background(Color(.systemGroupedBackground))
             .navigationTitle("Pieces")
@@ -282,7 +283,7 @@ struct PieceEditSheet: View {
                     }
                 }
             }
-            .listStyle(.insetGrouped)
+            .claveoInsetGroupedListStyle()
             .scrollContentBackground(.hidden)
             .background(Color(.systemGroupedBackground))
             .tint(themeManager.accentColor)

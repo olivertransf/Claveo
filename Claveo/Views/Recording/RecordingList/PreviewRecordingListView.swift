@@ -137,7 +137,7 @@ struct PreviewRecordingListView: View {
                             }
                         }
                     }
-                    .listStyle(.insetGrouped)
+                    .claveoInsetGroupedListStyle()
                 }
             }
             .onAppear {

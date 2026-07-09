@@ -33,6 +33,7 @@ struct TimeSignaturePickerView: View {
                     }
                 }
             }
+            .claveoInsetGroupedListStyle()
             .navigationTitle("Time Signature")
             .navigationBarTitleDisplayMode(.inline)
             .tint(themeManager.accentColor)

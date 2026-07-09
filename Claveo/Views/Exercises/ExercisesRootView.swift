@@ -65,6 +65,7 @@ struct ExercisesRootView: View {
                     Text("Pitch")
                 }
             }
+            .claveoInsetGroupedListStyle()
             .navigationTitle("Exercises")
             .navigationBarTitleDisplayMode(.inline)
         }
