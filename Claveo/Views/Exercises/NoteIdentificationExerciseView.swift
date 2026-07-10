@@ -211,7 +211,11 @@ struct NoteIdentificationExerciseView: View {
                 )
         }
         .accessibilityAddTraits(on ? .isSelected : [])
-        .accessibilityHint(on ? "Included in practice" : "Excluded from practice")
+        .accessibilityHint(
+            on
+                ? String(localized: "Included in practice")
+                : String(localized: "Excluded from practice")
+        )
     }
 
     private func toggleClef(_ clef: ClefName) {
@@ -282,13 +286,13 @@ struct NoteIdentificationExerciseView: View {
 
     private var answerGrid: some View {
         VStack(spacing: 18) {
-            labeledRow("Sharps") {
+            labeledRow(String(localized: "Sharps")) {
                 gridRow(accidental: .sharp) { "\($0.displayLetter)#" }
             }
-            labeledRow("Naturals") {
+            labeledRow(String(localized: "Naturals")) {
                 gridRow(accidental: .natural) { $0.displayLetter }
             }
-            labeledRow("Flats") {
+            labeledRow(String(localized: "Flats")) {
                 gridRow(accidental: .flat) { "\($0.displayLetter)♭" }
             }
         }

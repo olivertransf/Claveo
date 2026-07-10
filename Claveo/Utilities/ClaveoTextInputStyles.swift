@@ -42,7 +42,7 @@ struct ClaveoCompactTextFieldStyle: TextFieldStyle {
 
 struct ClaveoSearchField: View {
     @Binding var text: String
-    var prompt: String
+    var prompt: LocalizedStringKey
 
     var body: some View {
         HStack(spacing: 8) {
@@ -74,7 +74,7 @@ struct ClaveoSearchField: View {
 
 struct ClaveoMultilineTextInput: View {
     @Binding var text: String
-    var placeholder: String
+    var placeholder: LocalizedStringKey
     var minHeight: CGFloat = 100
 
     var body: some View {

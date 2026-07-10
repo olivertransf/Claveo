@@ -119,21 +119,21 @@ struct PracticeView: View {
         HStack(spacing: 0) {
             statItem(
                 value: "\(practiceService.currentStreak)",
-                label: "Day Streak",
+                label: String(localized: "Day Streak"),
                 icon: "flame.fill",
                 iconColor: practiceService.currentStreak > 0 ? .orange : .secondary
             )
             statDivider
             statItem(
                 value: formatMinutes(practiceService.thisWeekPracticeTime),
-                label: "This Week",
+                label: String(localized: "This Week"),
                 icon: "chart.bar.fill",
                 iconColor: themeManager.accentColor
             )
             statDivider
             statItem(
                 value: "\(practiceService.totalPracticeDays)",
-                label: "Total Days",
+                label: String(localized: "Total Days"),
                 icon: "calendar",
                 iconColor: themeManager.accentColor
             )
@@ -141,7 +141,7 @@ struct PracticeView: View {
                 statDivider
                 statItem(
                     value: String(format: "%.1f", avg),
-                    label: "Avg Rating",
+                    label: String(localized: "Avg Rating"),
                     icon: "star.fill",
                     iconColor: .yellow
                 )
@@ -310,8 +310,8 @@ struct PracticeView: View {
 
     private var weekTitle: String {
         switch currentWeekOffset {
-        case 0: return "This Week"
-        case -1: return "Last Week"
+        case 0: return String(localized: "This Week")
+        case -1: return String(localized: "Last Week")
         default:
             let formatter = DateFormatter()
             formatter.dateFormat = "MMM d"
@@ -353,11 +353,12 @@ private struct WeekDayCell: View {
     let onTap: () -> Void
 
     private let calendar = Calendar.current
-    private static let dayLetters = ["S", "M", "T", "W", "T", "F", "S"]
 
     private var dayLetter: String {
         let weekday = calendar.component(.weekday, from: date) - 1
-        return Self.dayLetters[weekday]
+        let symbols = calendar.veryShortWeekdaySymbols
+        guard weekday >= 0, weekday < symbols.count else { return "" }
+        return symbols[weekday]
     }
 
     private var dayNumber: String {

@@ -183,6 +183,7 @@
 			knownRegions = (
 				en,
 				Base,
+				es,
 			);
 			mainGroup = 4AA78F942ED028BF009BDB04;
 			minimizedProjectReferenceProxies = 1;
@@ -393,6 +394,7 @@
 				INFOPLIST_KEY_LSSupportsOpeningDocumentsInPlace = YES;
 				INFOPLIST_KEY_NSCameraUsageDescription = "Claveo does not access your camera. This permission may be referenced by audio processing libraries but is not used by the app.";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Claveo needs access to your microphone to record practice sessions and detect pitch for tuning.";
+				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
@@ -451,6 +453,7 @@
 				INFOPLIST_KEY_LSSupportsOpeningDocumentsInPlace = YES;
 				INFOPLIST_KEY_NSCameraUsageDescription = "Claveo does not access your camera. This permission may be referenced by audio processing libraries but is not used by the app.";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Claveo needs access to your microphone to record practice sessions and detect pitch for tuning.";
+				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;

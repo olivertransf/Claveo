@@ -203,9 +203,9 @@ final class iCloudManager: @unchecked Sendable {
 
     nonisolated func getStorageLocation() -> String {
         if prefersDeviceOnlyStorage {
-            return "On This iPhone"
+            return String(localized: "On This iPhone")
         }
-        return isAvailable ? "iCloud Drive" : "Local Storage"
+        return isAvailable ? String(localized: "iCloud Drive") : String(localized: "Local Storage")
     }
 
     nonisolated func getStoragePath() -> String {

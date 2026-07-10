@@ -1,0 +1,26 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "Audio capture in progress" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Captura de audio en curso"
+          }
+        }
+      }
+    },
+    "Recording" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Grabación"
+          }
+        }
+      }
+    }
+  },
+  "version" : "1.0"
+}

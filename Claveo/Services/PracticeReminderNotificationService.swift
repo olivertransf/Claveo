@@ -51,8 +51,8 @@ enum PracticeReminderNotificationService {
         components.minute = settings.practiceReminderMinute
 
         let content = UNMutableNotificationContent()
-        content.title = "Time to practice"
-        content.body = "Log a session in Claveo and keep your momentum going."
+        content.title = String(localized: "Time to practice")
+        content.body = String(localized: "Log a session in Claveo and keep your momentum going.")
         content.sound = .default
 
         let trigger = UNCalendarNotificationTrigger(dateMatching: components, repeats: true)

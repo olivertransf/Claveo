@@ -68,7 +68,7 @@ struct RecordingRowView: View {
                     .lineLimit(1)
 
                 if isExpanded, !recording.tags.isEmpty {
-                    Text(recording.tags.joined(separator: " · "))
+                    Text(recording.tags.map { RecordingTag.localizedName(for: $0) }.joined(separator: " · "))
                         .font(.caption)
                         .foregroundStyle(.tertiary)
                         .lineLimit(1)
@@ -210,8 +210,8 @@ struct RecordingRowView: View {
                 .frame(height: 32)
             }
         }
-        .accessibilityLabel("Playback position")
-        .accessibilityValue("\(formatTime(currentDisplayTime)) of \(formatTime(duration))")
+        .accessibilityLabel(String(localized: "Playback position"))
+        .accessibilityValue(String(localized: "\(formatTime(currentDisplayTime)) of \(formatTime(duration))"))
         .onChange(of: currentTime) { _, newValue in
             handleCurrentTimeChange(newValue)
         }
@@ -317,7 +317,7 @@ struct RecordingRowView: View {
             HStack(spacing: 22) {
                 transportCircleButton(
                     systemImage: "gobackward.15",
-                    accessibilityLabel: "Back 15 seconds",
+                    accessibilityLabel: String(localized: "Back 15 seconds"),
                     action: onSkipBackward
                 )
 
@@ -333,11 +333,11 @@ struct RecordingRowView: View {
                         .background(themeManager.accentColor, in: Circle())
                 }
                 .buttonStyle(.borderless)
-                .accessibilityLabel(isPlaying ? "Pause" : "Play")
+                .accessibilityLabel(isPlaying ? String(localized: "Pause") : String(localized: "Play"))
 
                 transportCircleButton(
                     systemImage: "goforward.15",
-                    accessibilityLabel: "Forward 15 seconds",
+                    accessibilityLabel: String(localized: "Forward 15 seconds"),
                     action: onSkipForward
                 )
             }
@@ -346,7 +346,7 @@ struct RecordingRowView: View {
 
             transportCircleButton(
                 systemImage: "trash",
-                accessibilityLabel: "Delete",
+                accessibilityLabel: String(localized: "Delete"),
                 foregroundColor: .red,
                 role: .destructive,
                 action: onDelete
@@ -388,7 +388,7 @@ struct RecordingRowView: View {
             transportButtonLabel(systemImage: "ellipsis")
         }
         .buttonStyle(.borderless)
-        .accessibilityLabel("More recording actions")
+        .accessibilityLabel(String(localized: "More recording actions"))
     }
 
     private func transportButtonLabel(systemImage: String, foregroundColor: Color = .primary) -> some View {

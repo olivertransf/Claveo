@@ -39,33 +39,35 @@ struct ChordScaleReferenceView: View {
     }
 
     private var activeKeyTitle: String {
-        keyMode == .major ? "\(rootName) Major" : "\(relativeMinorName) Natural Minor"
+        keyMode == .major
+            ? String(localized: "\(rootName) Major")
+            : String(localized: "\(relativeMinorName) Natural Minor")
     }
 
     private var activeKeySubtitle: String {
         if keyMode == .major {
-            return "Relative minor: \(relativeMinorName) minor — same notes, different tonic."
+            return String(localized: "Relative minor: \(relativeMinorName) minor — same notes, different tonic.")
         }
-        return "Relative major: \(rootName) major — same notes, different tonic."
+        return String(localized: "Relative major: \(rootName) major — same notes, different tonic.")
     }
 
     private var scaleSectionTitle: String {
-        "Scale notes"
+        String(localized: "Scale notes")
     }
 
     private var scaleSectionFooter: String {
         if keyMode == .major {
-            return "1 is the tonic (home note). 5 is the dominant — it often leads back to 1. 7 is the leading tone, a half step below the tonic."
+            return String(localized: "1 is the tonic (home note). 5 is the dominant — it often leads back to 1. 7 is the leading tone, a half step below the tonic.")
         }
-        return "Natural minor lowers the 3rd, 6th, and 7th compared to major. Same letter names as \(rootName) major, different tonic."
+        return String(localized: "Natural minor lowers the 3rd, 6th, and 7th compared to major. Same letter names as \(rootName) major, different tonic.")
     }
 
     private var chordSectionTitle: String {
-        "Chords in this key"
+        String(localized: "Chords in this key")
     }
 
     private var chordSectionFooter: String {
-        "Each chord is built by stacking thirds on a scale degree. Roman numerals show its role in the key."
+        String(localized: "Each chord is built by stacking thirds on a scale degree. Roman numerals show its role in the key.")
     }
 
     var body: some View {
@@ -104,11 +106,12 @@ struct ChordScaleReferenceView: View {
     // MARK: - Pickers
 
     private var accidentalPicker: some View {
-        HStack(spacing: 0) {
-            ForEach(["Sharps  ♯", "Flats  ♭"].indices, id: \.self) { i in
+        let titles = [String(localized: "Sharps  ♯"), String(localized: "Flats  ♭")]
+        return HStack(spacing: 0) {
+            ForEach(titles.indices, id: \.self) { i in
                 let isSelected = useFlats == (i == 1)
                 Button { useFlats = (i == 1) } label: {
-                    Text(["Sharps  ♯", "Flats  ♭"][i])
+                    Text(titles[i])
                         .font(.subheadline.weight(.semibold))
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 8)
@@ -155,7 +158,7 @@ struct ChordScaleReferenceView: View {
                                 )
                                 .foregroundStyle(isSelected ? .white : .primary)
                         }
-                        .accessibilityLabel("\(noteNameFor(root)) major")
+                        .accessibilityLabel(String(localized: "\(noteNameFor(root)) major"))
                         .accessibilityAddTraits(isSelected ? .isSelected : [])
                     }
                 }
@@ -183,8 +186,8 @@ struct ChordScaleReferenceView: View {
 
     private var modePicker: some View {
         Picker("Key type", selection: $keyMode) {
-            Text("\(rootName) Major").tag(KeyReferenceMode.major)
-            Text("\(relativeMinorName) Minor").tag(KeyReferenceMode.relativeMinor)
+            Text(String(localized: "\(rootName) Major")).tag(KeyReferenceMode.major)
+            Text(String(localized: "\(relativeMinorName) Minor")).tag(KeyReferenceMode.relativeMinor)
         }
         .pickerStyle(.segmented)
         .padding(.horizontal, 16)
@@ -295,7 +298,7 @@ struct ChordScaleReferenceView: View {
                     .foregroundStyle(themeManager.accentColor)
             }
 
-            Text("Scale degree \(degreeIndex + 1)")
+            Text(String(localized: "Scale degree \(degreeIndex + 1)"))
                 .font(.caption)
                 .foregroundStyle(.secondary)
 

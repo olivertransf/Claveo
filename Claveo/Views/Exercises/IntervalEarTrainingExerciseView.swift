@@ -46,19 +46,19 @@ private enum EarTrainingInterval: CaseIterable, Identifiable, Hashable {
 
     var title: String {
         switch self {
-        case .unison: return "Unison"
-        case .minorSecond: return "Minor 2nd"
-        case .majorSecond: return "Major 2nd"
-        case .minorThird: return "Minor 3rd"
-        case .majorThird: return "Major 3rd"
-        case .perfectFourth: return "Perfect 4th"
-        case .tritone: return "Tritone"
-        case .perfectFifth: return "Perfect 5th"
-        case .minorSixth: return "Minor 6th"
-        case .majorSixth: return "Major 6th"
-        case .minorSeventh: return "Minor 7th"
-        case .majorSeventh: return "Major 7th"
-        case .octave: return "Octave"
+        case .unison: return String(localized: "Unison")
+        case .minorSecond: return String(localized: "Minor 2nd")
+        case .majorSecond: return String(localized: "Major 2nd")
+        case .minorThird: return String(localized: "Minor 3rd")
+        case .majorThird: return String(localized: "Major 3rd")
+        case .perfectFourth: return String(localized: "Perfect 4th")
+        case .tritone: return String(localized: "Tritone")
+        case .perfectFifth: return String(localized: "Perfect 5th")
+        case .minorSixth: return String(localized: "Minor 6th")
+        case .majorSixth: return String(localized: "Major 6th")
+        case .minorSeventh: return String(localized: "Minor 7th")
+        case .majorSeventh: return String(localized: "Major 7th")
+        case .octave: return String(localized: "Octave")
         }
     }
 
@@ -139,8 +139,8 @@ struct IntervalEarTrainingExerciseView: View {
                 .foregroundStyle(.secondary)
                 .frame(maxWidth: .infinity)
             HStack(spacing: 8) {
-                playbackChip(title: "Same time", style: .simultaneous)
-                playbackChip(title: "Arpeggiated", style: .arpeggiated)
+                playbackChip(title: String(localized: "Same time"), style: .simultaneous)
+                playbackChip(title: String(localized: "Arpeggiated"), style: .arpeggiated)
             }
         }
         .padding(.bottom, 4)
@@ -179,7 +179,7 @@ struct IntervalEarTrainingExerciseView: View {
                 Image(systemName: "speaker.wave.2.fill")
                     .font(.title2)
                     .foregroundStyle(themeManager.accentColor)
-                Text(audio.isPlaying ? "Playing…" : "Play interval")
+                Text(audio.isPlaying ? String(localized: "Playing…") : String(localized: "Play interval"))
                     .font(.headline)
                     .frame(maxWidth: .infinity, alignment: .leading)
                 if audio.isPlaying {

@@ -231,7 +231,7 @@ class AudioRecorder: NSObject, ObservableObject {
             // Request permission if not granted
             let granted = await requestPermission()
             if !granted {
-                permissionError = "Microphone access is required to record audio. Please enable it in Settings."
+                permissionError = String(localized: "Microphone access is required to record audio. Please enable it in Settings.")
                 return
             }
         }
@@ -239,7 +239,7 @@ class AudioRecorder: NSObject, ObservableObject {
         do {
             try activateRecordingAudioSession()
         } catch {
-            permissionError = "Failed to setup audio session: \(error.localizedDescription)"
+            permissionError = String(localized: "Failed to setup audio session: \(error.localizedDescription)")
             return
         }
         
@@ -260,13 +260,13 @@ class AudioRecorder: NSObject, ObservableObject {
             audioRecorder?.isMeteringEnabled = true
             
             guard let recorder = audioRecorder else {
-                permissionError = "Failed to create audio recorder."
+                permissionError = String(localized: "Failed to create audio recorder.")
                 return
             }
             
             // Prepare the recorder before starting
             guard recorder.prepareToRecord() else {
-                permissionError = "Failed to prepare recorder. Check microphone availability."
+                permissionError = String(localized: "Failed to prepare recorder. Check microphone availability.")
                 #if DEBUG
                 print("ERROR: prepareToRecord() returned false")
                 #endif
@@ -275,7 +275,7 @@ class AudioRecorder: NSObject, ObservableObject {
             
             // Start recording
             guard recorder.record() else {
-                permissionError = "Failed to start recording. Please check your microphone settings."
+                permissionError = String(localized: "Failed to start recording. Please check your microphone settings.")
                 #if DEBUG
                 print("ERROR: record() returned false")
                 print("Recorder isRecording: \(recorder.isRecording)")
@@ -325,7 +325,7 @@ class AudioRecorder: NSObject, ObservableObject {
             RunLoop.main.add(timer, forMode: .common)
             levelTimer = timer
         } catch {
-            permissionError = "Failed to start recording: \(error.localizedDescription)"
+            permissionError = String(localized: "Failed to start recording: \(error.localizedDescription)")
         }
     }
     

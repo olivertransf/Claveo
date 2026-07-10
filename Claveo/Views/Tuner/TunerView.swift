@@ -37,7 +37,7 @@ struct TunerView: View {
                         .foregroundStyle(displayNote == "--" ? Color.secondary.opacity(0.45) : .primary)
 
                     if showFrequencyDisplay {
-                        Text(displayNote == "--" ? "— Hz" : String(format: "%.1f Hz", displayFrequency))
+                        Text(displayNote == "--" ? String(localized: "— Hz") : String(format: "%.1f Hz", displayFrequency))
                             .font(.title2)
                             .foregroundStyle(.secondary)
                             .monospacedDigit()

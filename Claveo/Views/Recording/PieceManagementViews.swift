@@ -66,14 +66,14 @@ struct PieceManagementView: View {
                     if filteredPieces.isEmpty {
                         ContentUnavailableView {
                             Label(
-                                searchText.isEmpty ? "No pieces yet" : "No matches",
+                                searchText.isEmpty ? String(localized: "No pieces yet") : String(localized: "No matches"),
                                 systemImage: "music.note.list"
                             )
                         } description: {
                             Text(
                                 searchText.isEmpty
-                                    ? "Add a title above to start your repertoire list."
-                                    : "Try a different search."
+                                    ? String(localized: "Add a title above to start your repertoire list.")
+                                    : String(localized: "Try a different search.")
                             )
                         }
                         .frame(maxWidth: .infinity)

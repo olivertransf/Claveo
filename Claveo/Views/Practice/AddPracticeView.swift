@@ -76,7 +76,7 @@ struct AddPracticeView: View {
                             ForEach(recorder.recordings.filter { selectedRecordings.contains($0.id) }) { recording in
                                 HStack {
                                     VStack(alignment: .leading) {
-                                        Text(recording.name.isEmpty ? "Untitled" : recording.name)
+                                        Text(recording.name.isEmpty ? String(localized: "Untitled") : recording.name)
                                             .font(.subheadline)
                                         Text(recording.formattedDuration)
                                             .font(.caption)
@@ -179,11 +179,11 @@ struct AddPracticeView: View {
 
     private func ratingDescription(_ rating: Int) -> String {
         switch rating {
-        case 1: return "Really struggled"
-        case 2: return "Had some challenges"
-        case 3: return "Decent session"
-        case 4: return "Good practice"
-        case 5: return "Amazing session!"
+        case 1: return String(localized: "Really struggled")
+        case 2: return String(localized: "Had some challenges")
+        case 3: return String(localized: "Decent session")
+        case 4: return String(localized: "Good practice")
+        case 5: return String(localized: "Amazing session!")
         default: return ""
         }
     }
@@ -207,7 +207,7 @@ struct RecordingPickerView: View {
                 } label: {
                     HStack {
                         VStack(alignment: .leading) {
-                            Text(recording.name.isEmpty ? "Untitled" : recording.name)
+                            Text(recording.name.isEmpty ? String(localized: "Untitled") : recording.name)
                                 .font(.headline)
                             Text(recording.formattedDate)
                                 .font(.subheadline)

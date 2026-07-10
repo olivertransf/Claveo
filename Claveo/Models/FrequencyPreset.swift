@@ -27,19 +27,19 @@ enum FrequencyPreset: String, CaseIterable, Identifiable {
         case .baroquePitch: return "A415"
         case .classicalPitch: return "A430"
         case .chorton: return "A466"
-        case .custom: return "Custom"
+        case .custom: return String(localized: "Custom")
         }
     }
     
     var fullName: String {
         switch self {
-        case .scientificPitch: return "Scientific Pitch (A432)"
-        case .concertPitch: return "Concert Pitch (A440)"
-        case .diapasonNormal: return "Diapason Normal (A435)"
-        case .baroquePitch: return "Baroque Pitch (A415)"
-        case .classicalPitch: return "Classical Pitch (A430)"
-        case .chorton: return "Chorton (A466)"
-        case .custom: return "Custom"
+        case .scientificPitch: return String(localized: "Scientific Pitch (A432)")
+        case .concertPitch: return String(localized: "Concert Pitch (A440)")
+        case .diapasonNormal: return String(localized: "Diapason Normal (A435)")
+        case .baroquePitch: return String(localized: "Baroque Pitch (A415)")
+        case .classicalPitch: return String(localized: "Classical Pitch (A430)")
+        case .chorton: return String(localized: "Chorton (A466)")
+        case .custom: return String(localized: "Custom")
         }
     }
     

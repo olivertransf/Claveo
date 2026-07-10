@@ -11,18 +11,18 @@ enum RecordingTrimmerError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .fileNotFound:
-            return "Recording file not found."
+            return String(localized: "Recording file not found.")
         case .invalidRange:
-            return "Invalid trim range."
+            return String(localized: "Invalid trim range.")
         case .exportSessionUnavailable:
-            return "Unable to create export session for this audio file."
+            return String(localized: "Unable to create export session for this audio file.")
         case .exportFailed(let underlying):
             if let underlying {
-                return "Failed to trim recording: \(underlying.localizedDescription)"
+                return String(localized: "Failed to trim recording: \(underlying.localizedDescription)")
             }
-            return "Failed to trim recording."
+            return String(localized: "Failed to trim recording.")
         case .replaceFailed:
-            return "Trim completed, but replacing the original file failed."
+            return String(localized: "Trim completed, but replacing the original file failed.")
         }
     }
 }

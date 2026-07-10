@@ -86,7 +86,7 @@ struct SettingsView: View {
         Section("Appearance") {
             Picker("Color Scheme", selection: $themeManager.colorSchemeOption) {
                 ForEach(ColorSchemeOption.allCases) { option in
-                    Text(option.rawValue).tag(option)
+                    Text(option.localizedName).tag(option)
                 }
             }
 
@@ -96,7 +96,7 @@ struct SettingsView: View {
                         Circle()
                             .fill(option.color)
                             .frame(width: 20, height: 20)
-                        Text(option.rawValue)
+                        Text(option.localizedName)
                     }
                     .tag(option)
                 }

@@ -162,7 +162,7 @@ struct RecordingTrimView: View {
             .alert("Unable to Trim", isPresented: $showingError) {
                 Button("OK", role: .cancel) { }
             } message: {
-                Text(errorMessage ?? "Something went wrong.")
+                Text(errorMessage ?? String(localized: "Something went wrong."))
             }
         }
     }
@@ -221,11 +221,11 @@ struct RecordingTrimView: View {
 
     private var timeSummary: some View {
         HStack(spacing: 0) {
-            trimTimeColumn(title: "Start", time: startTime, emphasized: false)
+            trimTimeColumn(title: String(localized: "Start"), time: startTime, emphasized: false)
             Spacer(minLength: 12)
-            trimTimeColumn(title: "Selected", time: max(0, endTime - startTime), emphasized: true)
+            trimTimeColumn(title: String(localized: "Selected"), time: max(0, endTime - startTime), emphasized: true)
             Spacer(minLength: 12)
-            trimTimeColumn(title: "End", time: endTime, emphasized: false)
+            trimTimeColumn(title: String(localized: "End"), time: endTime, emphasized: false)
         }
         .padding(.horizontal, 4)
     }
@@ -282,7 +282,7 @@ struct RecordingTrimView: View {
             }
             .buttonStyle(.plain)
             .disabled(isTrimming || !FileManager.default.fileExists(atPath: recording.fileURL.path) || !canApply)
-            .accessibilityLabel(previewPlayer.isPlaying ? "Pause preview" : "Play selection")
+            .accessibilityLabel(previewPlayer.isPlaying ? String(localized: "Pause preview") : String(localized: "Play selection"))
         }
         .padding(.horizontal, 20)
         .padding(.top, 14)

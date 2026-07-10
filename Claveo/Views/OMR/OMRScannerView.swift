@@ -14,7 +14,7 @@ struct OMRScannerView: View {
     @EnvironmentObject var themeManager: ThemeManager
 
     @State private var model: MusicScannerModel?
-    @State private var status = "Loading model..."
+    @State private var status = String(localized: "Loading model...")
     @State private var renderedImage: UIImage?
     @State private var detections: [OMRBoundingBox] = []
     @State private var isProcessing = false
@@ -130,7 +130,7 @@ struct OMRScannerView: View {
                     guard let url = urls.first else { return }
                     Task { await processDocument(at: url) }
                 case .failure(let error):
-                    status = "Error: \(error.localizedDescription)"
+                    status = String(localized: "Error: \(error.localizedDescription)")
                 }
             }
         }
@@ -148,7 +148,7 @@ struct OMRScannerView: View {
 
     private func processDocument(at url: URL) async {
         guard url.startAccessingSecurityScopedResource() else {
-            status = "Cannot access file"
+            status = String(localized: "Cannot access file")
             return
         }
         defer { url.stopAccessingSecurityScopedResource() }
@@ -159,19 +159,19 @@ struct OMRScannerView: View {
 
         if url.pathExtension.lowercased() == "pdf" {
             guard let doc = PDFDocument(url: url) else {
-                status = "Failed to load PDF"
+                status = String(localized: "Failed to load PDF")
                 return
             }
             pdfPageCount = doc.pageCount
             currentPage = 1
             guard let rawPage = imageFromPDF(url: url, page: 1) else {
-                status = "Failed to render PDF page"
+                status = String(localized: "Failed to render PDF page")
                 return
             }
             await runDetection(on: rawPage)
         } else {
             guard let cgImage = loadImage(from: url) else {
-                status = "Failed to load image"
+                status = String(localized: "Failed to load image")
                 return
             }
             await runDetection(on: cgImage)
@@ -191,19 +191,20 @@ struct OMRScannerView: View {
         guard let m = model else { return }
         let resized = resizeIfLarge(cgImage)
         renderedImage = UIImage(cgImage: resized)
-        status = "Detecting..."
+        status = String(localized: "Detecting...")
         isProcessing = true
         do {
             let results = try await Task.detached(priority: .userInitiated) {
                 try m.predict(image: resized, confidenceThreshold: 0.15)
             }.value
             detections = results
-            status = "\(results.count) detections"
             if let name = currentFileName {
-                status += " · \(name)"
+                status = String(localized: "\(results.count) detections · \(name)")
+            } else {
+                status = String(localized: "\(results.count) detections")
             }
         } catch {
-            status = "Error: \(error.localizedDescription)"
+            status = String(localized: "Error: \(error.localizedDescription)")
         }
         isProcessing = false
     }
@@ -212,9 +213,9 @@ struct OMRScannerView: View {
         do {
             let m = try MusicScannerModel()
             model = m
-            status = "Tap Open to select sheet music (PDF or image)"
+            status = String(localized: "Tap Open to select sheet music (PDF or image)")
         } catch {
-            status = "Error loading model: \(error.localizedDescription)"
+            status = String(localized: "Error loading model: \(error.localizedDescription)")
         }
     }
 

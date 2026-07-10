@@ -18,7 +18,7 @@ struct MetronomeSettingsSection: View {
                 set: { settingsManager.setMetronomeEmphasizedSound($0) }
             )) {
                 ForEach(MetronomeSound.allCases, id: \.self) { sound in
-                    Text(sound.rawValue).tag(sound)
+                    Text(sound.localizedName).tag(sound)
                 }
             }
 
@@ -27,7 +27,7 @@ struct MetronomeSettingsSection: View {
                 set: { settingsManager.setMetronomeNonEmphasizedSound($0) }
             )) {
                 ForEach(MetronomeSound.allCases, id: \.self) { sound in
-                    Text(sound.rawValue).tag(sound)
+                    Text(sound.localizedName).tag(sound)
                 }
             }
 

@@ -20,6 +20,25 @@ struct MusicTerm: Identifiable, Codable, Hashable {
     enum CodingKeys: String, CodingKey {
         case term, definition, category, example, symbol, smuflCode
     }
+
+    /// Category keys stay English in JSON for filtering; this is the UI label.
+    var localizedCategory: String {
+        switch category {
+        case "Tempo": return String(localized: "Tempo")
+        case "Dynamics": return String(localized: "Dynamics")
+        case "Articulation": return String(localized: "Articulation")
+        case "Ornamentation": return String(localized: "Ornamentation")
+        case "Expression": return String(localized: "Expression")
+        case "Rhythm": return String(localized: "Rhythm")
+        case "Theory": return String(localized: "Theory")
+        case "Notation": return String(localized: "Notation")
+        case "Form": return String(localized: "Form")
+        case "Performance": return String(localized: "Performance")
+        case "General": return String(localized: "General")
+        case "Instruments": return String(localized: "Instruments")
+        default: return category
+        }
+    }
 }
 
 struct MusicSymbol: Identifiable, Codable, Hashable {

@@ -21,6 +21,20 @@ enum AccentColorOption: String, CaseIterable, Identifiable {
     case indigo = "Indigo"
     
     var id: String { rawValue }
+
+    var localizedName: String {
+        switch self {
+        case .blue: return String(localized: "Blue")
+        case .purple: return String(localized: "Purple")
+        case .pink: return String(localized: "Pink")
+        case .red: return String(localized: "Red")
+        case .orange: return String(localized: "Orange")
+        case .yellow: return String(localized: "Yellow")
+        case .green: return String(localized: "Green")
+        case .teal: return String(localized: "Teal")
+        case .indigo: return String(localized: "Indigo")
+        }
+    }
     
     var color: Color {
         switch self {
@@ -43,6 +57,14 @@ enum ColorSchemeOption: String, CaseIterable, Identifiable {
     case system = "System"
     
     var id: String { rawValue }
+
+    var localizedName: String {
+        switch self {
+        case .light: return String(localized: "Light")
+        case .dark: return String(localized: "Dark")
+        case .system: return String(localized: "System")
+        }
+    }
     
     var colorScheme: ColorScheme? {
         switch self {

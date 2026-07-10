@@ -13,15 +13,15 @@ enum AppTabRegistry {
 
     static func title(_ id: Int) -> String {
         switch id {
-        case 0: return "Recordings"
-        case 1: return "Metronome"
-        case 2: return "Tuner"
-        case 3: return "Practice"
-        case 4: return "Exercises"
-        case 5: return "Dictionary"
-        case 6: return "Settings"
-        case 7: return "Chords"
-        default: return "Tab"
+        case 0: return String(localized: "Recordings")
+        case 1: return String(localized: "Metronome")
+        case 2: return String(localized: "Tuner")
+        case 3: return String(localized: "Practice")
+        case 4: return String(localized: "Exercises")
+        case 5: return String(localized: "Dictionary")
+        case 6: return String(localized: "Settings")
+        case 7: return String(localized: "Chords")
+        default: return String(localized: "Tab")
         }
     }
 

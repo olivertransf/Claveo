@@ -37,8 +37,8 @@ private enum KeySigMode: String, CaseIterable {
 
     var chipTitle: String {
         switch self {
-        case .major: return "Major"
-        case .minor: return "Minor"
+        case .major: return String(localized: "Major")
+        case .minor: return String(localized: "Minor")
         }
     }
 }
@@ -258,7 +258,11 @@ struct KeySignatureIdentificationExerciseView: View {
                 )
         }
         .accessibilityAddTraits(on ? .isSelected : [])
-        .accessibilityHint(on ? "Included in practice" : "Excluded from practice")
+        .accessibilityHint(
+            on
+                ? String(localized: "Included in practice")
+                : String(localized: "Excluded from practice")
+        )
     }
 
     private func toggleMode(_ mode: KeySigMode) {
@@ -272,12 +276,20 @@ struct KeySignatureIdentificationExerciseView: View {
 
     private var promptSection: some View {
         VStack(spacing: 6) {
-            Text(question.mode == .major ? "Treble clef — which major key?" : "Treble clef — which minor key?")
+            Text(
+                question.mode == .major
+                    ? String(localized: "Treble clef — which major key?")
+                    : String(localized: "Treble clef — which minor key?")
+            )
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
                 .frame(maxWidth: .infinity)
-            Text(question.mode == .major ? "__ Major" : "__ minor")
+            Text(
+                question.mode == .major
+                    ? String(localized: "__ Major")
+                    : String(localized: "__ minor")
+            )
                 .font(.title2.weight(.semibold))
                 .multilineTextAlignment(.center)
                 .frame(maxWidth: .infinity)
@@ -345,10 +357,10 @@ struct KeySignatureIdentificationExerciseView: View {
 
     private var answerGrid: some View {
         VStack(spacing: 18) {
-            labeledRow("Sharps") {
+            labeledRow(String(localized: "Sharps")) {
                 gridRow(slots: KeySignatureExercise.sharpRowSlots)
             }
-            labeledRow("Naturals") {
+            labeledRow(String(localized: "Naturals")) {
                 HStack(spacing: 6) {
                     ForEach(KeySignatureExercise.naturalLetters, id: \.rawValue) { letter in
                         answerButton(letter: letter, accidental: .natural, label: letter.displayLetter)
@@ -356,7 +368,7 @@ struct KeySignatureIdentificationExerciseView: View {
                 }
                 .frame(maxWidth: .infinity)
             }
-            labeledRow("Flats") {
+            labeledRow(String(localized: "Flats")) {
                 gridRow(slots: KeySignatureExercise.flatRowSlots)
             }
         }

@@ -35,7 +35,7 @@ struct MusicDictionaryView: View {
     private var categoryTitle: String? {
         guard let selectedCategory else { return nil }
         if selectedCategory == MusicDictionaryService.allCategoryToken {
-            return "All"
+            return String(localized: "All")
         }
         return MusicDictionaryService.browseCategories.first { $0.category == selectedCategory }?.title
     }
@@ -82,7 +82,7 @@ struct MusicDictionaryView: View {
                     )
                 }
             }
-            .navigationTitle(selectedCategory == nil ? "Dictionary" : (categoryTitle ?? "Dictionary"))
+            .navigationTitle(selectedCategory == nil ? String(localized: "Dictionary") : (categoryTitle ?? String(localized: "Dictionary")))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 if selectedCategory != nil, searchText.isEmpty {
@@ -207,15 +207,15 @@ struct MusicDictionaryView: View {
         }
 
         private var emptyTitle: String {
-            if !searchText.isEmpty { return "No Results" }
-            if categoryTitle != nil { return "No Terms" }
-            return "No Terms"
+            if !searchText.isEmpty { return String(localized: "No Results") }
+            if categoryTitle != nil { return String(localized: "No Terms") }
+            return String(localized: "No Terms")
         }
 
         private var emptyMessage: String {
-            if !searchText.isEmpty { return "Try a different search term" }
-            if categoryTitle != nil { return "No terms in this topic" }
-            return "Search or pick a topic to get started"
+            if !searchText.isEmpty { return String(localized: "Try a different search term") }
+            if categoryTitle != nil { return String(localized: "No terms in this topic") }
+            return String(localized: "Search or pick a topic to get started")
         }
     }
     
@@ -239,7 +239,7 @@ struct MusicDictionaryView: View {
 
                     Spacer()
 
-                    Text(term.category)
+                    Text(term.localizedCategory)
                         .font(.caption)
                         .foregroundColor(.secondary)
                         .padding(.horizontal, 8)
@@ -277,7 +277,7 @@ struct MusicDictionaryView: View {
                                     .font(.largeTitle)
                                     .fontWeight(.bold)
                                 
-                                Text(term.category)
+                                Text(term.localizedCategory)
                                     .font(.subheadline)
                                     .foregroundColor(.secondary)
                                     .padding(.horizontal, 12)

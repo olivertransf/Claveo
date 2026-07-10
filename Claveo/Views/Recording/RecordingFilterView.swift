@@ -216,7 +216,7 @@ struct FilterOptionsView: View {
                     )) {
                         Text("All").tag("")
                         ForEach(RecordingTag.allCases, id: \.self) { tag in
-                            Text(tag.rawValue).tag(tag.rawValue)
+                            Text(tag.localizedName).tag(tag.rawValue)
                         }
                     }
                 }

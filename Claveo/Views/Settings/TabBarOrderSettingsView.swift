@@ -58,21 +58,19 @@ struct TabBarOrderSettingsView: View {
     }
 
     private var footerExplanation: String {
-        let layout: String
         if UIDevice.current.userInterfaceIdiom == .pad {
-            layout = "This order is used for every tab in the tab bar."
+            return String(localized: "Drag a row using the handle on the right to reorder. This order is used for every tab in the tab bar.")
         } else {
-            layout = "The first four tabs sit on the bottom bar; the rest are in More."
+            return String(localized: "Drag a row using the handle on the right to reorder. The first four tabs sit on the bottom bar; the rest are in More.")
         }
-        return "Drag a row using the handle on the right to reorder. \(layout)"
     }
 
     private func placementLabel(for tabId: Int) -> String {
         guard let index = order.firstIndex(of: tabId) else { return "" }
         if index < 4 {
-            return "Bottom bar"
+            return String(localized: "Bottom bar")
         }
-        return "More menu"
+        return String(localized: "More menu")
     }
 
     @ViewBuilder

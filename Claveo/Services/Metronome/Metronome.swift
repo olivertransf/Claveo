@@ -23,6 +23,21 @@ enum MetronomeSound: String, CaseIterable {
     case marimba = "Marimba"
     case drum = "Drum"
     case chimes = "Chimes"
+
+    var localizedName: String {
+        switch self {
+        case .click: return String(localized: "Click")
+        case .woodBlock: return String(localized: "Wood Block")
+        case .bell: return String(localized: "Bell")
+        case .beep: return String(localized: "Beep")
+        case .tick: return String(localized: "Tick")
+        case .cowbell: return String(localized: "Cowbell")
+        case .triangle: return String(localized: "Triangle")
+        case .marimba: return String(localized: "Marimba")
+        case .drum: return String(localized: "Drum")
+        case .chimes: return String(localized: "Chimes")
+        }
+    }
 }
 
 @MainActor

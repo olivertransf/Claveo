@@ -24,12 +24,26 @@ class MusicDictionaryService: ObservableObject {
         loadDictionary()
     }
 
+    /// Prefers `musicDictionary.<lang>.json` for the app's preferred localizations, then the base English file.
+    private static func musicDictionaryURL() -> URL? {
+        let codes = Bundle.main.preferredLocalizations.compactMap { localization -> String? in
+            Locale(identifier: localization).language.languageCode?.identifier
+        }
+        var seen = Set<String>()
+        for code in codes where seen.insert(code).inserted && code != "en" {
+            if let url = Bundle.main.url(forResource: "musicDictionary.\(code)", withExtension: "json") {
+                return url
+            }
+        }
+        return Bundle.main.url(forResource: "musicDictionary", withExtension: "json")
+    }
+
     func loadDictionary() {
         isLoading = true
         errorMessage = nil
         
-        guard let url = Bundle.main.url(forResource: "musicDictionary", withExtension: "json") else {
-            errorMessage = "Dictionary file not found in bundle"
+        guard let url = Self.musicDictionaryURL() else {
+            errorMessage = String(localized: "Dictionary file not found in bundle")
             isLoading = false
             #if DEBUG
             print("❌ Dictionary file not found at: musicDictionary.json")
@@ -51,26 +65,26 @@ class MusicDictionaryService: ObservableObject {
             #endif
             isLoading = false
         } catch let decodingError as DecodingError {
-            var errorDetails = "Failed to decode dictionary: "
+            let detail: String
             switch decodingError {
             case .dataCorrupted(let context):
-                errorDetails += "Data corrupted at \(context.codingPath.map { $0.stringValue }.joined(separator: ".")): \(context.debugDescription)"
+                detail = "Data corrupted at \(context.codingPath.map { $0.stringValue }.joined(separator: ".")): \(context.debugDescription)"
             case .keyNotFound(let key, let context):
-                errorDetails += "Key '\(key.stringValue)' not found at \(context.codingPath.map { $0.stringValue }.joined(separator: "."))"
+                detail = "Key '\(key.stringValue)' not found at \(context.codingPath.map { $0.stringValue }.joined(separator: "."))"
             case .typeMismatch(let type, let context):
-                errorDetails += "Type mismatch for \(type) at \(context.codingPath.map { $0.stringValue }.joined(separator: ".")): \(context.debugDescription)"
+                detail = "Type mismatch for \(type) at \(context.codingPath.map { $0.stringValue }.joined(separator: ".")): \(context.debugDescription)"
             case .valueNotFound(let type, let context):
-                errorDetails += "Value not found for \(type) at \(context.codingPath.map { $0.stringValue }.joined(separator: "."))"
+                detail = "Value not found for \(type) at \(context.codingPath.map { $0.stringValue }.joined(separator: "."))"
             @unknown default:
-                errorDetails += decodingError.localizedDescription
+                detail = decodingError.localizedDescription
             }
-            errorMessage = errorDetails
+            errorMessage = String(localized: "Failed to decode dictionary: \(detail)")
             isLoading = false
             #if DEBUG
-            print("❌ Decoding error: \(errorDetails)")
+            print("❌ Decoding error: \(detail)")
             #endif
         } catch {
-            errorMessage = "Failed to load dictionary: \(error.localizedDescription)"
+            errorMessage = String(localized: "Failed to load dictionary: \(error.localizedDescription)")
             isLoading = false
             #if DEBUG
             print("❌ General error: \(error.localizedDescription)")
@@ -233,20 +247,22 @@ class MusicDictionaryService: ObservableObject {
     static let allCategoryToken = "__all__"
 
     /// Browse topics use categories assigned in musicDictionary.json.
-    static let browseCategories: [(title: String, icon: String, category: String)] = [
-        ("All", "books.vertical", allCategoryToken),
-        ("Tempo", "metronome", "Tempo"),
-        ("Dynamics", "speaker.wave.2.fill", "Dynamics"),
-        ("Articulation", "waveform.path", "Articulation"),
-        ("Ornamentation", "sparkles", "Ornamentation"),
-        ("Expression", "face.smiling", "Expression"),
-        ("Rhythm", "figure.wave", "Rhythm"),
-        ("Theory", "music.note", "Theory"),
-        ("Notation", "music.note.list", "Notation"),
-        ("Form", "square.grid.2x2", "Form"),
-        ("Performance", "person.3", "Performance"),
-        ("General", "text.book.closed", "General")
-    ]
+    static var browseCategories: [(title: String, icon: String, category: String)] {
+        [
+            (String(localized: "All"), "books.vertical", allCategoryToken),
+            (String(localized: "Tempo"), "metronome", "Tempo"),
+            (String(localized: "Dynamics"), "speaker.wave.2.fill", "Dynamics"),
+            (String(localized: "Articulation"), "waveform.path", "Articulation"),
+            (String(localized: "Ornamentation"), "sparkles", "Ornamentation"),
+            (String(localized: "Expression"), "face.smiling", "Expression"),
+            (String(localized: "Rhythm"), "figure.wave", "Rhythm"),
+            (String(localized: "Theory"), "music.note", "Theory"),
+            (String(localized: "Notation"), "music.note.list", "Notation"),
+            (String(localized: "Form"), "square.grid.2x2", "Form"),
+            (String(localized: "Performance"), "person.3", "Performance"),
+            (String(localized: "General"), "text.book.closed", "General")
+        ]
+    }
 
     func allTerms() -> [MusicTerm] {
         guard let dictionary = dictionary else { return [] }

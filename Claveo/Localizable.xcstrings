@@ -1,0 +1,4276 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    " ": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": " "
+          }
+        }
+      }
+    },
+    "__ Major": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "__ Mayor"
+          }
+        }
+      }
+    },
+    "__ minor": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "__ menor"
+          }
+        }
+      }
+    },
+    "— Hz": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "— Hz"
+          }
+        }
+      }
+    },
+    "·": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "·"
+          }
+        }
+      }
+    },
+    "\"%@\"": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "\"%@\""
+          }
+        }
+      }
+    },
+    "“%@” will be removed from your library. Recordings already tagged with it are unchanged.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "“%@” se eliminará de tu biblioteca. Las grabaciones ya etiquetadas con él no cambian."
+          }
+        }
+      }
+    },
+    "%@ major": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ mayor"
+          }
+        }
+      }
+    },
+    "%@ Major": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ mayor"
+          }
+        }
+      }
+    },
+    "%@ Minor": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ menor"
+          }
+        }
+      }
+    },
+    "%@ Natural Minor": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ menor natural"
+          }
+        }
+      }
+    },
+    "%@ of %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ of %2$@"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ de %2$@"
+          }
+        }
+      }
+    },
+    "%@%lld": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@%2$lld"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@%2$lld"
+          }
+        }
+      }
+    },
+    "%lld": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld"
+          }
+        }
+      }
+    },
+    "%lld BPM": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld BPM"
+          }
+        }
+      }
+    },
+    "%lld detections": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld detecciones"
+          }
+        }
+      }
+    },
+    "%lld detections · %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld detections · %2$@"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld detecciones · %2$@"
+          }
+        }
+      }
+    },
+    "%lld linked": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld vinculadas"
+          }
+        }
+      }
+    },
+    "%lld min": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld min"
+          }
+        }
+      }
+    },
+    "%lld minutes": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld minutos"
+          }
+        }
+      }
+    },
+    "%lld selected": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld seleccionadas"
+          }
+        }
+      }
+    },
+    "%lld%%": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld%%"
+          }
+        }
+      }
+    },
+    "+%lld": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "+%lld"
+          }
+        }
+      }
+    },
+    "∞": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "∞"
+          }
+        }
+      }
+    },
+    "0": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "0"
+          }
+        }
+      }
+    },
+    "0.75x": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "0.75x"
+          }
+        }
+      }
+    },
+    "1 is the tonic (home note). 5 is the dominant — it often leads back to 1. 7 is the leading tone, a half step below the tonic.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1 es la tónica (nota de reposo). 5 es la dominante: suele conducir de nuevo a 1. 7 es la sensible, un semitono por debajo de la tónica."
+          }
+        }
+      }
+    },
+    "1.5x": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1.5x"
+          }
+        }
+      }
+    },
+    "1.25x": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1.25x"
+          }
+        }
+      }
+    },
+    "1x": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1x"
+          }
+        }
+      }
+    },
+    "5 min": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "5 min"
+          }
+        }
+      }
+    },
+    "8 hours": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "8 horas"
+          }
+        }
+      }
+    },
+    "20": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "20"
+          }
+        }
+      }
+    },
+    "300": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "300"
+          }
+        }
+      }
+    },
+    "A4 Reference Frequency": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Frecuencia de referencia A4"
+          }
+        }
+      }
+    },
+    "About": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Acerca de"
+          }
+        }
+      }
+    },
+    "Accent Color": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Color de acento"
+          }
+        }
+      }
+    },
+    "Accented": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Acentuado"
+          }
+        }
+      }
+    },
+    "Accented, playing": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Acentuado, reproduciendo"
+          }
+        }
+      }
+    },
+    "Add": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Añadir"
+          }
+        }
+      }
+    },
+    "Add a title above to start your repertoire list.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Añade un título arriba para empezar tu lista de repertorio."
+          }
+        }
+      }
+    },
+    "Add Practice Entry": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Añadir entrada de práctica"
+          }
+        }
+      }
+    },
+    "Add Tag": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Añadir etiqueta"
+          }
+        }
+      }
+    },
+    "Add Tempo": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Añadir tempo"
+          }
+        }
+      }
+    },
+    "Add to Favorites": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Añadir a favoritos"
+          }
+        }
+      }
+    },
+    "Add to library": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Añadir a la biblioteca"
+          }
+        }
+      }
+    },
+    "All": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Todos"
+          }
+        }
+      }
+    },
+    "Amazing session!": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "¡Sesión increíble!"
+          }
+        }
+      }
+    },
+    "Any piece": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cualquier pieza"
+          }
+        }
+      }
+    },
+    "Any tag": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cualquier etiqueta"
+          }
+        }
+      }
+    },
+    "Appearance": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apariencia"
+          }
+        }
+      }
+    },
+    "Apply": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aplicar"
+          }
+        }
+      }
+    },
+    "Are you sure you want to delete this recording?": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "¿Seguro que quieres eliminar esta grabación?"
+          }
+        }
+      }
+    },
+    "Arpeggiated": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Arpegiado"
+          }
+        }
+      }
+    },
+    "Articulation": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Articulación"
+          }
+        }
+      }
+    },
+    "Audio": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Audio"
+          }
+        }
+      }
+    },
+    "Audition": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Audición"
+          }
+        }
+      }
+    },
+    "Auto-stop when switching tabs": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Detener automáticamente al cambiar de pestaña"
+          }
+        }
+      }
+    },
+    "Avg Rating": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Valoración media"
+          }
+        }
+      }
+    },
+    "Back": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Atrás"
+          }
+        }
+      }
+    },
+    "Back 15 seconds": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Retroceder 15 segundos"
+          }
+        }
+      }
+    },
+    "Baroque Pitch (A415)": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Afinación barroca (A415)"
+          }
+        }
+      }
+    },
+    "Beat %lld": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pulso %lld"
+          }
+        }
+      }
+    },
+    "Beat Pattern": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Patrón de pulsos"
+          }
+        }
+      }
+    },
+    "Beep": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pitido"
+          }
+        }
+      }
+    },
+    "Bell": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Campana"
+          }
+        }
+      }
+    },
+    "BETA": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "BETA"
+          }
+        }
+      }
+    },
+    "Blue": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Azul"
+          }
+        }
+      }
+    },
+    "Bottom": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Abajo"
+          }
+        }
+      }
+    },
+    "Bottom bar": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Barra inferior"
+          }
+        }
+      }
+    },
+    "Bottom Number": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Número inferior"
+          }
+        }
+      }
+    },
+    "BPM": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "BPM"
+          }
+        }
+      }
+    },
+    "Browse by Topic": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Explorar por tema"
+          }
+        }
+      }
+    },
+    "Buttons shown when logging a session": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Botones al registrar una sesión"
+          }
+        }
+      }
+    },
+    "Cancel": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cancelar"
+          }
+        }
+      }
+    },
+    "Cannot access file": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se puede acceder al archivo"
+          }
+        }
+      }
+    },
+    "Chimes": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Campanillas"
+          }
+        }
+      }
+    },
+    "Choose a key": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Elige una tonalidad"
+          }
+        }
+      }
+    },
+    "Chords": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Acordes"
+          }
+        }
+      }
+    },
+    "Chords & Scales": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Acordes y escalas"
+          }
+        }
+      }
+    },
+    "Chords in this key": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Acordes en esta tonalidad"
+          }
+        }
+      }
+    },
+    "Chorton (A466)": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Chorton (A466)"
+          }
+        }
+      }
+    },
+    "Classical Pitch (A430)": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Afinación clásica (A430)"
+          }
+        }
+      }
+    },
+    "Clear all filters": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Borrar todos los filtros"
+          }
+        }
+      }
+    },
+    "Clear Custom": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Borrar personalizado"
+          }
+        }
+      }
+    },
+    "Clear Date Range": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Borrar rango de fechas"
+          }
+        }
+      }
+    },
+    "Clear Filters": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Borrar filtros"
+          }
+        }
+      }
+    },
+    "Clefs": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Claves"
+          }
+        }
+      }
+    },
+    "Click": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clic"
+          }
+        }
+      }
+    },
+    "Color Scheme": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Esquema de color"
+          }
+        }
+      }
+    },
+    "Composer (optional)": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Compositor (opcional)"
+          }
+        }
+      }
+    },
+    "Concert": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Concierto"
+          }
+        }
+      }
+    },
+    "Concert Pitch (A440)": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Diapasón de concierto (A440)"
+          }
+        }
+      }
+    },
+    "Cowbell": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cencerro"
+          }
+        }
+      }
+    },
+    "Custom": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Personalizado"
+          }
+        }
+      }
+    },
+    "Custom Time Signature": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Compás personalizado"
+          }
+        }
+      }
+    },
+    "Custom…": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Personalizado…"
+          }
+        }
+      }
+    },
+    "Customize tab order": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Personalizar orden de pestañas"
+          }
+        }
+      }
+    },
+    "Daily practice reminder": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recordatorio diario de práctica"
+          }
+        }
+      }
+    },
+    "Dark": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Oscuro"
+          }
+        }
+      }
+    },
+    "Date": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fecha"
+          }
+        }
+      }
+    },
+    "Date & Time": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fecha y hora"
+          }
+        }
+      }
+    },
+    "Date Range": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rango de fechas"
+          }
+        }
+      }
+    },
+    "Day Streak": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Racha diaria"
+          }
+        }
+      }
+    },
+    "Decent session": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sesión aceptable"
+          }
+        }
+      }
+    },
+    "Decrease tempo": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bajar el tempo"
+          }
+        }
+      }
+    },
+    "Default Duration": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Duración predeterminada"
+          }
+        }
+      }
+    },
+    "Default Practice Duration": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Duración de práctica predeterminada"
+          }
+        }
+      }
+    },
+    "Definition": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Definición"
+          }
+        }
+      }
+    },
+    "Delete": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Eliminar"
+          }
+        }
+      }
+    },
+    "Delete Entry": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Eliminar entrada"
+          }
+        }
+      }
+    },
+    "Delete piece": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Eliminar pieza"
+          }
+        }
+      }
+    },
+    "Delete piece?": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "¿Eliminar pieza?"
+          }
+        }
+      }
+    },
+    "Delete Practice Entry": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Eliminar entrada de práctica"
+          }
+        }
+      }
+    },
+    "Delete Recording": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Eliminar grabación"
+          }
+        }
+      }
+    },
+    "Details": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Detalles"
+          }
+        }
+      }
+    },
+    "Detecting...": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Detectando..."
+          }
+        }
+      }
+    },
+    "Diapason Normal (A435)": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Diapasón normal (A435)"
+          }
+        }
+      }
+    },
+    "Dictionary": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Diccionario"
+          }
+        }
+      }
+    },
+    "Dictionary file not found in bundle": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se encontró el archivo del diccionario en el paquete"
+          }
+        }
+      }
+    },
+    "Done": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Listo"
+          }
+        }
+      }
+    },
+    "Drag a row using the handle on the right to reorder. The first four tabs sit on the bottom bar; the rest are in More.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Arrastra una fila con el control de la derecha para reordenar. Las primeras cuatro pestañas van en la barra inferior; el resto está en Más."
+          }
+        }
+      }
+    },
+    "Drag a row using the handle on the right to reorder. This order is used for every tab in the tab bar.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Arrastra una fila con el control de la derecha para reordenar. Este orden se usa para todas las pestañas de la barra."
+          }
+        }
+      }
+    },
+    "Drag the handles to choose what to keep.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Arrastra los controles para elegir qué conservar."
+          }
+        }
+      }
+    },
+    "Drum": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tambor"
+          }
+        }
+      }
+    },
+    "Duration": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Duración"
+          }
+        }
+      }
+    },
+    "Duration: %@": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Duración: %@"
+          }
+        }
+      }
+    },
+    "Dynamics": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dinámica"
+          }
+        }
+      }
+    },
+    "Each chord is built by stacking thirds on a scale degree. Roman numerals show its role in the key.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cada acorde se forma apilando terceras sobre un grado de la escala. Los números romanos indican su función en la tonalidad."
+          }
+        }
+      }
+    },
+    "Edit": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Editar"
+          }
+        }
+      }
+    },
+    "Edit piece": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Editar pieza"
+          }
+        }
+      }
+    },
+    "Edit piece library": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Editar biblioteca de piezas"
+          }
+        }
+      }
+    },
+    "Edit Practice Entry": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Editar entrada de práctica"
+          }
+        }
+      }
+    },
+    "Edit Session": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Editar sesión"
+          }
+        }
+      }
+    },
+    "Emphasized Sound": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sonido acentuado"
+          }
+        }
+      }
+    },
+    "End": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fin"
+          }
+        }
+      }
+    },
+    "Error Loading Dictionary": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Error al cargar el diccionario"
+          }
+        }
+      }
+    },
+    "Error loading model: %@": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Error al cargar el modelo: %@"
+          }
+        }
+      }
+    },
+    "Error: %@": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Error: %@"
+          }
+        }
+      }
+    },
+    "Example": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ejemplo"
+          }
+        }
+      }
+    },
+    "Excluded from practice": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Excluido de la práctica"
+          }
+        }
+      }
+    },
+    "Exercises": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ejercicios"
+          }
+        }
+      }
+    },
+    "Export": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exportar"
+          }
+        }
+      }
+    },
+    "Export (%lld)": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exportar (%lld)"
+          }
+        }
+      }
+    },
+    "Export Recording": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exportar grabación"
+          }
+        }
+      }
+    },
+    "Expression": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Expresión"
+          }
+        }
+      }
+    },
+    "Failed to create audio recorder.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudo crear el grabador de audio."
+          }
+        }
+      }
+    },
+    "Failed to decode dictionary: %@": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudo decodificar el diccionario: %@"
+          }
+        }
+      }
+    },
+    "Failed to load dictionary: %@": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudo cargar el diccionario: %@"
+          }
+        }
+      }
+    },
+    "Failed to load image": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudo cargar la imagen"
+          }
+        }
+      }
+    },
+    "Failed to load PDF": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudo cargar el PDF"
+          }
+        }
+      }
+    },
+    "Failed to prepare recorder. Check microphone availability.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudo preparar el grabador. Comprueba que el micrófono esté disponible."
+          }
+        }
+      }
+    },
+    "Failed to render PDF page": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudo renderizar la página del PDF"
+          }
+        }
+      }
+    },
+    "Failed to setup audio session: %@": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudo configurar la sesión de audio: %@"
+          }
+        }
+      }
+    },
+    "Failed to start recording: %@": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudo iniciar la grabación: %@"
+          }
+        }
+      }
+    },
+    "Failed to start recording. Please check your microphone settings.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudo iniciar la grabación. Comprueba la configuración del micrófono."
+          }
+        }
+      }
+    },
+    "Failed to trim recording: %@": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudo recortar la grabación: %@"
+          }
+        }
+      }
+    },
+    "Failed to trim recording.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudo recortar la grabación."
+          }
+        }
+      }
+    },
+    "Favorite Tempos": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tempos favoritos"
+          }
+        }
+      }
+    },
+    "File not found": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Archivo no encontrado"
+          }
+        }
+      }
+    },
+    "Files are stored on this iPhone only": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Los archivos se guardan solo en este iPhone"
+          }
+        }
+      }
+    },
+    "Files stay on this device": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Los archivos permanecen en este dispositivo"
+          }
+        }
+      }
+    },
+    "Files will automatically sync to iCloud Drive": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Los archivos se sincronizarán automáticamente con iCloud Drive"
+          }
+        }
+      }
+    },
+    "Filter": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Filtro"
+          }
+        }
+      }
+    },
+    "Filters": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Filtros"
+          }
+        }
+      }
+    },
+    "Flats": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bemoles"
+          }
+        }
+      }
+    },
+    "Flats  ♭": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bemoles  ♭"
+          }
+        }
+      }
+    },
+    "Form": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Forma"
+          }
+        }
+      }
+    },
+    "Forward 15 seconds": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Avanzar 15 segundos"
+          }
+        }
+      }
+    },
+    "From": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Desde"
+          }
+        }
+      }
+    },
+    "General": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "General"
+          }
+        }
+      }
+    },
+    "Good practice": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Buena práctica"
+          }
+        }
+      }
+    },
+    "Green": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Verde"
+          }
+        }
+      }
+    },
+    "Had some challenges": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hubo algunas dificultades"
+          }
+        }
+      }
+    },
+    "Haptic Feedback": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Respuesta háptica"
+          }
+        }
+      }
+    },
+    "How did it go?": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "¿Cómo te fue?"
+          }
+        }
+      }
+    },
+    "How did you feel?": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "¿Cómo te sentiste?"
+          }
+        }
+      }
+    },
+    "Hz": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hz"
+          }
+        }
+      }
+    },
+    "iCloud Drive": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iCloud Drive"
+          }
+        }
+      }
+    },
+    "iCloud Drive → Claveo → Documents": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iCloud Drive → Claveo → Documents"
+          }
+        }
+      }
+    },
+    "iCloud Drive Enabled": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iCloud Drive activado"
+          }
+        }
+      }
+    },
+    "iCloud Drive is not available. Files are stored locally.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iCloud Drive no está disponible. Los archivos se guardan localmente."
+          }
+        }
+      }
+    },
+    "iCloud Drive is the default when available. Turn it off to keep recordings and app data on this iPhone only without syncing. Changing this affects where new files are saved; existing files stay where they were created.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iCloud Drive es la opción predeterminada cuando está disponible. Desactívalo para guardar grabaciones y datos de la app solo en este iPhone, sin sincronizar. Este cambio afecta dónde se guardan los archivos nuevos; los existentes permanecen donde se crearon."
+          }
+        }
+      }
+    },
+    "Identify intervals from two short notes near octave 4.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Identifica intervalos a partir de dos notas cortas cerca de la octava 4."
+          }
+        }
+      }
+    },
+    "Included in practice": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Incluido en la práctica"
+          }
+        }
+      }
+    },
+    "Increase tempo": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Subir el tempo"
+          }
+        }
+      }
+    },
+    "Indigo": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Índigo"
+          }
+        }
+      }
+    },
+    "Interval Ear Training": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Entrenamiento auditivo de intervalos"
+          }
+        }
+      }
+    },
+    "Invalid trim range.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rango de recorte no válido."
+          }
+        }
+      }
+    },
+    "Journal": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Diario"
+          }
+        }
+      }
+    },
+    "Journal Entry": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Entrada del diario"
+          }
+        }
+      }
+    },
+    "Key Signature ID": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ID de armadura"
+          }
+        }
+      }
+    },
+    "Key Signature Identification": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Identificación de armaduras"
+          }
+        }
+      }
+    },
+    "Key type": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tipo de tonalidad"
+          }
+        }
+      }
+    },
+    "Last Week": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Semana pasada"
+          }
+        }
+      }
+    },
+    "Leave a Review": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dejar una reseña"
+          }
+        }
+      }
+    },
+    "Lesson": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clase"
+          }
+        }
+      }
+    },
+    "Library": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Biblioteca"
+          }
+        }
+      }
+    },
+    "Light": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Claro"
+          }
+        }
+      }
+    },
+    "Link Recording": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vincular grabación"
+          }
+        }
+      }
+    },
+    "Link Recordings": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vincular grabaciones"
+          }
+        }
+      }
+    },
+    "Linked Recordings": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Grabaciones vinculadas"
+          }
+        }
+      }
+    },
+    "Load a PDF or image of sheet music to detect musical symbols. Tap Open to browse your files, then tap any detection box to see its label.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Carga un PDF o una imagen de partitura para detectar símbolos musicales. Toca Abrir para explorar tus archivos y luego toca cualquier recuadro de detección para ver su etiqueta."
+          }
+        }
+      }
+    },
+    "Loading dictionary...": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cargando diccionario..."
+          }
+        }
+      }
+    },
+    "Loading model...": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cargando modelo..."
+          }
+        }
+      }
+    },
+    "Loading recordings…": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cargando grabaciones…"
+          }
+        }
+      }
+    },
+    "Loading waveform…": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cargando forma de onda…"
+          }
+        }
+      }
+    },
+    "Local Storage": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Almacenamiento local"
+          }
+        }
+      }
+    },
+    "Log a session in Claveo and keep your momentum going.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Registra una sesión en Claveo y mantén el ritmo."
+          }
+        }
+      }
+    },
+    "Log Practice": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Registrar práctica"
+          }
+        }
+      }
+    },
+    "Log Session": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Registrar sesión"
+          }
+        }
+      }
+    },
+    "Loud": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fuerte"
+          }
+        }
+      }
+    },
+    "Major": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mayor"
+          }
+        }
+      }
+    },
+    "Major 2nd": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "2ª mayor"
+          }
+        }
+      }
+    },
+    "Major 3rd": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "3ª mayor"
+          }
+        }
+      }
+    },
+    "Major 6th": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "6ª mayor"
+          }
+        }
+      }
+    },
+    "Major 7th": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "7ª mayor"
+          }
+        }
+      }
+    },
+    "Manage Tempos": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gestionar tempos"
+          }
+        }
+      }
+    },
+    "Manual Hz": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hz manual"
+          }
+        }
+      }
+    },
+    "Marimba": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Marimba"
+          }
+        }
+      }
+    },
+    "Max (minutes)": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Máx. (minutos)"
+          }
+        }
+      }
+    },
+    "Measures": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Compases"
+          }
+        }
+      }
+    },
+    "Metronome": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Metrónomo"
+          }
+        }
+      }
+    },
+    "Metronome Settings": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajustes del metrónomo"
+          }
+        }
+      }
+    },
+    "Microphone access is required to detect pitch.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Se necesita acceso al micrófono para detectar la afinación."
+          }
+        }
+      }
+    },
+    "Microphone access is required to record audio.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Se necesita acceso al micrófono para grabar audio."
+          }
+        }
+      }
+    },
+    "Microphone access is required to record audio. Please enable it in Settings.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Se necesita acceso al micrófono para grabar audio. Actívalo en Ajustes."
+          }
+        }
+      }
+    },
+    "Microphone Access Required": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Se requiere acceso al micrófono"
+          }
+        }
+      }
+    },
+    "min": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "min"
+          }
+        }
+      }
+    },
+    "Min (minutes)": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mín (minutos)"
+          }
+        }
+      }
+    },
+    "Minor": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Menor"
+          }
+        }
+      }
+    },
+    "Minor 2nd": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "2.ª menor"
+          }
+        }
+      }
+    },
+    "Minor 3rd": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "3.ª menor"
+          }
+        }
+      }
+    },
+    "Minor 6th": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "6.ª menor"
+          }
+        }
+      }
+    },
+    "Minor 7th": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "7.ª menor"
+          }
+        }
+      }
+    },
+    "mm.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "mm."
+          }
+        }
+      }
+    },
+    "mm. %lld": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "mm. %lld"
+          }
+        }
+      }
+    },
+    "mm. %lld-%lld": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "mm. %1$lld-%2$lld"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "mm. %1$lld-%2$lld"
+          }
+        }
+      }
+    },
+    "Mode": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Modo"
+          }
+        }
+      }
+    },
+    "More": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Más"
+          }
+        }
+      }
+    },
+    "More menu": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Menú Más"
+          }
+        }
+      }
+    },
+    "More recording actions": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Más acciones de grabación"
+          }
+        }
+      }
+    },
+    "Name": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nombre"
+          }
+        }
+      }
+    },
+    "Name major or minor keys from the treble key signature.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nombra tonalidades mayores o menores a partir de la armadura en clave de sol."
+          }
+        }
+      }
+    },
+    "Name treble-clef notes including sharps and flats.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nombra notas en clave de sol, incluidos sostenidos y bemoles."
+          }
+        }
+      }
+    },
+    "Natural minor lowers the 3rd, 6th, and 7th compared to major. Same letter names as %@ major, different tonic.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La menor natural baja la 3.ª, 6.ª y 7.ª respecto a la mayor. Mismas letras que %@ mayor, tónica distinta."
+          }
+        }
+      }
+    },
+    "Naturals": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Becuadros"
+          }
+        }
+      }
+    },
+    "New key signature": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nueva armadura"
+          }
+        }
+      }
+    },
+    "New note": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nueva nota"
+          }
+        }
+      }
+    },
+    "New piece": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nueva pieza"
+          }
+        }
+      }
+    },
+    "No matches": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sin coincidencias"
+          }
+        }
+      }
+    },
+    "No pieces in library": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No hay piezas en la biblioteca"
+          }
+        }
+      }
+    },
+    "No pieces yet": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aún no hay piezas"
+          }
+        }
+      }
+    },
+    "No Recordings": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sin grabaciones"
+          }
+        }
+      }
+    },
+    "No recordings available": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No hay grabaciones disponibles"
+          }
+        }
+      }
+    },
+    "No recordings linked": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No hay grabaciones vinculadas"
+          }
+        }
+      }
+    },
+    "No Results": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sin resultados"
+          }
+        }
+      }
+    },
+    "No sessions yet": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aún no hay sesiones"
+          }
+        }
+      }
+    },
+    "No tempos": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sin tempos"
+          }
+        }
+      }
+    },
+    "No Terms": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sin términos"
+          }
+        }
+      }
+    },
+    "No terms in this topic": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No hay términos en este tema"
+          }
+        }
+      }
+    },
+    "Non-Emphasized Sound": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sonido no acentuado"
+          }
+        }
+      }
+    },
+    "None": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ninguno"
+          }
+        }
+      }
+    },
+    "Normal": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Normal"
+          }
+        }
+      }
+    },
+    "Notation": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notación"
+          }
+        }
+      }
+    },
+    "Note Identification": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Identificación de notas"
+          }
+        }
+      }
+    },
+    "Notes": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notas"
+          }
+        }
+      }
+    },
+    "Notifications are turned off for Claveo. Enable them in Settings to receive your daily reminder.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Las notificaciones están desactivadas para Claveo. Actívalas en Ajustes para recibir tu recordatorio diario."
+          }
+        }
+      }
+    },
+    "Octave": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Octava"
+          }
+        }
+      }
+    },
+    "OK": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OK"
+          }
+        }
+      }
+    },
+    "OMR Scanner": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Escáner OMR"
+          }
+        }
+      }
+    },
+    "On This iPhone": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "En este iPhone"
+          }
+        }
+      }
+    },
+    "Open": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Abrir"
+          }
+        }
+      }
+    },
+    "Open Notification Settings": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Abrir ajustes de notificaciones"
+          }
+        }
+      }
+    },
+    "Optical Music Recognition": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reconocimiento óptico de música"
+          }
+        }
+      }
+    },
+    "Orange": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Naranja"
+          }
+        }
+      }
+    },
+    "Original audio is preserved. You can restore it anytime.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Se conserva el audio original. Puedes restaurarlo en cualquier momento."
+          }
+        }
+      }
+    },
+    "Ornamentation": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ornamentación"
+          }
+        }
+      }
+    },
+    "Other": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Otro"
+          }
+        }
+      }
+    },
+    "Page %lld / %lld": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Page %1$lld / %2$lld"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Página %1$lld / %2$lld"
+          }
+        }
+      }
+    },
+    "Pause": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pausa"
+          }
+        }
+      }
+    },
+    "Pause preview": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pausar vista previa"
+          }
+        }
+      }
+    },
+    "Perfect 4th": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "4.ª justa"
+          }
+        }
+      }
+    },
+    "Perfect 5th": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "5.ª justa"
+          }
+        }
+      }
+    },
+    "Performance": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Interpretación"
+          }
+        }
+      }
+    },
+    "Piece": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pieza"
+          }
+        }
+      }
+    },
+    "Piece title": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Título de la pieza"
+          }
+        }
+      }
+    },
+    "Pieces": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Piezas"
+          }
+        }
+      }
+    },
+    "Pink": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rosa"
+          }
+        }
+      }
+    },
+    "Pitch": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Altura"
+          }
+        }
+      }
+    },
+    "Play": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reproducir"
+          }
+        }
+      }
+    },
+    "Play interval": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reproducir intervalo"
+          }
+        }
+      }
+    },
+    "Play selection": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reproducir selección"
+          }
+        }
+      }
+    },
+    "Play Tone": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reproducir tono"
+          }
+        }
+      }
+    },
+    "Playback": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reproducción"
+          }
+        }
+      }
+    },
+    "Playback position": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Posición de reproducción"
+          }
+        }
+      }
+    },
+    "Playback Speed": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Velocidad de reproducción"
+          }
+        }
+      }
+    },
+    "Playing": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reproduciendo"
+          }
+        }
+      }
+    },
+    "Playing…": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reproduciendo…"
+          }
+        }
+      }
+    },
+    "Practice": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Práctica"
+          }
+        }
+      }
+    },
+    "Practice Entry": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Entrada de práctica"
+          }
+        }
+      }
+    },
+    "Practice Notes": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notas de práctica"
+          }
+        }
+      }
+    },
+    "Practice Session": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sesión de práctica"
+          }
+        }
+      }
+    },
+    "Practice Settings": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajustes de práctica"
+          }
+        }
+      }
+    },
+    "Preset Frequencies": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Frecuencias predefinidas"
+          }
+        }
+      }
+    },
+    "Purple": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Morado"
+          }
+        }
+      }
+    },
+    "Quick Duration Options": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Opciones rápidas de duración"
+          }
+        }
+      }
+    },
+    "Quiet": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Suave"
+          }
+        }
+      }
+    },
+    "Rate your practice session": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Valora tu sesión de práctica"
+          }
+        }
+      }
+    },
+    "Really struggled": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Me costó mucho"
+          }
+        }
+      }
+    },
+    "Recording %@": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Grabación %@"
+          }
+        }
+      }
+    },
+    "Recording Details": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Detalles de la grabación"
+          }
+        }
+      }
+    },
+    "Recording file not found.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se encontró el archivo de grabación."
+          }
+        }
+      }
+    },
+    "Recordings": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Grabaciones"
+          }
+        }
+      }
+    },
+    "Red": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rojo"
+          }
+        }
+      }
+    },
+    "Rehearsal": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ensayo"
+          }
+        }
+      }
+    },
+    "Relative major: %@ major — same notes, different tonic.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mayor relativa: %@ mayor — mismas notas, tónica distinta."
+          }
+        }
+      }
+    },
+    "Relative minor: %@ minor — same notes, different tonic.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Menor relativa: %@ menor — mismas notas, tónica distinta."
+          }
+        }
+      }
+    },
+    "Reminder time": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hora del recordatorio"
+          }
+        }
+      }
+    },
+    "Remove from Favorites": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quitar de favoritos"
+          }
+        }
+      }
+    },
+    "Reset": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Restablecer"
+          }
+        }
+      }
+    },
+    "Reset Settings": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Restablecer ajustes"
+          }
+        }
+      }
+    },
+    "Reset Settings?": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "¿Restablecer ajustes?"
+          }
+        }
+      }
+    },
+    "Reset to default order": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Restablecer orden predeterminado"
+          }
+        }
+      }
+    },
+    "Restore": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Restaurar"
+          }
+        }
+      }
+    },
+    "Restore Original": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Restaurar original"
+          }
+        }
+      }
+    },
+    "Restore Original Recording": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Restaurar grabación original"
+          }
+        }
+      }
+    },
+    "Restore the original %@ recording? This will replace the current trimmed version.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "¿Restaurar la grabación original %@? Se reemplazará la versión recortada actual."
+          }
+        }
+      }
+    },
+    "Restore the original recording? This will replace the current trimmed version.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "¿Restaurar la grabación original? Se reemplazará la versión recortada actual."
+          }
+        }
+      }
+    },
+    "Restores app preferences only. Recordings and saved music data stay untouched.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Solo restablece las preferencias de la app. Las grabaciones y los datos musicales guardados no se modifican."
+          }
+        }
+      }
+    },
+    "Retry": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reintentar"
+          }
+        }
+      }
+    },
+    "Rhythm": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ritmo"
+          }
+        }
+      }
+    },
+    "Running detection...": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Detectando…"
+          }
+        }
+      }
+    },
+    "Same time": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Misma hora"
+          }
+        }
+      }
+    },
+    "Save": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Guardar"
+          }
+        }
+      }
+    },
+    "Save Custom Time Signature": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Guardar compás personalizado"
+          }
+        }
+      }
+    },
+    "Scale degree %lld": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Grado %lld"
+          }
+        }
+      }
+    },
+    "Scale notes": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notas de la escala"
+          }
+        }
+      }
+    },
+    "Scientific Pitch (A432)": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Afinación científica (A432)"
+          }
+        }
+      }
+    },
+    "Search by title or composer": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Buscar por título o compositor"
+          }
+        }
+      }
+    },
+    "Search dictionary": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Buscar en el diccionario"
+          }
+        }
+      }
+    },
+    "Search journal notes": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Buscar notas del diario"
+          }
+        }
+      }
+    },
+    "Search or pick a topic to get started": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Busca o elige un tema para empezar"
+          }
+        }
+      }
+    },
+    "Search recordings": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Buscar grabaciones"
+          }
+        }
+      }
+    },
+    "Search recordings...": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Buscar grabaciones…"
+          }
+        }
+      }
+    },
+    "Select": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seleccionar"
+          }
+        }
+      }
+    },
+    "Select Recordings": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seleccionar grabaciones"
+          }
+        }
+      }
+    },
+    "Selected": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seleccionado"
+          }
+        }
+      }
+    },
+    "Set a daily reminder to help build a consistent practice habit.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Configura un recordatorio diario para mantener un hábito de práctica constante."
+          }
+        }
+      }
+    },
+    "Settings": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajustes"
+          }
+        }
+      }
+    },
+    "Sharps": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sostenidos"
+          }
+        }
+      }
+    },
+    "Sharps  ♯": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sostenidos  ♯"
+          }
+        }
+      }
+    },
+    "Show Frequency Display": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mostrar frecuencia"
+          }
+        }
+      }
+    },
+    "Show Tab Bar Labels": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mostrar etiquetas de la barra de pestañas"
+          }
+        }
+      }
+    },
+    "Something went wrong.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Algo salió mal."
+          }
+        }
+      }
+    },
+    "Speed": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Velocidad"
+          }
+        }
+      }
+    },
+    "Start": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Iniciar"
+          }
+        }
+      }
+    },
+    "Start Metronome": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Iniciar metrónomo"
+          }
+        }
+      }
+    },
+    "Stop": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Detener"
+          }
+        }
+      }
+    },
+    "Stop Metronome": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Detener metrónomo"
+          }
+        }
+      }
+    },
+    "Stop Tone": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Detener tono"
+          }
+        }
+      }
+    },
+    "Stop tone when leaving Metronome": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Detener el tono al salir del metrónomo"
+          }
+        }
+      }
+    },
+    "Storage": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Almacenamiento"
+          }
+        }
+      }
+    },
+    "Storage Information": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Información de almacenamiento"
+          }
+        }
+      }
+    },
+    "Storage Location": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ubicación de almacenamiento"
+          }
+        }
+      }
+    },
+    "System": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sistema"
+          }
+        }
+      }
+    },
+    "System Volume": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Volumen del sistema"
+          }
+        }
+      }
+    },
+    "Tab": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pestaña"
+          }
+        }
+      }
+    },
+    "Tabs": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pestañas"
+          }
+        }
+      }
+    },
+    "Tag": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Etiqueta"
+          }
+        }
+      }
+    },
+    "Tags": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Etiquetas"
+          }
+        }
+      }
+    },
+    "Tap a day above or use + to log your first practice session.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Toca un día arriba o usa + para registrar tu primera sesión de práctica."
+          }
+        }
+      }
+    },
+    "Tap active options to remove, tap grayed ones to add": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Toca las opciones activas para quitarlas; toca las atenuadas para añadirlas"
+          }
+        }
+      }
+    },
+    "Tap Open to select sheet music (PDF or image)": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Toca Abrir para elegir una partitura (PDF o imagen)"
+          }
+        }
+      }
+    },
+    "Tap Tempo": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tempo al tacto"
+          }
+        }
+      }
+    },
+    "Tap the record button to create your first recording": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Toca el botón de grabar para crear tu primera grabación"
+          }
+        }
+      }
+    },
+    "Teal": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Verde azulado"
+          }
+        }
+      }
+    },
+    "Tempo": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tempo"
+          }
+        }
+      }
+    },
+    "Tempos": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tempos"
+          }
+        }
+      }
+    },
+    "Theory": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Teoría"
+          }
+        }
+      }
+    },
+    "This restores app preferences to their defaults. Your recordings, pieces, and practice history will not be deleted.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Esto restablece las preferencias de la app a sus valores predeterminados. Tus grabaciones, piezas e historial de práctica no se eliminarán."
+          }
+        }
+      }
+    },
+    "This Week": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Esta semana"
+          }
+        }
+      }
+    },
+    "Tick": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tic"
+          }
+        }
+      }
+    },
+    "Time Signature": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Compás"
+          }
+        }
+      }
+    },
+    "Time to practice": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hora de practicar"
+          }
+        }
+      }
+    },
+    "Title": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Título"
+          }
+        }
+      }
+    },
+    "To": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hasta"
+          }
+        }
+      }
+    },
+    "Tone Generator": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Generador de tono"
+          }
+        }
+      }
+    },
+    "Top Number": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Número superior"
+          }
+        }
+      }
+    },
+    "Total Days": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Días totales"
+          }
+        }
+      }
+    },
+    "Treble clef — which major key?": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clave de sol — ¿qué tonalidad mayor?"
+          }
+        }
+      }
+    },
+    "Treble clef — which minor key?": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clave de sol — ¿qué tonalidad menor?"
+          }
+        }
+      }
+    },
+    "Triangle": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Triángulo"
+          }
+        }
+      }
+    },
+    "Trim": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recortar"
+          }
+        }
+      }
+    },
+    "Trim completed, but replacing the original file failed.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recorte completado, pero no se pudo reemplazar el archivo original."
+          }
+        }
+      }
+    },
+    "Trim Recording": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recortar grabación"
+          }
+        }
+      }
+    },
+    "Trimming preserves the original audio for restoration.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El recorte conserva el audio original para poder restaurarlo."
+          }
+        }
+      }
+    },
+    "Tritone": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tritono"
+          }
+        }
+      }
+    },
+    "Try a different search term": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Prueba con otro término de búsqueda"
+          }
+        }
+      }
+    },
+    "Try a different search term.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Prueba con otro término de búsqueda."
+          }
+        }
+      }
+    },
+    "Try a different search.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Prueba con otra búsqueda."
+          }
+        }
+      }
+    },
+    "Try adjusting your search or filters": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Prueba a ajustar la búsqueda o los filtros"
+          }
+        }
+      }
+    },
+    "Tuner": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Afinador"
+          }
+        }
+      }
+    },
+    "Unable to create export session for this audio file.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudo crear la sesión de exportación para este archivo de audio."
+          }
+        }
+      }
+    },
+    "Unable to Trim": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se puede recortar"
+          }
+        }
+      }
+    },
+    "Unison": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unísono"
+          }
+        }
+      }
+    },
+    "Untitled": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sin título"
+          }
+        }
+      }
+    },
+    "Use iCloud Drive": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Usar iCloud Drive"
+          }
+        }
+      }
+    },
+    "Using Local Storage": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Usando almacenamiento local"
+          }
+        }
+      }
+    },
+    "Version": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Versión"
+          }
+        }
+      }
+    },
+    "Visit https://claveo-app.vercel.app/ for help, feedback, and product updates.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Visita https://claveo-app.vercel.app/ para ayuda, comentarios y novedades del producto."
+          }
+        }
+      }
+    },
+    "Volume": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Volumen"
+          }
+        }
+      }
+    },
+    "Warm-up": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Calentamiento"
+          }
+        }
+      }
+    },
+    "Website & contact": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sitio web y contacto"
+          }
+        }
+      }
+    },
+    "What did you practice today?": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "¿Qué practicaste hoy?"
+          }
+        }
+      }
+    },
+    "What did you practice today? Any goals, challenges, or progress notes...": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "¿Qué practicaste hoy? Metas, retos o notas de progreso…"
+          }
+        }
+      }
+    },
+    "Wood Block": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Caja china"
+          }
+        }
+      }
+    },
+    "Yellow": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Amarillo"
+          }
+        }
+      }
+    },
+    "Yesterday": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ayer"
+          }
+        }
+      }
+    },
+    "Yesterday, %@": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ayer, %@"
+          }
+        }
+      }
+    },
+    "You can access your recordings in the Files app under:": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Puedes acceder a tus grabaciones en la app Archivos en:"
+          }
+        }
+      }
+    },
+    "You'll get a notification every day at this time.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recibirás una notificación todos los días a esta hora."
+          }
+        }
+      }
+    },
+    "Your recordings are stored in:": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tus grabaciones se guardan en:"
+          }
+        }
+      }
+    },
+    "Instruments": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Instrumentos"
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

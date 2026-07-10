@@ -91,14 +91,14 @@ extension RecordingListView {
                                 Button {
                                     selectedTag = nil
                                 } label: {
-                                    filterMenuRow(title: "Any tag", selected: selectedTag == nil)
+                                    filterMenuRow(title: String(localized: "Any tag"), selected: selectedTag == nil)
                                 }
 
                                 ForEach(RecordingTag.allCases, id: \.self) { tag in
                                     Button {
                                         selectedTag = tag.rawValue
                                     } label: {
-                                        filterMenuRow(title: tag.rawValue, selected: selectedTag == tag.rawValue)
+                                        filterMenuRow(title: tag.localizedName, selected: selectedTag == tag.rawValue)
                                     }
                                 }
                             } header: {
@@ -109,7 +109,7 @@ extension RecordingListView {
                                 Button {
                                     selectedPiece = nil
                                 } label: {
-                                    filterMenuRow(title: "Any piece", selected: selectedPiece == nil)
+                                    filterMenuRow(title: String(localized: "Any piece"), selected: selectedPiece == nil)
                                 }
 
                                 if availablePieces.isEmpty {

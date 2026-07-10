@@ -64,7 +64,7 @@ struct Recording: Identifiable, Codable, Sendable {
     }
     
     var displayName: String {
-        name.isEmpty ? "Recording \(formattedDate)" : name
+        name.isEmpty ? String(localized: "Recording \(formattedDate)") : name
     }
     
     var formattedDate: String {
@@ -85,7 +85,7 @@ struct Recording: Identifiable, Codable, Sendable {
         } else if calendar.isDateInYesterday(createdAt) {
             let formatter = DateFormatter()
             formatter.timeStyle = .short
-            return "Yesterday, \(formatter.string(from: createdAt))"
+            return String(localized: "Yesterday, \(formatter.string(from: createdAt))")
         } else if calendar.dateInterval(of: .weekOfYear, for: now)?.contains(createdAt) ?? false {
             // Show day name for this week
             let formatter = DateFormatter()
@@ -109,7 +109,7 @@ struct Recording: Identifiable, Codable, Sendable {
             formatter.timeStyle = .short
             return formatter.string(from: createdAt)
         } else if calendar.isDateInYesterday(createdAt) {
-            return "Yesterday"
+            return String(localized: "Yesterday")
         } else if calendar.dateInterval(of: .weekOfYear, for: now)?.contains(createdAt) ?? false {
             // Show abbreviated day name for this week
             let formatter = DateFormatter()
@@ -132,9 +132,9 @@ struct Recording: Identifiable, Codable, Sendable {
     var measureRange: String? {
         guard let start = measureStart else { return nil }
         if let end = measureEnd, end != start {
-            return "mm. \(start)-\(end)"
+            return String(localized: "mm. \(start)-\(end)")
         }
-        return "mm. \(start)"
+        return String(localized: "mm. \(start)")
     }
 
     /// Parses measure text from the detail editor. Returns nil for empty or invalid input.
@@ -248,5 +248,22 @@ enum RecordingTag: String, CaseIterable {
     case performance = "Performance"
     case warmup = "Warm-up"
     case other = "Other"
+
+    var localizedName: String {
+        switch self {
+        case .practice: return String(localized: "Practice")
+        case .concert: return String(localized: "Concert")
+        case .rehearsal: return String(localized: "Rehearsal")
+        case .lesson: return String(localized: "Lesson")
+        case .audition: return String(localized: "Audition")
+        case .performance: return String(localized: "Performance")
+        case .warmup: return String(localized: "Warm-up")
+        case .other: return String(localized: "Other")
+        }
+    }
+
+    static func localizedName(for rawValue: String) -> String {
+        RecordingTag(rawValue: rawValue)?.localizedName ?? rawValue
+    }
 }
 

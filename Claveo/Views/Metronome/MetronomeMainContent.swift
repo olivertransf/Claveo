@@ -31,7 +31,7 @@ extension MetronomeView {
                 } label: {
                     Image(systemName: "slider.horizontal.3")
                 }
-                .accessibilityLabel("Metronome Settings")
+                .accessibilityLabel(String(localized: "Metronome Settings"))
             }
         }
         .sheet(isPresented: $showingTemposManagement) {
@@ -109,7 +109,7 @@ extension MetronomeView {
 
     private func toneGeneratorPanel<Content: View>(@ViewBuilder content: () -> Content) -> some View {
         VStack(alignment: .leading, spacing: 16) {
-            sectionLabel("Tone Generator", systemImage: "waveform.path")
+            sectionLabel(String(localized: "Tone Generator"), systemImage: "waveform.path")
             content()
         }
         .padding(24)
@@ -146,7 +146,9 @@ extension MetronomeView {
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel(
-                    favoriteTempos.contains(metronome.tempo) ? "Remove from Favorites" : "Add to Favorites"
+                    favoriteTempos.contains(metronome.tempo)
+                        ? String(localized: "Remove from Favorites")
+                        : String(localized: "Add to Favorites")
                 )
             }
 
@@ -158,7 +160,7 @@ extension MetronomeView {
 
             Button(action: toggleMetronomePlayback) {
                 Label(
-                    metronome.isPlaying ? "Stop" : "Start",
+                    metronome.isPlaying ? String(localized: "Stop") : String(localized: "Start"),
                     systemImage: metronome.isPlaying ? "stop.fill" : "play.fill"
                 )
                 .font(.headline)
@@ -171,7 +173,11 @@ extension MetronomeView {
                 )
             }
             .buttonStyle(.plain)
-            .accessibilityLabel(metronome.isPlaying ? "Stop Metronome" : "Start Metronome")
+            .accessibilityLabel(
+                metronome.isPlaying
+                    ? String(localized: "Stop Metronome")
+                    : String(localized: "Start Metronome")
+            )
 
             tempoSliderControl
         }
@@ -183,7 +189,7 @@ extension MetronomeView {
     private var metronomeDetailsCard: some View {
         VStack(alignment: .leading, spacing: 16) {
             HStack(spacing: 10) {
-                compactMetronomeButton(title: "Tap Tempo", systemImage: "hand.tap", action: tapTempo)
+                compactMetronomeButton(title: String(localized: "Tap Tempo"), systemImage: "hand.tap", action: tapTempo)
                 timeSignatureMenu
             }
 
@@ -224,7 +230,11 @@ extension MetronomeView {
                 .background(Color(.tertiarySystemFill), in: Circle())
         }
         .buttonStyle(.plain)
-        .accessibilityLabel(delta < 0 ? "Decrease tempo" : "Increase tempo")
+        .accessibilityLabel(
+            delta < 0
+                ? String(localized: "Decrease tempo")
+                : String(localized: "Increase tempo")
+        )
     }
 
     // MARK: - Shared metronome blocks
@@ -289,7 +299,7 @@ extension MetronomeView {
                 prepareCustomTimeSignature()
             } label: {
                 HStack {
-                    Text("Custom…")
+                    Text(String(localized: "Custom…"))
                     Spacer()
                     if metronome.customTimeSignature != nil {
                         Image(systemName: "checkmark")
@@ -299,7 +309,7 @@ extension MetronomeView {
             }
 
             if metronome.customTimeSignature != nil {
-                Button("Clear Custom", role: .destructive) {
+                Button(String(localized: "Clear Custom"), role: .destructive) {
                     metronome.setTimeSignature(.fourFour)
                 }
             }
@@ -335,7 +345,7 @@ extension MetronomeView {
                     }
                     .buttonStyle(.plain)
                     .contentShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-                    .accessibilityLabel("Beat \(index + 1)")
+                    .accessibilityLabel(String(localized: "Beat \(index + 1)"))
                     .accessibilityValue(beatAccessibilityValue(index: index, isAccented: isAccented))
                     .accessibilityAddTraits(isAccented ? .isSelected : [])
                 }
@@ -389,9 +399,13 @@ extension MetronomeView {
 
     private func beatAccessibilityValue(index: Int, isAccented: Bool) -> String {
         if metronome.isPlaying && index == metronome.currentBeat {
-            return isAccented ? "Accented, playing" : "Playing"
+            return isAccented
+                ? String(localized: "Accented, playing")
+                : String(localized: "Playing")
         }
-        return isAccented ? "Accented" : "Normal"
+        return isAccented
+            ? String(localized: "Accented")
+            : String(localized: "Normal")
     }
 
     private var favoriteTemposSection: some View {
@@ -492,7 +506,9 @@ extension MetronomeView {
                 }
             } label: {
                 Label(
-                    toneGenerator.isPlaying ? "Stop Tone" : "Play Tone",
+                    toneGenerator.isPlaying
+                        ? String(localized: "Stop Tone")
+                        : String(localized: "Play Tone"),
                     systemImage: toneGenerator.isPlaying ? "stop.fill" : "play.fill"
                 )
                 .frame(maxWidth: .infinity)

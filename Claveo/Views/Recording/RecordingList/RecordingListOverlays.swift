@@ -19,7 +19,9 @@ extension RecordingListView {
     
     var emptyStateMessage: String {
         let hasActiveFilters = !searchText.isEmpty || selectedTag != nil || selectedPiece != nil
-        return hasActiveFilters ? "Try adjusting your search or filters" : "Tap the record button to create your first recording"
+        return hasActiveFilters
+            ? String(localized: "Try adjusting your search or filters")
+            : String(localized: "Tap the record button to create your first recording")
     }
 }
 

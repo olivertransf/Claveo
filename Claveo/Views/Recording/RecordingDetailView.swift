@@ -35,7 +35,7 @@ struct RecordingDetailView: View {
                     if !recording.tags.isEmpty {
                         ForEach(recording.tags, id: \.self) { tag in
                             HStack {
-                                Text(tag)
+                                Text(RecordingTag.localizedName(for: tag))
                                 Spacer()
                                 Button(action: {
                                     recording.tags.removeAll { $0 == tag }
@@ -58,7 +58,7 @@ struct RecordingDetailView: View {
                         Text("Add Tag").tag("")
                         ForEach(RecordingTag.allCases, id: \.self) { tag in
                             if !recording.tags.contains(tag.rawValue) {
-                                Text(tag.rawValue).tag(tag.rawValue)
+                                Text(tag.localizedName).tag(tag.rawValue)
                             }
                         }
                     }

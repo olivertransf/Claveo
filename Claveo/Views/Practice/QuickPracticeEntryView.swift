@@ -34,7 +34,7 @@ struct QuickPracticeEntryView: View {
                     // Date header
                     HStack {
                         VStack(alignment: .leading, spacing: 2) {
-                            Text(existingEntry != nil ? "Edit Session" : "Log Session")
+                            Text(existingEntry != nil ? String(localized: "Edit Session") : String(localized: "Log Session"))
                                 .font(.title2.weight(.bold))
                             Text(formattedDate(date))
                                 .font(.subheadline)
