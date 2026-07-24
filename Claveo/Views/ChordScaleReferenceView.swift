@@ -114,13 +114,14 @@ struct ChordScaleReferenceView: View {
                     Text(titles[i])
                         .font(.subheadline.weight(.semibold))
                         .frame(maxWidth: .infinity)
-                        .padding(.vertical, 8)
+                        .frame(minHeight: 44)
                         .background(
                             RoundedRectangle(cornerRadius: 8, style: .continuous)
                                 .fill(isSelected ? themeManager.accentColor : Color.clear)
                         )
                         .foregroundStyle(isSelected ? .white : .primary)
                 }
+                .accessibilityAddTraits(isSelected ? .isSelected : [])
             }
         }
         .padding(3)
@@ -182,6 +183,7 @@ struct ChordScaleReferenceView: View {
         .padding(16)
         .background(cardBackground)
         .padding(.horizontal, 16)
+        .accessibilityElement(children: .combine)
     }
 
     private var modePicker: some View {
@@ -220,27 +222,39 @@ struct ChordScaleReferenceView: View {
     private var cardBackground: some View {
         RoundedRectangle(cornerRadius: 16, style: .continuous)
             .fill(Color(.secondarySystemGroupedBackground))
+            .overlay {
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .strokeBorder(Color.primary.opacity(0.08), lineWidth: 1)
+            }
     }
 
     // MARK: - Scale
 
     private func scaleRow(notes: [Int]) -> some View {
-        HStack(spacing: 6) {
+        HStack(spacing: 4) {
             ForEach(Array(notes.enumerated()), id: \.offset) { index, pitch in
-                VStack(spacing: 4) {
-                    Text(noteNameFor(pitch))
-                        .font(.subheadline.weight(.semibold))
-                        .minimumScaleFactor(0.7)
-                        .lineLimit(1)
-                        .aspectRatio(1, contentMode: .fit)
-                        .frame(maxWidth: .infinity)
-                        .background(
-                            Circle()
-                                .fill(index == 0
-                                      ? themeManager.accentColor
-                                      : Color(.tertiarySystemFill))
-                        )
-                        .foregroundStyle(index == 0 ? .white : .primary)
+                VStack(spacing: 6) {
+                    ZStack {
+                        Circle()
+                            .fill(index == 0
+                                  ? themeManager.accentColor
+                                  : Color(.tertiarySystemFill))
+                        Circle()
+                            .strokeBorder(
+                                index == 0
+                                    ? Color.clear
+                                    : Color.primary.opacity(0.12),
+                                lineWidth: 1
+                            )
+                        Text(noteNameFor(pitch))
+                            .font(.body.weight(.semibold))
+                            .minimumScaleFactor(0.65)
+                            .lineLimit(1)
+                            .foregroundStyle(index == 0 ? .white : .primary)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .aspectRatio(1, contentMode: .fit)
+                    .frame(minHeight: 60)
 
                     Text("\(index + 1)")
                         .font(.caption2.weight(.medium))
@@ -248,6 +262,10 @@ struct ChordScaleReferenceView: View {
                         .frame(height: 14)
                 }
                 .frame(maxWidth: .infinity)
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel(
+                    String(localized: "Scale degree \(index + 1), \(noteNameFor(pitch))")
+                )
             }
         }
     }
@@ -320,6 +338,12 @@ struct ChordScaleReferenceView: View {
         .background(
             RoundedRectangle(cornerRadius: 12, style: .continuous)
                 .fill(Color(.tertiarySystemGroupedBackground))
+        )
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(
+            String(
+                localized: "\(chordName), scale degree \(degreeIndex + 1), \(triad.map(noteNameFor).joined(separator: ", "))"
+            )
         )
     }
 

@@ -10,9 +10,13 @@ import SwiftUI
 import WidgetKit
 
 struct RecordingActivityAttributes: ActivityAttributes {
+    static let schemaVersion = 2
+
     struct ContentState: Codable, Hashable {
         var isRecording: Bool
         var finalDuration: TimeInterval?
+        /// When set, the Live Activity timer counts from this date (capture-time aligned after pauses).
+        var timerAnchor: Date?
     }
 
     var title: String
@@ -101,8 +105,14 @@ private struct RecordingElapsedTimeView: View {
 
     var body: some View {
         if context.state.isRecording {
-            Text(timerInterval: context.attributes.startedAt...Date.distantFuture, countsDown: false)
-                .monospacedDigit()
+            if let paused = context.state.finalDuration, context.state.timerAnchor == nil {
+                Text(formatDuration(paused))
+                    .monospacedDigit()
+            } else {
+                let anchor = context.state.timerAnchor ?? context.attributes.startedAt
+                Text(timerInterval: anchor...Date.distantFuture, countsDown: false)
+                    .monospacedDigit()
+            }
         } else {
             Text(formatDuration(context.state.finalDuration ?? 0))
                 .monospacedDigit()

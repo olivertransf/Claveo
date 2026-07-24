@@ -7,10 +7,10 @@
 //  Copyright (c) 2025 Oliver Tran
 
 import AVFoundation
-import Foundation
 import Combine
-import UIKit
+import Foundation
 import QuartzCore
+import UIKit
 
 enum MetronomeSound: String, CaseIterable {
     case click = "Click"
@@ -40,14 +40,39 @@ enum MetronomeSound: String, CaseIterable {
     }
 }
 
+enum MetronomeStartupError: LocalizedError, Equatable {
+    case audioSessionFailed(String)
+    case audioBuffersUnavailable
+    case audioEngineFailed(String)
+
+    var errorDescription: String? {
+        switch self {
+        case .audioSessionFailed(let detail):
+            return String(localized: "The metronome could not configure audio: \(detail)")
+        case .audioBuffersUnavailable:
+            return String(localized: "The metronome could not create playable click sounds.")
+        case .audioEngineFailed(let detail):
+            return String(localized: "The metronome could not start audio: \(detail)")
+        }
+    }
+}
+
+struct MetronomeAudioConfiguration: Equatable {
+    let emphasizedSound: MetronomeSound
+    let normalSound: MetronomeSound
+    let gain: Double
+}
+
 @MainActor
 class Metronome: ObservableObject {
     @Published var isPlaying = false
+    @Published var startupError: MetronomeStartupError?
     @Published var tempo: Int = 120 {
         didSet {
             updateInterval()
-            // Restart timer if playing to apply new tempo immediately
-            if isPlaying {
+            if isTempoAdjustmentInProgress {
+                hasPendingTempoReschedule = true
+            } else if isPlaying {
                 restartTimer()
             }
         }
@@ -59,23 +84,28 @@ class Metronome: ObservableObject {
     @Published var soundType: MetronomeSound = .click {
         didSet {
             if isPlaying {
-                setupAudioPlayer()
-                restartTimer()
+                rebuildAudioBuffersAndReschedule()
             }
         }
     }
     @Published var hapticEnabled: Bool = true
     
-    var timer: Timer?
     var interval: TimeInterval = 0.5
     var nextBeatTime: TimeInterval = 0
     var startTime: TimeInterval = 0
     var beatCount: Int = 0
     var lastBeatTime: TimeInterval = 0
-    var scheduledBeatCount: Int = 0 // Track how many beats we've pre-scheduled
-    let beatsToScheduleAhead = 4 // Pre-schedule 4 beats ahead
+    var scheduleState = MetronomeScheduleState()
+    var scheduledBeatCount: Int {
+        get { scheduleState.scheduledBeatCount }
+        set { scheduleState.scheduledBeatCount = newValue }
+    }
+    let beatsToScheduleAhead = 8
+    var schedulingTimer: DispatchSourceTimer?
     var displayLink: CADisplayLink?
     var displayLinkTarget: MetronomeDisplayLinkTarget?
+    var isTempoAdjustmentInProgress = false
+    var hasPendingTempoReschedule = false
     
     let hapticGenerator = UIImpactFeedbackGenerator(style: .medium)
     let hapticGeneratorLight = UIImpactFeedbackGenerator(style: .light)
@@ -91,8 +121,18 @@ class Metronome: ObservableObject {
         return timeSignature.rawValue
     }
     
+    private var observerTokens: [NSObjectProtocol] = []
+    private var settingsCancellable: AnyCancellable?
+    private var lastAudioConfiguration: MetronomeAudioConfiguration
+    private var shouldResumeAfterInterruption = false
+
     init() {
         let settings = SettingsManager.shared.settings
+        lastAudioConfiguration = MetronomeAudioConfiguration(
+            emphasizedSound: MetronomeSound(rawValue: settings.metronomeEmphasizedSound) ?? .tick,
+            normalSound: MetronomeSound(rawValue: settings.metronomeNonEmphasizedSound) ?? .click,
+            gain: settings.metronomeVolume
+        )
         
         // Load last tempo (or 120 if no last tempo saved)
         let tempoToLoad = settings.lastMetronomeTempo > 0 ? settings.lastMetronomeTempo : 120
@@ -129,7 +169,7 @@ class Metronome: ObservableObject {
         hapticGenerator.prepare()
         hapticGeneratorLight.prepare()
 
-        NotificationCenter.default.addObserver(
+        let interruptionToken = NotificationCenter.default.addObserver(
             forName: AVAudioSession.interruptionNotification,
             object: AVAudioSession.sharedInstance(),
             queue: .main
@@ -138,6 +178,37 @@ class Metronome: ObservableObject {
                 self?.handleAudioSessionInterruption(userInfo: notification.userInfo)
             }
         }
+        observerTokens.append(interruptionToken)
+
+        let routeToken = NotificationCenter.default.addObserver(
+            forName: AVAudioSession.routeChangeNotification,
+            object: AVAudioSession.sharedInstance(),
+            queue: .main
+        ) { [weak self] notification in
+            MainActor.assumeIsolated {
+                self?.handleAudioRouteChange(userInfo: notification.userInfo)
+            }
+        }
+        observerTokens.append(routeToken)
+
+        settingsCancellable = SettingsManager.shared.$settings
+            .dropFirst()
+            .sink { [weak self] settings in
+                let configuration = MetronomeAudioConfiguration(
+                    emphasizedSound: MetronomeSound(rawValue: settings.metronomeEmphasizedSound) ?? .tick,
+                    normalSound: MetronomeSound(rawValue: settings.metronomeNonEmphasizedSound) ?? .click,
+                    gain: settings.metronomeVolume
+                )
+                guard let self, configuration != self.lastAudioConfiguration else { return }
+                self.lastAudioConfiguration = configuration
+                if self.isPlaying {
+                    self.rebuildAudioBuffersAndReschedule()
+                }
+            }
+    }
+
+    deinit {
+        observerTokens.forEach(NotificationCenter.default.removeObserver)
     }
 
     private func handleAudioSessionInterruption(userInfo: [AnyHashable: Any]?) {
@@ -149,12 +220,33 @@ class Metronome: ObservableObject {
 
         switch type {
         case .began:
-            if isPlaying {
+            shouldResumeAfterInterruption = isPlaying
+            if shouldResumeAfterInterruption {
                 stop()
             }
         case .ended:
-            break
+            let optionsValue = userInfo[AVAudioSessionInterruptionOptionKey] as? UInt ?? 0
+            let options = AVAudioSession.InterruptionOptions(rawValue: optionsValue)
+            if shouldResumeAfterInterruption, options.contains(.shouldResume) {
+                start()
+            }
+            shouldResumeAfterInterruption = false
         @unknown default:
+            break
+        }
+    }
+
+    private func handleAudioRouteChange(userInfo: [AnyHashable: Any]?) {
+        guard isPlaying,
+              let reasonValue = userInfo?[AVAudioSessionRouteChangeReasonKey] as? UInt,
+              let reason = AVAudioSession.RouteChangeReason(rawValue: reasonValue) else {
+            return
+        }
+
+        switch reason {
+        case .newDeviceAvailable, .oldDeviceUnavailable, .routeConfigurationChange:
+            restartForAudioRouteChange()
+        default:
             break
         }
     }
@@ -188,7 +280,7 @@ final class MetronomeDisplayLinkTarget: NSObject {
             link.invalidate()
             return
         }
-        Task { @MainActor in
+        MainActor.assumeIsolated {
             guard metronome.isPlaying else { return }
             metronome.checkAndPlayBeat()
         }

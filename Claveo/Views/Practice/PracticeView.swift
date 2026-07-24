@@ -17,6 +17,7 @@ struct PracticeView: View {
     @State private var selectedDate = Date()
     @State private var sheetDate = Date()
     @State private var showingQuickEntry = false
+    @State private var quickEntryPrefersNew = false
     @State private var showingSettings = false
     @State private var currentWeekOffset = 0
     @State private var searchText = ""
@@ -87,15 +88,18 @@ struct PracticeView: View {
                     } label: {
                         Image(systemName: "slider.horizontal.3")
                     }
+                    .accessibilityLabel("Practice settings")
                 }
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button {
                         sheetDate = Date()
+                        quickEntryPrefersNew = true
                         showingQuickEntry = true
                     } label: {
                         Image(systemName: "plus")
                             .fontWeight(.semibold)
                     }
+                    .accessibilityLabel("Log practice session")
                 }
             }
             .sheet(item: $selectedEntry) { entry in
@@ -103,7 +107,7 @@ struct PracticeView: View {
                     .environmentObject(themeManager)
             }
             .sheet(isPresented: $showingQuickEntry) {
-                QuickPracticeEntryView(date: sheetDate)
+                QuickPracticeEntryView(date: sheetDate, prefersNewEntry: quickEntryPrefersNew)
                     .environmentObject(themeManager)
             }
             .sheet(isPresented: $showingSettings) {
@@ -148,6 +152,7 @@ struct PracticeView: View {
             }
         }
         .padding(.vertical, 10)
+        .accessibilityElement(children: .contain)
     }
 
     private func statItem(value: String, label: String, icon: String, iconColor: Color) -> some View {
@@ -192,8 +197,10 @@ struct PracticeView: View {
                 Image(systemName: "chevron.left")
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(currentWeekOffset <= -52 ? Color(.tertiaryLabel) : themeManager.accentColor)
+                    .frame(width: 44, height: 44)
             }
             .disabled(currentWeekOffset <= -52)
+            .accessibilityLabel("Previous week")
 
             Spacer()
 
@@ -211,8 +218,10 @@ struct PracticeView: View {
                 Image(systemName: "chevron.right")
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(currentWeekOffset >= 0 ? Color(.tertiaryLabel) : themeManager.accentColor)
+                    .frame(width: 44, height: 44)
             }
             .disabled(currentWeekOffset >= 0)
+            .accessibilityLabel("Next week")
         }
     }
 
@@ -246,6 +255,7 @@ struct PracticeView: View {
                 ) {
                     sheetDate = item.date
                     selectedDate = item.date
+                    quickEntryPrefersNew = false
                     showingQuickEntry = true
                 }
             }
@@ -285,6 +295,7 @@ struct PracticeView: View {
             }
             Button {
                 sheetDate = Date()
+                quickEntryPrefersNew = true
                 showingQuickEntry = true
             } label: {
                 Label("Log Practice", systemImage: "plus")
@@ -326,12 +337,13 @@ struct PracticeView: View {
 
     private var filteredEntries: [PracticeEntry] {
         guard !searchText.isEmpty else {
-            return Array(practiceService.practiceEntries.prefix(20))
+            return practiceService.practiceEntries
         }
         let q = searchText.lowercased()
         return practiceService.practiceEntries.filter {
             $0.notes?.lowercased().contains(q) == true
             || $0.formattedDate.lowercased().contains(q)
+            || "\($0.duration)".contains(q)
             || $0.formattedDuration.lowercased().contains(q)
         }
     }
@@ -407,6 +419,20 @@ private struct WeekDayCell: View {
         .frame(maxWidth: .infinity)
         .opacity(isFuture ? 0.35 : 1)
         .disabled(isFuture)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(date.formatted(date: .complete, time: .omitted))
+        .accessibilityValue(accessibilityValue)
+        .accessibilityHint(isFuture ? "" : String(localized: "Log a practice session"))
+    }
+
+    private var accessibilityValue: String {
+        if isPracticed {
+            return String(localized: "\(minutesPracticed) minutes practiced")
+        }
+        if isToday {
+            return String(localized: "Today, no practice logged")
+        }
+        return String(localized: "No practice logged")
     }
 
     private var circleBackground: Color {
@@ -529,6 +555,8 @@ private struct JournalEntryRow: View {
                     .foregroundStyle(star <= rating ? .orange : Color(.tertiaryLabel))
             }
         }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(String(localized: "Rating, \(rating) out of 5"))
     }
 }
 
@@ -579,14 +607,18 @@ struct PracticeSettingsView: View {
                                         .font(.subheadline.weight(.medium))
                                         .foregroundStyle(defaultTime == mins ? .white : themeManager.accentColor)
                                         .frame(maxWidth: .infinity)
-                                        .padding(.vertical, 8)
+                                        .frame(minHeight: 44)
                                         .background(defaultTime == mins ? themeManager.accentColor : themeManager.accentColor.opacity(0.1))
                                         .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                                 }
+                                .accessibilityLabel(String(localized: "\(mins) minutes"))
+                                .accessibilityAddTraits(defaultTime == mins ? .isSelected : [])
                             }
                         }
                         Slider(value: .init(get: { Double(defaultTime) }, set: { defaultTime = Int($0) }), in: 5...180, step: 5)
                             .tint(themeManager.accentColor)
+                            .accessibilityLabel("Default practice duration")
+                            .accessibilityValue(String(localized: "\(defaultTime) minutes"))
                     }
                     .padding(.vertical, 4)
                 }
@@ -609,10 +641,11 @@ struct PracticeSettingsView: View {
                                     .font(.subheadline)
                                     .foregroundStyle(themeManager.accentColor)
                                     .padding(.horizontal, 8)
-                                    .padding(.vertical, 6)
+                                    .frame(minHeight: 44)
                                     .background(themeManager.accentColor.opacity(0.1))
                                     .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                                 }
+                                .accessibilityLabel(String(localized: "Remove \(option)-minute option"))
                             }
                         }
                         if durationOptions.count < 6 {
@@ -626,10 +659,11 @@ struct PracticeSettingsView: View {
                                             .font(.subheadline)
                                             .foregroundStyle(.secondary)
                                             .padding(.horizontal, 8)
-                                            .padding(.vertical, 6)
+                                            .frame(minHeight: 44)
                                             .background(Color(.tertiarySystemFill))
                                             .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                                     }
+                                    .accessibilityLabel(String(localized: "Add \(mins)-minute option"))
                                 }
                             }
                         }
@@ -706,6 +740,8 @@ struct PracticeSettingsView: View {
                 let status = await PracticeReminderNotificationService.authorizationStatus()
                 reminderPermissionDenied = status == .denied
                 if reminderPermissionDenied {
+                    settingsManager.update(\.practiceReminderEnabled, value: false)
+                    reminderEnabled = false
                     return
                 }
             }

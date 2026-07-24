@@ -14,37 +14,16 @@ extension RecordingListView {
               let recording = recorder.recordings.first(where: { $0.id == newId }) else {
             return
         }
+        searchText = ""
+        selectedTag = nil
+        selectedPiece = nil
+        refreshFilteredRecordings()
         selectedRecording = recording
         recorder.newlyCreatedRecordingId = nil
-        refreshFilteredRecordings()
     }
     
     func loadAvailablePieces() -> [Piece] {
-        let documentsPath = iCloudManager.shared.getDocumentsURL()
-        let fileURL = documentsPath.appendingPathComponent("pieces.json")
-        
-        do {
-            let data = try iCloudManager.shared.readFile(from: fileURL)
-            if let decoded = try? JSONDecoder().decode([Piece].self, from: data) {
-                UserDefaults.standard.set(data, forKey: "pieces_cache")
-                return decoded.sorted { $0.name < $1.name }
-            }
-        } catch {
-            // fall through to other strategies
-        }
-        
-        if let data = try? Data(contentsOf: fileURL),
-           let decoded = try? JSONDecoder().decode([Piece].self, from: data) {
-            UserDefaults.standard.set(data, forKey: "pieces_cache")
-            return decoded.sorted { $0.name < $1.name }
-        }
-        
-        if let cachedData = UserDefaults.standard.data(forKey: "pieces_cache"),
-           let decoded = try? JSONDecoder().decode([Piece].self, from: cachedData) {
-            return decoded.sorted { $0.name < $1.name }
-        }
-        
-        return []
+        PieceService.load()
     }
     
     func formatTime(_ time: TimeInterval) -> String {
@@ -61,22 +40,6 @@ extension RecordingListView {
             piece.name.localizedCaseInsensitiveContains(pieceSearchText) ||
             (piece.composer?.localizedCaseInsensitiveContains(pieceSearchText) ?? false)
         }.sorted { $0.name < $1.name }
-    }
-    
-    func savePieces() {
-        availablePieces.sort { $0.name < $1.name }
-        guard let encoded = try? JSONEncoder().encode(availablePieces) else { return }
-        
-        let documentsPath = iCloudManager.shared.getDocumentsURL()
-        let fileURL = documentsPath.appendingPathComponent("pieces.json")
-        
-        do {
-            try iCloudManager.shared.writeFile(data: encoded, to: fileURL)
-        } catch {
-            try? encoded.write(to: fileURL)
-        }
-        
-        UserDefaults.standard.set(encoded, forKey: "pieces_cache")
     }
 }
 

@@ -24,6 +24,19 @@ extension MetronomeView {
         .scrollDismissesKeyboard(.interactively)
         .navigationTitle("Metronome")
         .navigationBarTitleDisplayMode(.inline)
+        .alert(
+            "Metronome Unavailable",
+            isPresented: Binding(
+                get: { metronome.startupError != nil },
+                set: { if !$0 { metronome.startupError = nil } }
+            )
+        ) {
+            Button("OK") {
+                metronome.startupError = nil
+            }
+        } message: {
+            Text(metronome.startupError?.localizedDescription ?? "")
+        }
         .toolbar {
             ToolbarItemGroup(placement: .navigationBarTrailing) {
                 Button {
@@ -262,7 +275,14 @@ extension MetronomeView {
                     set: { metronome.tempo = Int($0) }
                 ),
                 in: 20...300,
-                step: 1
+                step: 1,
+                onEditingChanged: { isEditing in
+                    if isEditing {
+                        metronome.beginTempoAdjustment()
+                    } else {
+                        metronome.endTempoAdjustment()
+                    }
+                }
             )
             .tint(themeManager.accentColor)
 

@@ -76,7 +76,13 @@ private enum NoteIdentificationClefs {
     static let allEnabled: Set<ClefName> = Set(ordered)
 
     static func label(_ clef: ClefName) -> String {
-        clef.rawValue.capitalized
+        switch clef {
+        case .treble: return String(localized: "Treble")
+        case .bass: return String(localized: "Bass")
+        case .alto: return String(localized: "Alto")
+        case .tenor: return String(localized: "Tenor")
+        default: return clef.rawValue.capitalized
+        }
     }
 
     /// Bottom-line diatonic pitch for each practice clef (treble E4, bass G2, alto F3, tenor D3).
@@ -253,6 +259,12 @@ struct NoteIdentificationExerciseView: View {
                 .frame(height: blockH)
                 .frame(maxWidth: .infinity)
                 .id(question)
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel(
+                    String(
+                        localized: "Note to identify on \(NoteIdentificationClefs.label(question.clef)) clef"
+                    )
+                )
         }
         .padding(.top, 2)
         .padding(.bottom, 0)
@@ -337,9 +349,21 @@ struct NoteIdentificationExerciseView: View {
                         )
                 }
                 .buttonStyle(ExerciseAnswerButtonStyle())
+                .accessibilityLabel(accessibilityAnswerLabel(letter: letter, accidental: accidental))
             }
         }
         .frame(maxWidth: .infinity)
+    }
+
+    private func accessibilityAnswerLabel(letter: NoteLetter, accidental: WrittenAccidental) -> String {
+        switch accidental {
+        case .natural:
+            return String(localized: "\(letter.displayLetter) natural")
+        case .sharp:
+            return String(localized: "\(letter.displayLetter) sharp")
+        case .flat:
+            return String(localized: "\(letter.displayLetter) flat")
+        }
     }
 
     private func select(letter: NoteLetter, accidental: WrittenAccidental) {

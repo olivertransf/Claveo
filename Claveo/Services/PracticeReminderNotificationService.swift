@@ -19,7 +19,7 @@ enum PracticeReminderNotificationService {
         if settings.practiceReminderEnabled {
             await schedule(settings: settings)
         } else {
-            await cancel()
+            cancel()
         }
     }
 
@@ -43,8 +43,16 @@ enum PracticeReminderNotificationService {
         }
     }
 
-    private static func schedule(settings: AppSettings) async {
-        guard await requestAuthorization() else { return }
+    /// Returns whether a reminder is pending after this call.
+    @discardableResult
+    private static func schedule(settings: AppSettings) async -> Bool {
+        let center = UNUserNotificationCenter.current()
+        // Always clear stale requests before auth / re-add so denied auth cannot leave old schedules.
+        center.removePendingNotificationRequests(withIdentifiers: [notificationID])
+
+        guard await requestAuthorization() else {
+            return false
+        }
 
         var components = DateComponents()
         components.hour = settings.practiceReminderHour
@@ -58,12 +66,15 @@ enum PracticeReminderNotificationService {
         let trigger = UNCalendarNotificationTrigger(dateMatching: components, repeats: true)
         let request = UNNotificationRequest(identifier: notificationID, content: content, trigger: trigger)
 
-        let center = UNUserNotificationCenter.current()
-        center.removePendingNotificationRequests(withIdentifiers: [notificationID])
-        try? await center.add(request)
+        do {
+            try await center.add(request)
+            return true
+        } catch {
+            return false
+        }
     }
 
-    private static func cancel() async {
+    static func cancel() {
         UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: [notificationID])
     }
 }

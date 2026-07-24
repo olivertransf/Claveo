@@ -143,36 +143,7 @@ struct RecordingFilterView: View {
     }
     
     private func loadPieces() {
-        let documentsPath = iCloudManager.shared.getDocumentsURL()
-        let fileURL = documentsPath.appendingPathComponent("pieces.json")
-        
-        // Try to load from iCloud first
-        do {
-            let data = try iCloudManager.shared.readFile(from: fileURL)
-            if let decoded = try? JSONDecoder().decode([Piece].self, from: data) {
-                availablePieces = decoded.sorted { $0.name < $1.name }
-                // Update local cache
-                UserDefaults.standard.set(data, forKey: "pieces_cache")
-                return
-            }
-        } catch {
-            // iCloud file doesn't exist or can't be read - try fallback
-        }
-        
-        // Fallback to direct read from iCloud directory
-        if let data = try? Data(contentsOf: fileURL),
-           let decoded = try? JSONDecoder().decode([Piece].self, from: data) {
-            availablePieces = decoded.sorted { $0.name < $1.name }
-            // Update local cache
-            UserDefaults.standard.set(data, forKey: "pieces_cache")
-            return
-        }
-        
-        // Last resort: load from local cache (for offline access)
-        if let cachedData = UserDefaults.standard.data(forKey: "pieces_cache"),
-           let decoded = try? JSONDecoder().decode([Piece].self, from: cachedData) {
-            availablePieces = decoded.sorted { $0.name < $1.name }
-        }
+        availablePieces = PieceService.load()
     }
 }
 

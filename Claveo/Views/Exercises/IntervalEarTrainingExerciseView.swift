@@ -156,7 +156,7 @@ struct IntervalEarTrainingExerciseView: View {
                 .minimumScaleFactor(0.85)
                 .lineLimit(1)
                 .frame(maxWidth: .infinity)
-                .padding(.vertical, 12)
+                .frame(minHeight: 44)
                 .padding(.horizontal, 8)
                 .background(
                     RoundedRectangle(cornerRadius: 12, style: .continuous)
@@ -249,6 +249,12 @@ struct IntervalEarTrainingExerciseView: View {
                 )
         }
         .buttonStyle(IntervalExerciseButtonStyle())
+        .accessibilityValue(accessibilityFeedback(for: interval))
+    }
+
+    private func accessibilityFeedback(for interval: EarTrainingInterval) -> String {
+        guard let feedback, feedback.interval == interval else { return "" }
+        return feedback.correct ? String(localized: "Correct") : String(localized: "Incorrect")
     }
 
     private func cellFill(for interval: EarTrainingInterval) -> Color {

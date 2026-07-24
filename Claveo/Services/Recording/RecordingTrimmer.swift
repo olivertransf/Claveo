@@ -62,9 +62,22 @@ enum RecordingTrimmer {
         
         try FileManager.default.copyItem(at: recordingURL, to: backupURL)
         
-        let trimmedURL = try await trimToTemp(recordingURL: recordingURL, startTime: startTime, endTime: endTime, assetDuration: assetDurationSeconds)
-        
-        return (trimmedURL: trimmedURL, backupURL: backupURL, originalDuration: assetDurationSeconds)
+        do {
+            let trimmedURL = try await trimToTemp(
+                recordingURL: recordingURL,
+                startTime: startTime,
+                endTime: endTime,
+                assetDuration: assetDurationSeconds
+            )
+            return (
+                trimmedURL: trimmedURL,
+                backupURL: backupURL,
+                originalDuration: assetDurationSeconds
+            )
+        } catch {
+            try? deleteBackup(at: backupURL)
+            throw error
+        }
     }
     
     static func restoreOriginal(recordingURL: URL, backupURL: URL) async throws {
@@ -72,11 +85,28 @@ enum RecordingTrimmer {
             throw RecordingTrimmerError.fileNotFound
         }
         
-        if FileManager.default.fileExists(atPath: recordingURL.path) {
-            try FileManager.default.removeItem(at: recordingURL)
+        let stagedURL = recordingURL.deletingLastPathComponent()
+            .appendingPathComponent("restore_\(UUID().uuidString).m4a")
+        do {
+            try FileManager.default.copyItem(at: backupURL, to: stagedURL)
+            if FileManager.default.fileExists(atPath: recordingURL.path) {
+                _ = try FileManager.default.replaceItemAt(
+                    recordingURL,
+                    withItemAt: stagedURL
+                )
+            } else {
+                try FileManager.default.moveItem(at: stagedURL, to: recordingURL)
+            }
+            try deleteBackup(at: backupURL)
+        } catch {
+            try? FileManager.default.removeItem(at: stagedURL)
+            throw RecordingTrimmerError.replaceFailed
         }
-        
-        try FileManager.default.copyItem(at: backupURL, to: recordingURL)
+    }
+
+    static func deleteBackup(at backupURL: URL) throws {
+        guard FileManager.default.fileExists(atPath: backupURL.path) else { return }
+        try FileManager.default.removeItem(at: backupURL)
     }
     
     private static func trimToTemp(recordingURL: URL, startTime: TimeInterval, endTime: TimeInterval, assetDuration: TimeInterval) async throws -> URL {
@@ -153,14 +183,8 @@ enum RecordingTrimmer {
         do {
             _ = try FileManager.default.replaceItemAt(recordingURL, withItemAt: trimmedURL, backupItemName: nil, options: [])
         } catch {
-            do {
-                if FileManager.default.fileExists(atPath: recordingURL.path) {
-                    try FileManager.default.removeItem(at: recordingURL)
-                }
-                try FileManager.default.moveItem(at: trimmedURL, to: recordingURL)
-            } catch {
-                throw RecordingTrimmerError.replaceFailed
-            }
+            try? FileManager.default.removeItem(at: trimmedURL)
+            throw RecordingTrimmerError.replaceFailed
         }
     }
 }

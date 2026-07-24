@@ -19,6 +19,8 @@ struct RecordingListView: View {
     @StateObject var player = AudioPlayer()
     @StateObject var settingsManager = SettingsManager.shared
     @State var showingDeleteAlert = false
+    @State var showingRecordingErrorAlert = false
+    @State var showingPlaybackErrorAlert = false
     @State var recordingToDelete: Recording?
     @State var showingPermissionAlert = false
     @State var selectedRecording: Recording?
@@ -77,17 +79,23 @@ struct RecordingListView: View {
             PieceEditSheet(
                 piece: pieceToEdit,
                 onSave: { updatedPiece in
-                    if let index = availablePieces.firstIndex(where: { $0.id == updatedPiece.id }) {
-                        availablePieces[index] = updatedPiece
-                        availablePieces.sort { $0.name < $1.name }
-                        savePieces()
+                    do {
+                        availablePieces = try PieceService.upsert(updatedPiece)
+                    } catch {
+                        if let index = availablePieces.firstIndex(where: { $0.id == updatedPiece.id }) {
+                            availablePieces[index] = updatedPiece
+                            availablePieces.sort { $0.name < $1.name }
+                        }
                     }
                     editingPiece = nil
                 },
                 onDelete: {
-                    availablePieces.removeAll { $0.id == pieceToEdit.id }
-                    availablePieces.sort { $0.name < $1.name }
-                    savePieces()
+                    do {
+                        availablePieces = try PieceService.delete(id: pieceToEdit.id)
+                    } catch {
+                        availablePieces.removeAll { $0.id == pieceToEdit.id }
+                        availablePieces.sort { $0.name < $1.name }
+                    }
                     editingPiece = nil
                 },
                 onCancel: {
@@ -105,35 +113,15 @@ struct RecordingListView: View {
             }
             .environmentObject(themeManager)
         }
-        .alert("Delete Recording", isPresented: $showingDeleteAlert) {
-            Button("Cancel", role: .cancel) { }
-            Button("Delete", role: .destructive) {
-                if let recording = recordingToDelete {
-                    recorder.deleteRecording(recording)
-                }
-            }
-        } message: {
-            Text("Are you sure you want to delete this recording?")
-        }
-        .alert("Microphone Access Required", isPresented: $showingPermissionAlert) {
-            Button("Settings") {
-                if let settingsURL = URL(string: UIApplication.openSettingsURLString) {
-                    UIApplication.shared.open(settingsURL)
-                }
-            }
-            Button("Cancel", role: .cancel) {
-                recorder.permissionError = nil
-            }
-        } message: {
-            if let error = recorder.permissionError {
-                Text(error)
-            } else {
-                Text("Microphone access is required to record audio.")
-            }
-        }
-        .onChange(of: recorder.permissionError) { _, newValue in
-            showingPermissionAlert = newValue != nil
-        }
+        .modifier(RecordingListAlertsModifier(
+            showingDeleteAlert: $showingDeleteAlert,
+            showingPermissionAlert: $showingPermissionAlert,
+            showingRecordingErrorAlert: $showingRecordingErrorAlert,
+            showingPlaybackErrorAlert: $showingPlaybackErrorAlert,
+            recordingToDelete: $recordingToDelete,
+            recorder: recorder,
+            player: player
+        ))
         .onChange(of: recorder.newlyCreatedRecordingId) { _, newId in
             handleNewRecording(newId)
         }
@@ -141,7 +129,7 @@ struct RecordingListView: View {
             availablePieces = loadAvailablePieces()
             refreshFilteredRecordings()
         }
-        .onChange(of: recorder.recordings.count) { _, _ in refreshFilteredRecordings() }
+        .onReceive(recorder.$recordings) { _ in refreshFilteredRecordings() }
         .onChange(of: recorder.isLoadingRecordings) { _, _ in refreshFilteredRecordings() }
         .onChange(of: searchText) { _, _ in refreshFilteredRecordings() }
         .onChange(of: selectedTag) { _, _ in refreshFilteredRecordings() }
@@ -164,5 +152,68 @@ struct RecordingListView: View {
                     }
                 }
         }
+    }
+}
+
+private struct RecordingListAlertsModifier: ViewModifier {
+    @Binding var showingDeleteAlert: Bool
+    @Binding var showingPermissionAlert: Bool
+    @Binding var showingRecordingErrorAlert: Bool
+    @Binding var showingPlaybackErrorAlert: Bool
+    @Binding var recordingToDelete: Recording?
+    @ObservedObject var recorder: AudioRecorder
+    @ObservedObject var player: AudioPlayer
+
+    func body(content: Content) -> some View {
+        content
+            .alert("Delete Recording", isPresented: $showingDeleteAlert) {
+                Button("Cancel", role: .cancel) { }
+                Button("Delete", role: .destructive) {
+                    if let recording = recordingToDelete {
+                        recorder.deleteRecording(recording)
+                    }
+                }
+            } message: {
+                Text("Are you sure you want to delete this recording?")
+            }
+            .alert("Microphone Access Required", isPresented: $showingPermissionAlert) {
+                Button("Settings") {
+                    if let settingsURL = URL(string: UIApplication.openSettingsURLString) {
+                        UIApplication.shared.open(settingsURL)
+                    }
+                }
+                Button("Cancel", role: .cancel) {
+                    recorder.permissionError = nil
+                }
+            } message: {
+                if let error = recorder.permissionError {
+                    Text(error)
+                } else {
+                    Text("Microphone access is required to record audio.")
+                }
+            }
+            .alert("Recording Error", isPresented: $showingRecordingErrorAlert) {
+                Button("OK") {
+                    recorder.recordingError = nil
+                }
+            } message: {
+                Text(recorder.recordingError ?? String(localized: "The recording could not be saved."))
+            }
+            .alert("Playback Error", isPresented: $showingPlaybackErrorAlert) {
+                Button("OK") {
+                    player.playbackError = nil
+                }
+            } message: {
+                Text(player.playbackError ?? String(localized: "Playback failed."))
+            }
+            .onChange(of: recorder.permissionError) { _, newValue in
+                showingPermissionAlert = newValue != nil
+            }
+            .onChange(of: recorder.recordingError) { _, newValue in
+                showingRecordingErrorAlert = newValue != nil
+            }
+            .onChange(of: player.playbackError) { _, newValue in
+                showingPlaybackErrorAlert = newValue != nil
+            }
     }
 }

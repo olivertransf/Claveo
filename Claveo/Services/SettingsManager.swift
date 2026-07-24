@@ -17,6 +17,10 @@ class SettingsManager: ObservableObject {
     @Published var settings = AppSettings()
     
     private let settingsFileName = "settings.json"
+    private let settingsLastModifiedKey = "settingsLastModified"
+    private var settingsWriteTask: Task<Void, Never>?
+    /// Bumped on every local save so in-flight iCloud syncs can abort.
+    private var settingsGeneration = 0
     private var settingsURL: URL {
         iCloudManager.shared.getDocumentsURL().appendingPathComponent(settingsFileName)
     }
@@ -39,18 +43,58 @@ class SettingsManager: ObservableObject {
     // MARK: - Load Settings
     
     private func loadSettings() {
-        // Try to load from iCloud first
-        if let iCloudSettings = loadFromiCloud() {
-            settings = iCloudSettings
-            // Update local cache
+        loadFromUserDefaults()
+        let localSettings = settings
+        let localFavoritesBeforeSync = localSettings.favoriteTempos
+        let localModified = UserDefaults.standard.object(forKey: settingsLastModifiedKey) as? Date
+            ?? .distantPast
+
+        if let remote = loadFromiCloud() {
+            settings = Self.resolve(
+                local: localSettings,
+                localModified: localModified,
+                remote: remote.settings,
+                remoteModified: remote.lastModified
+            )
+            if remote.lastModified >= localModified {
+                UserDefaults.standard.set(remote.lastModified, forKey: settingsLastModifiedKey)
+            }
             saveToUserDefaults()
-        } else {
-            // Fall back to UserDefaults (local cache)
-            loadFromUserDefaults()
         }
+        recoverFavoriteTemposIfNeeded(preserving: localFavoritesBeforeSync)
+        // Device-local tab selection always wins over any cloud value.
+        applyDeviceLocalTabSelection()
         migrateTabIndicesForExercisesTabIfNeeded()
         migrateStorageToiCloudDefaultIfNeeded()
         iCloudManager.shared.setStoreFilesOnDeviceOnly(settings.storeFilesOnDeviceOnly)
+    }
+
+    /// Pulls favorite tempos from every known Documents root so a thin cloud snapshot
+    /// cannot permanently erase a richer local/other-root list.
+    private func recoverFavoriteTemposIfNeeded(preserving localFavorites: [Int]) {
+        var recovered = Set(settings.favoriteTempos)
+        recovered.formUnion(localFavorites)
+
+        for root in iCloudManager.shared.knownStorageRoots().values {
+            let url = root.appendingPathComponent(settingsFileName)
+            let data = (try? iCloudManager.shared.readFile(from: url))
+                ?? (try? Data(contentsOf: url))
+            guard let data,
+                  let decoded = try? JSONDecoder().decode(AppSettings.self, from: data) else {
+                continue
+            }
+            recovered.formUnion(decoded.favoriteTempos)
+        }
+
+        let merged = recovered.sorted()
+        guard merged != settings.favoriteTempos else { return }
+        settings.favoriteTempos = merged
+        saveToUserDefaults()
+    }
+
+    private func applyDeviceLocalTabSelection() {
+        let tab = UserDefaults.standard.integer(forKey: "lastSelectedTab")
+        settings.lastSelectedTab = (0...7).contains(tab) ? tab : 0
     }
 
     /// iCloud Drive is the default; ensure installs without an explicit choice use it.
@@ -65,23 +109,43 @@ class SettingsManager: ObservableObject {
         UserDefaults.standard.set(true, forKey: migrationKey)
     }
 
-    /// One-time remap after adding Exercises at index 4: old 4/5/6 (Dictionary/Settings/Chords) → 5/6/7.
+    /// Remap legacy tab indices for pre-Exercises payloads and one-time local upgrades.
     private func migrateTabIndicesForExercisesTabIfNeeded() {
         let key = "claveoTabIndicesExercisesMigration_v1"
+
+        if settings.tabSemanticsVersion < AppSettings.currentTabSemanticsVersion {
+            let t = settings.lastSelectedTab
+            if (4...6).contains(t) {
+                settings.lastSelectedTab = t + 1
+                UserDefaults.standard.set(settings.lastSelectedTab, forKey: "lastSelectedTab")
+            }
+            settings.tabSemanticsVersion = AppSettings.currentTabSemanticsVersion
+            UserDefaults.standard.set(true, forKey: key)
+            // Persist version bump without treating this as a full settings "user edit"
+            // that should blindly overwrite cloud lists — saveSettings still uploads,
+            // but resolve now unions favoriteTempos.
+            saveSettings()
+            return
+        }
+
         guard !UserDefaults.standard.bool(forKey: key) else { return }
-        let t = settings.lastSelectedTab
+        // Local upgrade before `tabSemanticsVersion` existed — remap once from UserDefaults.
+        let t = UserDefaults.standard.integer(forKey: "lastSelectedTab")
         if (4...6).contains(t) {
-            settings.lastSelectedTab = t + 1
-            UserDefaults.standard.set(settings.lastSelectedTab, forKey: "lastSelectedTab")
+            let remapped = t + 1
+            settings.lastSelectedTab = remapped
+            UserDefaults.standard.set(remapped, forKey: "lastSelectedTab")
         }
         UserDefaults.standard.set(true, forKey: key)
     }
     
-    private func loadFromiCloud() -> AppSettings? {
+    private func loadFromiCloud() -> (settings: AppSettings, lastModified: Date)? {
         do {
             let data = try iCloudManager.shared.readFile(from: settingsURL)
             if let decoded = try? JSONDecoder().decode(AppSettings.self, from: data) {
-                return decoded
+                let attributes = try? FileManager.default.attributesOfItem(atPath: settingsURL.path)
+                let modified = attributes?[.modificationDate] as? Date ?? .distantPast
+                return (decoded, modified)
             }
         } catch {
             // File doesn't exist or can't be read - that's okay, use UserDefaults
@@ -101,7 +165,7 @@ class SettingsManager: ObservableObject {
         settings.metronomeSound = defaults.string(forKey: "metronomeSound") ?? MetronomeSound.click.rawValue
         settings.metronomeEmphasizedSound = defaults.string(forKey: "metronomeEmphasizedSound") ?? MetronomeSound.tick.rawValue
         settings.metronomeNonEmphasizedSound = defaults.string(forKey: "metronomeNonEmphasizedSound") ?? MetronomeSound.click.rawValue
-        settings.metronomeVolume = defaults.object(forKey: "metronomeVolume") as? Double ?? 0.7
+        settings.metronomeVolume = defaults.object(forKey: "metronomeVolume") as? Double ?? 0.9
         settings.metronomeHapticEnabled = defaults.object(forKey: "metronomeHapticEnabled") as? Bool ?? true
         settings.metronomeAutoStopOnTabSwitch = defaults.bool(forKey: "metronomeAutoStopOnTabSwitch")
         settings.stopToneWhenLeavingMetronomeTab = defaults.object(forKey: "stopToneWhenLeavingMetronomeTab") as? Bool ?? false
@@ -178,14 +242,22 @@ class SettingsManager: ObservableObject {
     // MARK: - Save Settings
     
     func saveSettings() {
+        settingsGeneration &+= 1
+        settings.tabSemanticsVersion = AppSettings.currentTabSemanticsVersion
+        let modified = Date()
+        UserDefaults.standard.set(modified, forKey: settingsLastModifiedKey)
         // UserDefaults is memory-mapped — fast, keep on main thread.
         saveToUserDefaults()
         iCloudManager.shared.setStoreFilesOnDeviceOnly(settings.storeFilesOnDeviceOnly)
         // iCloud uses NSFileCoordinator (blocking I/O) — always run off the main thread.
-        let snapshot = settings
+        // Omit device-local tab selection from the cloud payload.
+        var snapshot = settings
+        snapshot.lastSelectedTab = 0
         let url = settingsURL
         guard let encoded = try? JSONEncoder().encode(snapshot) else { return }
-        Task.detached(priority: .utility) {
+        let previousWrite = settingsWriteTask
+        settingsWriteTask = Task.detached(priority: .utility) {
+            await previousWrite?.value
             do {
                 try iCloudManager.shared.writeFile(data: encoded, to: url)
             } catch {
@@ -267,20 +339,66 @@ class SettingsManager: ObservableObject {
     
     func syncFromiCloud() {
         let url = settingsURL
-        let currentSettings = settings
+        let generationAtStart = settingsGeneration
+        let localModified = UserDefaults.standard.object(forKey: settingsLastModifiedKey) as? Date
+            ?? .distantPast
         Task.detached(priority: .utility) {
             let data = try? iCloudManager.shared.readFile(from: url)
+            let attributes = try? FileManager.default.attributesOfItem(atPath: url.path)
+            let remoteModified = attributes?[.modificationDate] as? Date ?? .distantPast
             await MainActor.run { [weak self] in
                 guard let self else { return }
+                // Abort if the user saved settings while the cloud read was in flight.
+                guard self.settingsGeneration == generationAtStart else { return }
+                let currentLocalModified = UserDefaults.standard.object(forKey: self.settingsLastModifiedKey) as? Date
+                    ?? .distantPast
+                guard currentLocalModified == localModified else { return }
+
                 if let data,
                    let decoded = try? JSONDecoder().decode(AppSettings.self, from: data) {
-                    self.settings = decoded
+                    let localFavorites = self.settings.favoriteTempos
+                    var resolved = Self.resolve(
+                        local: self.settings,
+                        localModified: localModified,
+                        remote: decoded,
+                        remoteModified: remoteModified
+                    )
+                    // Preserve device-local tab; migrate legacy cloud payloads only.
+                    if resolved.tabSemanticsVersion < AppSettings.currentTabSemanticsVersion {
+                        let t = resolved.lastSelectedTab
+                        if (4...6).contains(t) {
+                            resolved.lastSelectedTab = t + 1
+                        }
+                        resolved.tabSemanticsVersion = AppSettings.currentTabSemanticsVersion
+                    }
+                    self.settings = resolved
+                    self.recoverFavoriteTemposIfNeeded(preserving: localFavorites)
+                    self.applyDeviceLocalTabSelection()
+                    UserDefaults.standard.set(
+                        max(localModified, remoteModified),
+                        forKey: self.settingsLastModifiedKey
+                    )
                     self.saveToUserDefaults()
-                } else if let encoded = try? JSONEncoder().encode(currentSettings) {
-                    try? iCloudManager.shared.writeFile(data: encoded, to: url)
+                    if localModified > remoteModified {
+                        self.saveSettings()
+                    }
+                } else {
+                    self.saveSettings()
                 }
             }
         }
+    }
+
+    static func resolve(
+        local: AppSettings,
+        localModified: Date,
+        remote: AppSettings,
+        remoteModified: Date
+    ) -> AppSettings {
+        var winner = localModified > remoteModified ? local : remote
+        // Never let a newer-but-empty cloud list erase local favorites (or vice versa).
+        winner.favoriteTempos = Array(Set(local.favoriteTempos).union(remote.favoriteTempos)).sorted()
+        return winner
     }
     
     // MARK: - Property Updates
@@ -291,6 +409,7 @@ class SettingsManager: ObservableObject {
     }
 
     func resetSettings() {
+        PracticeReminderNotificationService.cancel()
         let defaultShowTabBarText = UIDevice.current.userInterfaceIdiom == .pad
         var defaults = AppSettings()
         defaults.showTabBarText = defaultShowTabBarText
@@ -331,6 +450,7 @@ class SettingsManager: ObservableObject {
             "noteIdentificationEnabledClefRawValues",
             "keySignatureIdentificationEnabledModeRawValues"
         ].forEach { defaults.removeObject(forKey: $0) }
+        defaults.removeObject(forKey: settingsLastModifiedKey)
     }
     
     // MARK: - Computed Properties for Convenience

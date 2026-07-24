@@ -74,6 +74,15 @@ struct MetronomeView: View {
                 metronome.stop()
             }
         }
+        .onReceive(NotificationCenter.default.publisher(for: .claveoPlaybackShouldYieldForTuner)) { _ in
+            if metronome.isPlaying {
+                metronome.stop()
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .claveoPlaybackMayResumeAfterTuner)) { _ in
+            // Session category is restored when the user presses Start again.
+            // Auto-resume is intentionally skipped to avoid surprising clicks after tuner use.
+        }
         .sheet(isPresented: $showingCustomTimeSignatureSheet) {
             customTimeSignatureSheet
                 .environmentObject(themeManager)

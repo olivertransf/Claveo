@@ -10,11 +10,19 @@ import Foundation
 import UniformTypeIdentifiers
 import SwiftUI
 
-struct Recording: Identifiable, Codable, Sendable {
+enum RecordingStorageLocation: String, Codable, Sendable {
+    case device
+    case iCloud
+}
+
+struct Recording: Identifiable, Codable, Equatable, Sendable {
     var id: UUID
     let fileName: String
     var createdAt: Date
     var duration: TimeInterval
+    var lastModified: Date
+    var storageLocation: RecordingStorageLocation?
+    var isDeleted: Bool
     
     // Metadata fields
     var name: String
@@ -29,14 +37,17 @@ struct Recording: Identifiable, Codable, Sendable {
     var originalDuration: TimeInterval? // Original duration before trimming
     
     enum CodingKeys: String, CodingKey {
-        case id, fileName, createdAt, duration, name, tags, piece, measureStart, measureEnd, notes, originalFileName, originalDuration
+        case id, fileName, createdAt, duration, lastModified, storageLocation, isDeleted, name, tags, piece, measureStart, measureEnd, notes, originalFileName, originalDuration
     }
     
-    init(id: UUID = UUID(), fileName: String, createdAt: Date = Date(), duration: TimeInterval, name: String = "", tags: [String] = [], piece: String? = nil, measureStart: Int? = nil, measureEnd: Int? = nil, notes: String = "", originalFileName: String? = nil, originalDuration: TimeInterval? = nil) {
+    init(id: UUID = UUID(), fileName: String, createdAt: Date = Date(), duration: TimeInterval, name: String = "", tags: [String] = [], piece: String? = nil, measureStart: Int? = nil, measureEnd: Int? = nil, notes: String = "", originalFileName: String? = nil, originalDuration: TimeInterval? = nil, lastModified: Date? = nil, storageLocation: RecordingStorageLocation? = nil, isDeleted: Bool = false) {
         self.id = id
         self.fileName = fileName
         self.createdAt = createdAt
         self.duration = duration
+        self.lastModified = lastModified ?? createdAt
+        self.storageLocation = storageLocation
+        self.isDeleted = isDeleted
         self.name = name
         self.tags = tags
         self.piece = piece
@@ -53,6 +64,9 @@ struct Recording: Identifiable, Codable, Sendable {
         fileName = try container.decode(String.self, forKey: .fileName)
         createdAt = try container.decode(Date.self, forKey: .createdAt)
         duration = try container.decode(TimeInterval.self, forKey: .duration)
+        lastModified = try container.decodeIfPresent(Date.self, forKey: .lastModified) ?? createdAt
+        storageLocation = try container.decodeIfPresent(RecordingStorageLocation.self, forKey: .storageLocation)
+        isDeleted = try container.decodeIfPresent(Bool.self, forKey: .isDeleted) ?? false
         name = try container.decodeIfPresent(String.self, forKey: .name) ?? ""
         tags = try container.decodeIfPresent([String].self, forKey: .tags) ?? []
         piece = try container.decodeIfPresent(String.self, forKey: .piece)
@@ -155,12 +169,18 @@ struct Recording: Identifiable, Codable, Sendable {
     }
     
     var fileURL: URL {
-        return iCloudManager.shared.getDocumentsURL().appendingPathComponent(fileName)
+        iCloudManager.shared.fileURL(
+            fileName: fileName,
+            pinnedLocation: storageLocation
+        )
     }
     
     var originalFileURL: URL? {
         guard let originalFileName = originalFileName else { return nil }
-        return iCloudManager.shared.getDocumentsURL().appendingPathComponent(originalFileName)
+        return iCloudManager.shared.fileURL(
+            fileName: originalFileName,
+            pinnedLocation: storageLocation
+        )
     }
     
     var hasTrimHistory: Bool {
@@ -207,7 +227,8 @@ struct Recording: Identifiable, Codable, Sendable {
 
     @MainActor
     func shareableFileURL() throws -> URL {
-        try shareableFileURL(documentsBase: iCloudManager.shared.getDocumentsURL())
+        let sourceURL = fileURL
+        return try shareableFileURL(documentsBase: sourceURL.deletingLastPathComponent())
     }
 }
 
@@ -217,8 +238,7 @@ struct RecordingFileTransferable: Transferable {
     static var transferRepresentation: some TransferRepresentation {
         FileRepresentation(contentType: UTType.audio) { transferable in
             let shareableURL = try await MainActor.run {
-                let base = iCloudManager.shared.getDocumentsURL()
-                return try transferable.recording.shareableFileURL(documentsBase: base)
+                try transferable.recording.shareableFileURL()
             }
             return SentTransferredFile(shareableURL)
         } importing: { received in

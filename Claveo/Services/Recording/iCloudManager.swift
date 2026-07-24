@@ -12,7 +12,7 @@ extension Notification.Name {
     static let claveoStorageLocationDidChange = Notification.Name("claveoStorageLocationDidChange")
 }
 
-private let storeFilesOnDeviceOnlyUserDefaultsKey = "storeFilesOnDeviceOnly"
+nonisolated(unsafe) private let storeFilesOnDeviceOnlyUserDefaultsKey = "storeFilesOnDeviceOnly"
 
 /// Manages iCloud Drive sync for recordings and metadata.
 /// Returns local Documents immediately; resolves the ubiquity container on a background task.
@@ -23,6 +23,7 @@ final class iCloudManager: @unchecked Sendable {
     private nonisolated(unsafe) let fileCoordinator = NSFileCoordinator()
     private let localDocumentsURL: URL
     private nonisolated(unsafe) var resolvedDocumentsURL: URL?
+    private nonisolated(unsafe) var resolvedICloudDocumentsURL: URL?
     private nonisolated(unsafe) var warmUpTask: Task<Void, Never>?
     private let lock = NSLock()
 
@@ -44,23 +45,21 @@ final class iCloudManager: @unchecked Sendable {
         if enabled {
             lock.lock()
             resolvedDocumentsURL = localDocumentsURL
-            warmUpTask = nil
             lock.unlock()
             notifyStorageLocationDidChange()
             return
         }
 
         lock.lock()
-        let stuckOnLocal = resolvedDocumentsURL == nil || resolvedDocumentsURL == localDocumentsURL
+        if let cloudURL = resolvedICloudDocumentsURL {
+            resolvedDocumentsURL = cloudURL
+        }
+        let stuckOnLocal = resolvedICloudDocumentsURL == nil
         let preferenceChanged = current != enabled
         lock.unlock()
 
-        if preferenceChanged {
-            lock.lock()
-            resolvedDocumentsURL = nil
-            warmUpTask = nil
-            lock.unlock()
-            warmUp()
+        if preferenceChanged && !stuckOnLocal {
+            notifyStorageLocationDidChange()
             return
         }
 
@@ -72,19 +71,9 @@ final class iCloudManager: @unchecked Sendable {
         }
     }
 
-    /// Non-blocking. Starts background ubiquity resolution if needed.
-    nonisolated func warmUp() {
+    nonisolated func warmUp(force: Bool = false) {
         lock.lock()
-        if warmUpTask != nil {
-            lock.unlock()
-            return
-        }
-        if prefersDeviceOnlyStorage {
-            resolvedDocumentsURL = localDocumentsURL
-            let localURL = localDocumentsURL
-            warmUpTask = Task.detached(priority: .utility) {
-                iCloudManager.shared.storeResolvedURL(localURL, iCloudActive: false)
-            }
+        if warmUpTask != nil, !force {
             lock.unlock()
             return
         }
@@ -103,10 +92,18 @@ final class iCloudManager: @unchecked Sendable {
     }
 
     /// Awaits background ubiquity resolution started by `warmUp()`.
+    /// Retries when a prior resolve found no container (e.g. user signed into iCloud later).
     nonisolated func warmUpIfNeeded() async {
-        warmUp()
+        let shouldRetry = shouldRetryUbiquityResolve()
+        warmUp(force: shouldRetry)
         let task = copyWarmUpTask()
         await task?.value
+    }
+
+    nonisolated private func shouldRetryUbiquityResolve() -> Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        return !prefersDeviceOnlyStorage && resolvedICloudDocumentsURL == nil
     }
 
     nonisolated private func copyWarmUpTask() -> Task<Void, Never>? {
@@ -117,6 +114,9 @@ final class iCloudManager: @unchecked Sendable {
 
     nonisolated private func storeResolvedURL(_ url: URL, iCloudActive: Bool) {
         lock.lock()
+        if iCloudActive {
+            resolvedICloudDocumentsURL = url
+        }
         if prefersDeviceOnlyStorage {
             resolvedDocumentsURL = localDocumentsURL
         } else {
@@ -144,6 +144,109 @@ final class iCloudManager: @unchecked Sendable {
             return localDocumentsURL
         }
         return resolvedDocumentsURL ?? localDocumentsURL
+    }
+
+    nonisolated var activeStorageLocation: RecordingStorageLocation {
+        getDocumentsURL() == localDocumentsURL ? .device : .iCloud
+    }
+
+    nonisolated func documentsURL(for location: RecordingStorageLocation) -> URL? {
+        lock.lock()
+        defer { lock.unlock() }
+        switch location {
+        case .device:
+            return localDocumentsURL
+        case .iCloud:
+            return resolvedICloudDocumentsURL
+        }
+    }
+
+    nonisolated func knownStorageRoots() -> [RecordingStorageLocation: URL] {
+        lock.lock()
+        defer { lock.unlock() }
+        var roots: [RecordingStorageLocation: URL] = [.device: localDocumentsURL]
+        if let resolvedICloudDocumentsURL {
+            roots[.iCloud] = resolvedICloudDocumentsURL
+        }
+        return roots
+    }
+
+    nonisolated func fileURL(
+        fileName: String,
+        pinnedLocation: RecordingStorageLocation?
+    ) -> URL {
+        let roots = knownStorageRoots()
+        if let existing = Self.existingFileURL(
+            fileName: fileName,
+            pinnedLocation: pinnedLocation,
+            roots: roots
+        ) {
+            return existing
+        }
+        if let pinnedLocation, let pinnedRoot = roots[pinnedLocation] {
+            return pinnedRoot.appendingPathComponent(fileName)
+        }
+        return getDocumentsURL().appendingPathComponent(fileName)
+    }
+
+    nonisolated func storageLocation(
+        containing fileName: String,
+        preferred: RecordingStorageLocation?
+    ) -> RecordingStorageLocation? {
+        let roots = knownStorageRoots()
+        if let preferred,
+           let root = roots[preferred],
+           FileManager.default.fileExists(atPath: root.appendingPathComponent(fileName).path) {
+            return preferred
+        }
+        return roots.keys
+            .sorted { $0.rawValue < $1.rawValue }
+            .first { location in
+                guard let root = roots[location] else { return false }
+                return FileManager.default.fileExists(
+                    atPath: root.appendingPathComponent(fileName).path
+                )
+            }
+    }
+
+    nonisolated static func existingFileURL(
+        fileName: String,
+        pinnedLocation: RecordingStorageLocation?,
+        roots: [RecordingStorageLocation: URL]
+    ) -> URL? {
+        var locations: [RecordingStorageLocation] = []
+        if let pinnedLocation {
+            locations.append(pinnedLocation)
+        }
+        locations.append(contentsOf: roots.keys.sorted { $0.rawValue < $1.rawValue })
+
+        for location in locations {
+            guard let root = roots[location] else { continue }
+            let candidate = root.appendingPathComponent(fileName)
+            if FileManager.default.fileExists(atPath: candidate.path) {
+                return candidate
+            }
+        }
+        return nil
+    }
+
+    @discardableResult
+    nonisolated static func copyFileIfDestinationMissing(
+        from sourceURL: URL,
+        to destinationURL: URL
+    ) throws -> Bool {
+        guard FileManager.default.fileExists(atPath: sourceURL.path) else {
+            return false
+        }
+        guard !FileManager.default.fileExists(atPath: destinationURL.path) else {
+            return false
+        }
+        try FileManager.default.createDirectory(
+            at: destinationURL.deletingLastPathComponent(),
+            withIntermediateDirectories: true
+        )
+        try FileManager.default.copyItem(at: sourceURL, to: destinationURL)
+        return true
     }
 
     nonisolated var isAvailable: Bool {

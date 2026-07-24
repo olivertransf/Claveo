@@ -37,13 +37,17 @@ final class ToneGeneratorEngine: ObservableObject {
     private var engine: AVAudioEngine?
     /// Task that stops the engine after a fade-out completes.
     private var stopTask: Task<Void, Never>?
+    private var resignActiveObserver: NSObjectProtocol?
+    private var yieldObserver: NSObjectProtocol?
+    private var resumeObserver: NSObjectProtocol?
+    private var resumeAfterTuner = false
 
     init() {
         renderState.lock.lock()
         renderState.hz = Self.clamp(440)
         renderState.lock.unlock()
 
-        NotificationCenter.default.addObserver(
+        resignActiveObserver = NotificationCenter.default.addObserver(
             forName: UIApplication.willResignActiveNotification,
             object: nil,
             queue: .main
@@ -51,6 +55,44 @@ final class ToneGeneratorEngine: ObservableObject {
             Task { @MainActor [weak self] in
                 self?.gracefulStop()
             }
+        }
+
+        yieldObserver = NotificationCenter.default.addObserver(
+            forName: .claveoPlaybackShouldYieldForTuner,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                self.resumeAfterTuner = self.isPlaying
+                if self.isPlaying {
+                    self.gracefulStop()
+                }
+            }
+        }
+
+        resumeObserver = NotificationCenter.default.addObserver(
+            forName: .claveoPlaybackMayResumeAfterTuner,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor [weak self] in
+                guard let self, self.resumeAfterTuner else { return }
+                self.resumeAfterTuner = false
+                self.start()
+            }
+        }
+    }
+
+    deinit {
+        if let resignActiveObserver {
+            NotificationCenter.default.removeObserver(resignActiveObserver)
+        }
+        if let yieldObserver {
+            NotificationCenter.default.removeObserver(yieldObserver)
+        }
+        if let resumeObserver {
+            NotificationCenter.default.removeObserver(resumeObserver)
         }
     }
 
@@ -84,7 +126,10 @@ final class ToneGeneratorEngine: ObservableObject {
 
     /// Fades amplitude to zero over ~40 ms then tears down the engine.
     func gracefulStop() {
-        guard isPlaying else { return }
+        guard isPlaying else {
+            tearDownEngineImmediately()
+            return
+        }
         isPlaying = false
         stopTask?.cancel()
         renderState.lock.lock()
@@ -93,20 +138,33 @@ final class ToneGeneratorEngine: ObservableObject {
         stopTask = Task { @MainActor [weak self] in
             // Wait for the fade (50 ms headroom over the 40 ms ramp).
             try? await Task.sleep(nanoseconds: 50_000_000)
-            self?.engine?.stop()
-            self?.engine = nil
+            self?.tearDownEngineImmediately()
         }
     }
 
-    func start() {
-        guard !isPlaying else { return }
+    private func tearDownEngineImmediately() {
         stopTask?.cancel()
         stopTask = nil
+        engine?.stop()
+        engine = nil
+    }
+
+    func start() {
+        stopTask?.cancel()
+        stopTask = nil
+        tearDownEngineImmediately()
         prepareSession()
 
+        let sessionRate = AVAudioSession.sharedInstance().sampleRate
+        let sampleRate = sessionRate > 0 ? sessionRate : 44_100
+        guard let format = AVAudioFormat(standardFormatWithSampleRate: sampleRate, channels: 1) else {
+            #if DEBUG
+            print("ToneGeneratorEngine: invalid audio format")
+            #endif
+            return
+        }
+
         let eng = AVAudioEngine()
-        let format = eng.mainMixerNode.outputFormat(forBus: 0)
-        let sampleRate = format.sampleRate
         let renderState = self.renderState
 
         // Per-sample amplitude step for a ~40 ms fade (avoids clicks on start/stop).

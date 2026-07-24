@@ -17,6 +17,8 @@ struct QuickPracticeEntryView: View {
     @State private var durationOptions: [Int] = []
 
     let date: Date
+    /// When true, always create a new session even if one exists for the day.
+    var prefersNewEntry: Bool = false
     @State private var duration: Int = 30
     @State private var notes = ""
     @State private var rating: Int? = nil
@@ -24,7 +26,7 @@ struct QuickPracticeEntryView: View {
     @State private var selectedRecordings: Set<UUID> = []
 
     var existingEntry: PracticeEntry? {
-        practiceService.entriesForDate(date).first
+        prefersNewEntry ? nil : practiceService.entriesForDate(date).first
     }
 
     var body: some View {
@@ -69,18 +71,22 @@ struct QuickPracticeEntryView: View {
                                             .font(.subheadline.weight(.semibold))
                                             .foregroundStyle(duration == mins ? .white : themeManager.accentColor)
                                             .frame(maxWidth: .infinity)
-                                            .padding(.vertical, 9)
+                                            .frame(minHeight: 44)
                                             .background(
                                                 RoundedRectangle(cornerRadius: 10, style: .continuous)
                                                     .fill(duration == mins ? themeManager.accentColor : themeManager.accentColor.opacity(0.1))
                                             )
                                     }
+                                    .accessibilityLabel(String(localized: "\(mins) minutes"))
+                                    .accessibilityAddTraits(duration == mins ? .isSelected : [])
                                 }
                             }
                         }
 
                         Slider(value: .init(get: { Double(duration) }, set: { duration = Int($0) }), in: 5...180, step: 5)
                             .tint(themeManager.accentColor)
+                            .accessibilityLabel("Duration")
+                            .accessibilityValue(String(localized: "\(duration) minutes"))
                     }
                     .padding(18)
                     .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(Color(.secondarySystemGroupedBackground)))
@@ -107,6 +113,8 @@ struct QuickPracticeEntryView: View {
                                         .contentShape(Rectangle())
                                         .scaleEffect(star <= (rating ?? 0) ? 1.1 : 1.0)
                                 }
+                                .accessibilityLabel(String(localized: "Rating, \(star) out of 5"))
+                                .accessibilityAddTraits(rating == star ? .isSelected : [])
                             }
                         }
                     }

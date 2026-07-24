@@ -64,8 +64,8 @@ final class TrimPreviewPlayer: NSObject, ObservableObject, AVAudioPlayerDelegate
     private func startTimer(player: AVAudioPlayer, stopAt: TimeInterval) {
         timer?.invalidate()
         timer = Timer.scheduledTimer(withTimeInterval: 0.033, repeats: true) { [weak self] _ in
-            guard let self else { return }
-            MainActor.assumeIsolated {
+            Task { @MainActor [weak self] in
+                guard let self else { return }
                 let t = player.currentTime
                 self.currentTime = t
                 if t >= stopAt {
@@ -335,14 +335,23 @@ struct RecordingTrimView: View {
                 startTime: startTime,
                 endTime: endTime
             )
-            
-            if FileManager.default.fileExists(atPath: recording.fileURL.path) {
-                try FileManager.default.removeItem(at: recording.fileURL)
+
+            do {
+                _ = try FileManager.default.replaceItemAt(
+                    recording.fileURL,
+                    withItemAt: result.trimmedURL,
+                    backupItemName: nil,
+                    options: []
+                )
+            } catch {
+                try? FileManager.default.removeItem(at: result.trimmedURL)
+                try? RecordingTrimmer.deleteBackup(at: result.backupURL)
+                throw RecordingTrimmerError.replaceFailed
             }
-            try FileManager.default.moveItem(at: result.trimmedURL, to: recording.fileURL)
 
             var updated = recording
-            updated.duration = max(0, endTime - startTime)
+            updated.duration = Self.durationFromTrimmedFile(at: recording.fileURL)
+                ?? max(0, endTime - startTime)
             updated.originalFileName = result.backupURL.lastPathComponent
             updated.originalDuration = result.originalDuration
             onApply(updated)
@@ -353,6 +362,16 @@ struct RecordingTrimView: View {
         }
 
         isTrimming = false
+    }
+
+    private static func durationFromTrimmedFile(at url: URL) -> TimeInterval? {
+        guard FileManager.default.fileExists(atPath: url.path),
+              let player = try? AVAudioPlayer(contentsOf: url) else {
+            return nil
+        }
+        let duration = player.duration
+        guard duration.isFinite, duration > 0 else { return nil }
+        return duration
     }
 
     private func formatTime(_ time: TimeInterval) -> String {

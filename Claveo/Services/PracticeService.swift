@@ -108,6 +108,27 @@ class PracticeService: ObservableObject {
         }
     }
 
+    func removeRecordingReferences(to recordingID: UUID) {
+        let updated = Self.removingRecordingID(recordingID, from: allEntries)
+        guard updated != allEntries else { return }
+        allEntries = updated
+        scheduleSave()
+    }
+
+    static func removingRecordingID(
+        _ recordingID: UUID,
+        from entries: [PracticeEntry],
+        modifiedAt: Date = Date()
+    ) -> [PracticeEntry] {
+        entries.map { entry in
+            guard entry.linkedRecordingIds.contains(recordingID) else { return entry }
+            var updated = entry
+            updated.linkedRecordingIds.removeAll { $0 == recordingID }
+            updated.lastModified = max(modifiedAt, entry.lastModified.addingTimeInterval(0.001))
+            return updated
+        }
+    }
+
     // MARK: - Statistics
 
     var totalPracticeTime: Int {
@@ -134,13 +155,17 @@ class PracticeService: ObservableObject {
 
     var thisWeekPracticeTime: Int {
         let calendar = Calendar.current
-        let weekStart = calendar.date(from: calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: Date()))!
+        guard let weekStart = calendar.date(from: calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: Date())) else {
+            return 0
+        }
         return practiceEntries.filter { $0.date >= weekStart }.reduce(0) { $0 + $1.duration }
     }
 
     var thisMonthPracticeTime: Int {
         let calendar = Calendar.current
-        let monthStart = calendar.date(from: calendar.dateComponents([.year, .month], from: Date()))!
+        guard let monthStart = calendar.date(from: calendar.dateComponents([.year, .month], from: Date())) else {
+            return 0
+        }
         return practiceEntries.filter { $0.date >= monthStart }.reduce(0) { $0 + $1.duration }
     }
 

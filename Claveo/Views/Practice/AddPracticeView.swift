@@ -88,7 +88,11 @@ struct AddPracticeView: View {
                                     } label: {
                                         Image(systemName: "xmark.circle.fill")
                                             .foregroundColor(.red)
+                                            .frame(width: 44, height: 44)
                                     }
+                                    .accessibilityLabel(
+                                        String(localized: "Remove recording \(recording.displayName)")
+                                    )
                                 }
                             }
                         }
@@ -116,6 +120,8 @@ struct AddPracticeView: View {
                                         .frame(width: 44, height: 44)
                                         .contentShape(Rectangle())
                                 }
+                                .accessibilityLabel(String(localized: "Rating, \(star) out of 5"))
+                                .accessibilityAddTraits(rating == star ? .isSelected : [])
                             }
                         }
 
@@ -165,16 +171,16 @@ struct AddPracticeView: View {
 
     private func formatDuration(_ minutes: Int) -> String {
         if minutes < 60 {
-            return "\(minutes) minutes"
-        } else {
-            let hours = minutes / 60
-            let mins = minutes % 60
-            if mins == 0 {
-                return "\(hours) hour\(hours == 1 ? "" : "s")"
-            } else {
-                return "\(hours) hour\(hours == 1 ? "" : "s") \(mins) min"
-            }
+            return String(localized: "\(minutes) minutes")
         }
+        let hours = minutes / 60
+        let mins = minutes % 60
+        if mins == 0 {
+            return hours == 1
+                ? String(localized: "\(hours) hour")
+                : String(localized: "\(hours) hours")
+        }
+        return String(localized: "\(hours) hours \(mins) min")
     }
 
     private func ratingDescription(_ rating: Int) -> String {
@@ -227,6 +233,8 @@ struct RecordingPickerView: View {
                     }
                     .contentShape(Rectangle())
                 }
+                .accessibilityElement(children: .combine)
+                .accessibilityAddTraits(selectedRecordings.contains(recording.id) ? .isSelected : [])
             }
             .navigationTitle("Select Recordings")
             .navigationBarTitleDisplayMode(.inline)

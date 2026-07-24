@@ -7,6 +7,20 @@ import Foundation
 import CoreML
 import UIKit
 
+enum MusicScannerError: LocalizedError {
+    case unableToCreateImageBuffer
+    case unableToRenderImage
+
+    var errorDescription: String? {
+        switch self {
+        case .unableToCreateImageBuffer:
+            return String(localized: "Unable to allocate an image buffer for scanning.")
+        case .unableToRenderImage:
+            return String(localized: "Unable to render the sheet music image.")
+        }
+    }
+}
+
 final class MusicScannerModel: @unchecked Sendable {
     private nonisolated(unsafe) let model: MLModel
     private let inputName: String
@@ -85,7 +99,14 @@ final class MusicScannerModel: @unchecked Sendable {
             while x < w {
                 let cropW = min(sliceSize, w - x)
                 let cropH = min(sliceSize, h - y)
-                let slice = cropOrPad(image: image, x: x, y: y, width: cropW, height: cropH, targetSize: sliceSize)
+                let slice = try cropOrPad(
+                    image: image,
+                    x: x,
+                    y: y,
+                    width: cropW,
+                    height: cropH,
+                    targetSize: sliceSize
+                )
                 guard let pixelBuffer = slice.toCVPixelBuffer(width: sliceSize, height: sliceSize) else {
                     x += stepW
                     continue
@@ -122,9 +143,16 @@ final class MusicScannerModel: @unchecked Sendable {
         return nmmIOS(boxes: nmsFiltered, threshold: 0.1)
     }
 
-    nonisolated private func cropOrPad(image: CGImage, x: Int, y: Int, width: Int, height: Int, targetSize: Int) -> CGImage {
+    nonisolated private func cropOrPad(
+        image: CGImage,
+        x: Int,
+        y: Int,
+        width: Int,
+        height: Int,
+        targetSize: Int
+    ) throws -> CGImage {
         guard let cropped = image.cropping(to: CGRect(x: x, y: y, width: width, height: height)) else {
-            return createBlankImage(width: targetSize, height: targetSize)
+            return try createBlankImage(width: targetSize, height: targetSize)
         }
         if width == targetSize && height == targetSize {
             return cropped
@@ -141,16 +169,19 @@ final class MusicScannerModel: @unchecked Sendable {
         return context.makeImage() ?? cropped
     }
 
-    nonisolated private func createBlankImage(width: Int, height: Int) -> CGImage {
+    nonisolated private func createBlankImage(width: Int, height: Int) throws -> CGImage {
         let colorSpace = CGColorSpaceCreateDeviceRGB()
         let bitmapInfo = CGImageAlphaInfo.premultipliedLast.rawValue
         guard let context = CGContext(data: nil, width: width, height: height, bitsPerComponent: 8,
             bytesPerRow: width * 4, space: colorSpace, bitmapInfo: bitmapInfo) else {
-            fatalError("Cannot create blank image")
+            throw MusicScannerError.unableToCreateImageBuffer
         }
         context.setFillColor(CGColor(srgbRed: 0.5, green: 0.5, blue: 0.5, alpha: 1))
         context.fill(CGRect(x: 0, y: 0, width: width, height: height))
-        return context.makeImage()!
+        guard let image = context.makeImage() else {
+            throw MusicScannerError.unableToRenderImage
+        }
+        return image
     }
 
     nonisolated private func nmmIOS(boxes: [OMRBoundingBox], threshold: Float) -> [OMRBoundingBox] {

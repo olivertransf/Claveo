@@ -20,6 +20,8 @@ struct RecordingDetailView: View {
     @State private var showingTrimSheet = false
     @State private var showingRestoreAlert = false
     @State private var isRestoring = false
+    @State private var restoreErrorMessage: String?
+    @State private var showingRestoreError = false
     
     var body: some View {
         Form {
@@ -251,6 +253,11 @@ struct RecordingDetailView: View {
                 Text("Restore the original recording? This will replace the current trimmed version.")
             }
         }
+        .alert("Restore Failed", isPresented: $showingRestoreError) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text(restoreErrorMessage ?? String(localized: "Could not restore the original recording."))
+        }
     }
     
     private func restoreOriginal() async {
@@ -279,9 +286,8 @@ struct RecordingDetailView: View {
             onSave(updated)
             dismiss()
         } catch {
-            #if DEBUG
-            print("Failed to restore original: \(error)")
-            #endif
+            restoreErrorMessage = error.localizedDescription
+            showingRestoreError = true
         }
         
         isRestoring = false
@@ -318,64 +324,6 @@ struct RecordingDetailView: View {
     }
     
     private func loadPieces() {
-        let documentsPath = iCloudManager.shared.getDocumentsURL()
-        let fileURL = documentsPath.appendingPathComponent("pieces.json")
-        
-        // Try to load from iCloud first
-        do {
-            let data = try iCloudManager.shared.readFile(from: fileURL)
-            if let decoded = try? JSONDecoder().decode([Piece].self, from: data) {
-                availablePieces = decoded.sorted { $0.name < $1.name }
-                UserDefaults.standard.set(data, forKey: "pieces_cache")
-                return
-            }
-        } catch {
-            // iCloud file doesn't exist or can't be read - try fallback
-        }
-        
-        // Fallback to direct read from iCloud directory
-        if let data = try? Data(contentsOf: fileURL),
-           let decoded = try? JSONDecoder().decode([Piece].self, from: data) {
-            availablePieces = decoded.sorted { $0.name < $1.name }
-            UserDefaults.standard.set(data, forKey: "pieces_cache")
-            return
-        }
-        
-        // Last resort: load from local cache (for offline access)
-        if let cachedData = UserDefaults.standard.data(forKey: "pieces_cache"),
-           let decoded = try? JSONDecoder().decode([Piece].self, from: cachedData) {
-            availablePieces = decoded.sorted { $0.name < $1.name }
-        }
-    }
-    
-    private func loadPiecesFromDisk() {
-        let documentsPath = iCloudManager.shared.getDocumentsURL()
-        let fileURL = documentsPath.appendingPathComponent("pieces.json")
-        
-        // Try to load from iCloud first
-        do {
-            let data = try iCloudManager.shared.readFile(from: fileURL)
-            if let decoded = try? JSONDecoder().decode([Piece].self, from: data) {
-                availablePieces = decoded.sorted { $0.name < $1.name }
-                UserDefaults.standard.set(data, forKey: "pieces_cache")
-                return
-            }
-        } catch {
-            // iCloud file doesn't exist or can't be read - try fallback
-        }
-        
-        // Fallback to direct read from iCloud directory
-        if let data = try? Data(contentsOf: fileURL),
-           let decoded = try? JSONDecoder().decode([Piece].self, from: data) {
-            availablePieces = decoded.sorted { $0.name < $1.name }
-            UserDefaults.standard.set(data, forKey: "pieces_cache")
-            return
-        }
-        
-        // Last resort: load from local cache (for offline access)
-        if let cachedData = UserDefaults.standard.data(forKey: "pieces_cache"),
-           let decoded = try? JSONDecoder().decode([Piece].self, from: cachedData) {
-            availablePieces = decoded.sorted { $0.name < $1.name }
-        }
+        availablePieces = PieceService.load()
     }
 }

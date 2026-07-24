@@ -14,6 +14,61 @@ import AVFoundation
 // Add package: https://github.com/alladinian/Tuna
 import Tuna
 
+struct TunerLifecycleGate {
+    private(set) var wantsActive = false
+    private var generation: UInt = 0
+
+    mutating func requestStart() -> UInt? {
+        guard !wantsActive else { return nil }
+        wantsActive = true
+        generation &+= 1
+        return generation
+    }
+
+    mutating func requestStop() -> UInt? {
+        guard wantsActive else { return nil }
+        wantsActive = false
+        generation &+= 1
+        return generation
+    }
+
+    func isCurrent(_ token: UInt, expectingActive: Bool) -> Bool {
+        generation == token && wantsActive == expectingActive
+    }
+}
+
+enum PitchDetectorError: LocalizedError, Identifiable, Equatable {
+    case permissionDenied
+    case audioSession(String)
+
+    var id: String {
+        switch self {
+        case .permissionDenied:
+            "permissionDenied"
+        case .audioSession(let message):
+            "audioSession:\(message)"
+        }
+    }
+
+    var errorDescription: String? {
+        switch self {
+        case .permissionDenied:
+            String(localized: "Microphone access is turned off.")
+        case .audioSession:
+            String(localized: "The tuner couldn’t start the audio session.")
+        }
+    }
+
+    var recoverySuggestion: String? {
+        switch self {
+        case .permissionDenied:
+            String(localized: "Allow microphone access in Settings, then return to the tuner.")
+        case .audioSession:
+            String(localized: "Check that another app isn’t using audio, then try again.")
+        }
+    }
+}
+
 @MainActor
 class PitchDetector: NSObject, ObservableObject {
     @Published var frequency: Double = 0.0
@@ -21,8 +76,20 @@ class PitchDetector: NSObject, ObservableObject {
     @Published var cents: Double = 0.0 // Actual cents deviation from target note (unclamped)
     @Published var targetFrequency: Double = 0.0 // Target frequency of the detected note
     @Published var isDetecting = false
+    @Published var lifecycleError: PitchDetectorError?
     
     private var pitchEngine: PitchEngine?
+    private var lifecycle = TunerLifecycleGate()
+    private var engineOperation: Task<Void, Never>?
+    private var ownsAudioSession = false
+
+    private static var usesSimulatedInput: Bool {
+        #if targetEnvironment(simulator)
+        true
+        #else
+        ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PLAYGROUNDS"] == "1"
+        #endif
+    }
     
     // Stabilization buffers
     private var frequencyBuffer: [Double] = []
@@ -48,105 +115,79 @@ class PitchDetector: NSObject, ObservableObject {
     }
     
     func startDetection() async {
-        guard !isDetecting else { return }
+        guard let lifecycleToken = lifecycle.requestStart() else { return }
+        lifecycleError = nil
         
-        // Skip audio initialization in preview mode or simulator (causes crashes)
-        #if DEBUG
-        if ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PLAYGROUNDS"] == "1" {
-            // Running in preview/playground - simulate detection for UI testing
-            isDetecting = true
-            // Set some dummy values for preview
-            frequency = 440.0
-            note = "A4"
-            cents = 0.0
+        if Self.usesSimulatedInput {
+            setSimulatedDetection(token: lifecycleToken)
             return
         }
         
-        // Simulator detection - simulate pitch detection for testing
-        #if targetEnvironment(simulator)
-        isDetecting = true
-        // Simulate a note for testing in simulator
-        frequency = 440.0
-        note = "A4"
-        cents = 0.0
-        
-        // Simulate some variation for testing
-        Task {
-            var testFrequency = 440.0
-            while isDetecting {
-                // Simulate slight frequency variation
-                testFrequency += Double.random(in: -2...2)
-                testFrequency = max(200, min(800, testFrequency))
-                let (note, cents, targetFreq) = calculateNote(from: testFrequency)
-                self.frequency = testFrequency
-                self.note = note
-                self.cents = cents
-                self.targetFrequency = targetFreq
-                try? await Task.sleep(nanoseconds: 100_000_000) // Update every 100ms
-            }
-        }
-        return
-        #endif
-        #endif
-        
-        // Request microphone permission first
-        let hasPermission: Bool
+        let permissionGranted: Bool
         if #available(iOS 17.0, *) {
-            hasPermission = AVAudioApplication.shared.recordPermission == .granted
+            switch AVAudioApplication.shared.recordPermission {
+            case .granted:
+                permissionGranted = true
+            case .denied:
+                permissionGranted = false
+            case .undetermined:
+                permissionGranted = await AVAudioApplication.requestRecordPermission()
+            @unknown default:
+                permissionGranted = false
+            }
         } else {
-            hasPermission = AVAudioSession.sharedInstance().recordPermission == .granted
-        }
-        
-        if !hasPermission {
-            // Request permission
-            if #available(iOS 17.0, *) {
-                let granted = await AVAudioApplication.requestRecordPermission()
-                if !granted {
-                    #if DEBUG
-                    print("Microphone permission denied")
-                    #endif
-                    return
-                }
-            } else {
-                let granted = await withCheckedContinuation { continuation in
+            switch AVAudioSession.sharedInstance().recordPermission {
+            case .granted:
+                permissionGranted = true
+            case .denied:
+                permissionGranted = false
+            case .undetermined:
+                permissionGranted = await withCheckedContinuation { continuation in
                     AVAudioSession.sharedInstance().requestRecordPermission { granted in
                         continuation.resume(returning: granted)
                     }
                 }
-                if !granted {
-                    #if DEBUG
-                    print("Microphone permission denied")
-                    #endif
-                    return
-                }
+            @unknown default:
+                permissionGranted = false
             }
         }
-        
-        // Configure audio session with proper settings for pitch detection
-        do {
-            let audioSession = AVAudioSession.sharedInstance()
-            // Use .record category with .measurement mode for low-latency audio input
-            try audioSession.setCategory(.record, mode: .measurement, options: [])
-            try audioSession.setActive(true, options: [])
-            
-            // Give the audio session a moment to stabilize
-            try await Task.sleep(nanoseconds: 50_000_000) // 50ms
-        } catch {
-            #if DEBUG
-            print("Failed to setup audio session for pitch detection: \(error)")
-            #endif
+
+        guard lifecycle.isCurrent(lifecycleToken, expectingActive: true) else { return }
+        guard permissionGranted else {
+            failStart(with: .permissionDenied, token: lifecycleToken)
             return
         }
+
+        AudioSessionCoordinator.prepareForTuner()
+        
+        do {
+            let audioSession = AVAudioSession.sharedInstance()
+            try audioSession.setCategory(.record, mode: .measurement, options: [])
+            try audioSession.setActive(true, options: [])
+            ownsAudioSession = true
+            try await Task.sleep(for: .milliseconds(50))
+        } catch is CancellationError {
+            stopDetection()
+            return
+        } catch {
+            failStart(with: .audioSession(error.localizedDescription), token: lifecycleToken)
+            return
+        }
+
+        guard lifecycle.isCurrent(lifecycleToken, expectingActive: true) else { return }
         
         // Initialize Tuna PitchEngine with YIN algorithm
         // Larger buffer size (8192) improves accuracy for lower frequencies (piano)
         // Trade-off: slightly higher latency but much better accuracy
-        pitchEngine = PitchEngine(
+        let engine = PitchEngine(
             bufferSize: 8192,
             estimationStrategy: .yin,
             callback: { [weak self] result in
                 Task { @MainActor in
-                    guard let self = self else { return }
+                    guard
+                        let self,
+                        self.lifecycle.isCurrent(lifecycleToken, expectingActive: true)
+                    else { return }
                     switch result {
                     case .success(let pitch):
                         var rawFrequency = Double(pitch.frequency)
@@ -221,8 +262,12 @@ class PitchDetector: NSObject, ObservableObject {
                         // Don't reset frequency on errors, keep last known value
                         if case PitchEngine.Error.levelBelowThreshold = error {
                             // Signal too weak - clear buffers after a delay
-                            Task {
+                            Task { @MainActor [weak self] in
                                 try? await Task.sleep(nanoseconds: 200_000_000) // 200ms delay
+                                guard
+                                    let self,
+                                    self.lifecycle.isCurrent(lifecycleToken, expectingActive: true)
+                                else { return }
                                 // If still no signal, clear buffers
                                 if self.frequencyBuffer.isEmpty || self.frequencyBuffer.last == 0 {
                                     self.frequencyBuffer.removeAll()
@@ -244,49 +289,80 @@ class PitchDetector: NSObject, ObservableObject {
                 }
             }
         )
+        pitchEngine = engine
         
-        // Start pitch engine on background thread to avoid blocking main thread
-        // AVCaptureSession.startRunning() should be called from background thread
-        let engine = pitchEngine
-        Task.detached(priority: .userInitiated) {
-            // Call start() on background thread (this internally calls AVCaptureSession.startRunning())
-            engine?.start()
-            // Update UI state on main thread after starting
-            await MainActor.run { [weak self] in
-                self?.isDetecting = true
-            }
+        let previousOperation = engineOperation
+        let startOperation = Task.detached(priority: .userInitiated) {
+            await previousOperation?.value
+            engine.start()
         }
+        engineOperation = startOperation
+        await startOperation.value
+
+        if Task.isCancelled || !lifecycle.isCurrent(lifecycleToken, expectingActive: true) {
+            stopDetection()
+            return
+        }
+        isDetecting = true
     }
     
     func stopDetection() {
-        // Stop pitch engine on background thread to avoid blocking main thread
+        guard let lifecycleToken = lifecycle.requestStop() else { return }
         let engine = pitchEngine
-        Task.detached(priority: .userInitiated) {
-            // Call stop() on background thread (this internally calls AVCaptureSession.stopRunning())
+        pitchEngine = nil
+        resetDetectionState()
+
+        let previousOperation = engineOperation
+        let stopOperation = Task.detached(priority: .userInitiated) {
+            await previousOperation?.value
             engine?.stop()
-            
-            // Update UI state on main thread after stopping
-            await MainActor.run { [weak self] in
-                guard let self = self else { return }
-                self.pitchEngine = nil
-                self.isDetecting = false
-                self.frequency = 0.0
-                self.note = "--"
-                self.cents = 0.0
-                self.frequencyBuffer.removeAll()
-                self.noteBuffer.removeAll()
-                self.lastStableNote = "--"
-                self.lastStableFrequency = 0.0
-                self.lastStableCents = 0.0
-            }
-            
-            // Deactivate audio session when stopping
-            do {
-                try AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
-            } catch {
-                print("Failed to deactivate audio session: \(error)")
-            }
         }
+        engineOperation = stopOperation
+
+        Task { @MainActor [weak self] in
+            await stopOperation.value
+            guard
+                let self,
+                self.lifecycle.isCurrent(lifecycleToken, expectingActive: false)
+            else { return }
+            self.deactivateAudioSession()
+        }
+    }
+
+    private func setSimulatedDetection(token: UInt) {
+        guard lifecycle.isCurrent(token, expectingActive: true) else { return }
+        isDetecting = true
+        frequency = 440
+        note = "A4"
+        cents = 0
+        targetFrequency = 440
+    }
+
+    private func failStart(with error: PitchDetectorError, token: UInt) {
+        guard lifecycle.isCurrent(token, expectingActive: true) else { return }
+        lifecycleError = error
+        stopDetection()
+    }
+
+    private func deactivateAudioSession() {
+        guard ownsAudioSession else { return }
+        ownsAudioSession = false
+        // Never force-deactivate while other Claveo playback may still own the session;
+        // notify them so they can restore `.playback` if needed.
+        AudioSessionCoordinator.tunerDidReleaseSession()
+    }
+
+    private func resetDetectionState() {
+        isDetecting = false
+        frequency = 0
+        note = "--"
+        cents = 0
+        targetFrequency = 0
+        frequencyBuffer.removeAll()
+        noteBuffer.removeAll()
+        lastStableNote = "--"
+        lastStableFrequency = 0
+        lastStableCents = 0
     }
     
     // Filter out overtones - if frequency is likely a harmonic, return the fundamental

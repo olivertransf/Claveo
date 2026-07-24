@@ -11,6 +11,20 @@ import QuartzCore
 import Foundation
 import UIKit
 
+struct MetronomeScheduleState {
+    var scheduledBeatCount = 0
+
+    mutating func recordSchedule(succeeded: Bool) {
+        if succeeded {
+            scheduledBeatCount += 1
+        }
+    }
+
+    mutating func reset() {
+        scheduledBeatCount = 0
+    }
+}
+
 extension Metronome {
     func updateInterval() {
         interval = 60.0 / Double(tempo)
@@ -29,22 +43,32 @@ extension Metronome {
         updated[index].toggle()
         beatPattern = updated
         SettingsManager.shared.update(\.metronomeBeatPattern, value: updated)
+        if isPlaying {
+            restartTimer()
+        }
     }
     
     func start() {
         guard !isPlaying else { return }
-        
-        setupAudioSession()
-        setupAudioPlayer()
-        
-        guard let engine = audioEngine, let player = playerNode else { return }
+
+        startupError = nil
+        if let error = setupAudioSession() {
+            failPlayback(with: error)
+            return
+        }
+        if let error = setupAudioPlayer() {
+            failPlayback(with: error)
+            return
+        }
+
+        guard let engine = audioEngine, let player = playerNode else {
+            failPlayback(with: .audioBuffersUnavailable)
+            return
+        }
         do {
             try engine.start()
-            player.play()
         } catch {
-            #if DEBUG
-            print("Failed to start audio engine: \(error)")
-            #endif
+            failPlayback(with: .audioEngineFailed(error.localizedDescription))
             return
         }
         
@@ -58,6 +82,7 @@ extension Metronome {
         lastBeatTime = 0
         
         scheduleBeatsAhead()
+        player.play()
         startTimer()
         checkAndPlayBeat()
     }
@@ -72,6 +97,11 @@ extension Metronome {
         startTime = 0
         stopAudioEngine()
     }
+
+    func failPlayback(with error: MetronomeStartupError) {
+        stop()
+        startupError = error
+    }
     
     func savePreferences() {
         SettingsManager.shared.setMetronomeSound(soundType)
@@ -83,7 +113,7 @@ extension Metronome {
         customTimeSignature = nil
         updateBeatPattern()
         if isPlaying {
-            currentBeat = 0
+            restartTimer()
         }
         // Clear custom time signature when selecting a standard one
         SettingsManager.shared.update(\.customTimeSignatureTop, value: nil)
@@ -99,7 +129,7 @@ extension Metronome {
         customTimeSignature = (clampedTop, validBottom)
         updateBeatPattern()
         if isPlaying {
-            currentBeat = 0
+            restartTimer()
         }
         // Save custom time signature and reset beat pattern
         SettingsManager.shared.update(\.customTimeSignatureTop, value: clampedTop)
@@ -109,6 +139,17 @@ extension Metronome {
     
     func startTimer() {
         stopBeatTimer()
+
+        let timer = DispatchSource.makeTimerSource(queue: DispatchQueue.global(qos: .userInteractive))
+        timer.schedule(deadline: .now(), repeating: .milliseconds(40), leeway: .milliseconds(5))
+        timer.setEventHandler { [weak self] in
+            Task { @MainActor [weak self] in
+                guard let self, self.isPlaying else { return }
+                self.scheduleBeatsAhead()
+            }
+        }
+        schedulingTimer = timer
+        timer.resume()
 
         let target = MetronomeDisplayLinkTarget(metronome: self)
         displayLinkTarget = target
@@ -122,8 +163,9 @@ extension Metronome {
         displayLink?.invalidate()
         displayLink = nil
         displayLinkTarget = nil
-        timer?.invalidate()
-        timer = nil
+        schedulingTimer?.setEventHandler {}
+        schedulingTimer?.cancel()
+        schedulingTimer = nil
     }
     
     func scheduleBeatsAhead() {
@@ -132,12 +174,13 @@ extension Metronome {
         // Schedule from elapsed time, not UI beatCount — avoids silence when the main thread lags.
         let now = CACurrentMediaTime()
         let elapsedBeats = max(0, Int(floor((now - startTime) / interval)))
+        // Skip past beats so AVAudioPlayerNode does not burst-play late buffers on resume.
+        if scheduledBeatCount < elapsedBeats {
+            scheduledBeatCount = elapsedBeats
+        }
         let targetScheduled = elapsedBeats + beatsToScheduleAhead
-        let beatsToAdd = targetScheduled - scheduledBeatCount
-        guard beatsToAdd > 0 else { return }
-
-        for i in 0..<beatsToAdd {
-            let beatNumber = scheduledBeatCount + i
+        while scheduledBeatCount < targetScheduled {
+            let beatNumber = scheduledBeatCount
             let beatTimeInSeconds = startTime + (Double(beatNumber) * interval)
             let beatHostTime = AVAudioTime.hostTime(forSeconds: beatTimeInSeconds)
 
@@ -145,13 +188,15 @@ extension Metronome {
             let isAccent = beatInMeasure < beatPattern.count && beatPattern[beatInMeasure]
 
             let buffer = isAccent ? accentBufferConverted : normalBufferConverted
-            guard let audioBuffer = buffer else { continue }
+            guard let audioBuffer = buffer else {
+                scheduleState.recordSchedule(succeeded: false)
+                return
+            }
 
             let audioTime = AVAudioTime(hostTime: beatHostTime)
             player.scheduleBuffer(audioBuffer, at: audioTime, options: [], completionHandler: nil)
+            scheduleState.recordSchedule(succeeded: true)
         }
-
-        scheduledBeatCount += beatsToAdd
     }
 
     func checkAndPlayBeat() {
@@ -229,6 +274,45 @@ extension Metronome {
         scheduleBeatsAhead()
         startTimer()
         checkAndPlayBeat()
+    }
+
+    func beginTempoAdjustment() {
+        isTempoAdjustmentInProgress = true
+    }
+
+    @discardableResult
+    func endTempoAdjustment(shouldApply: Bool = true) -> Bool {
+        guard hasPendingTempoReschedule else {
+            isTempoAdjustmentInProgress = false
+            return false
+        }
+        guard shouldApply else {
+            isTempoAdjustmentInProgress = false
+            hasPendingTempoReschedule = false
+            return false
+        }
+
+        isTempoAdjustmentInProgress = false
+        hasPendingTempoReschedule = false
+        if isPlaying {
+            restartTimer()
+        }
+        return true
+    }
+
+    func restartForAudioRouteChange() {
+        guard isPlaying else { return }
+        if let error = setupAudioSession() ?? setupAudioPlayer() {
+            failPlayback(with: error)
+            return
+        }
+        do {
+            try audioEngine?.start()
+            playerNode?.play()
+            restartTimer()
+        } catch {
+            failPlayback(with: .audioEngineFailed(error.localizedDescription))
+        }
     }
 }
 

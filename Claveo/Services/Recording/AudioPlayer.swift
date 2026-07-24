@@ -17,6 +17,7 @@ class AudioPlayer: NSObject, ObservableObject {
     @Published var currentTime: TimeInterval = 0
     @Published var duration: TimeInterval = 0
     @Published var currentRecording: Recording?
+    @Published var playbackError: String?
     @Published var playbackRate: Float = 1.0 {
         didSet {
             updatePlaybackRate()
@@ -64,14 +65,13 @@ class AudioPlayer: NSObject, ObservableObject {
 
     func play(_ recording: Recording) {
         activatePlaybackSession()
+        playbackError = nil
 
         if currentRecording?.id == recording.id, let player = audioPlayer {
             player.enableRate = true
             player.rate = playbackRate
             guard player.play() else {
-                #if DEBUG
-                print("AVAudioPlayer.play() returned false when resuming")
-                #endif
+                playbackError = String(localized: "Playback could not resume.")
                 return
             }
             isPlaying = true
@@ -83,9 +83,7 @@ class AudioPlayer: NSObject, ObservableObject {
 
         do {
             guard FileManager.default.fileExists(atPath: recording.fileURL.path) else {
-                #if DEBUG
-                print("Audio file does not exist at: \(recording.fileURL.path)")
-                #endif
+                playbackError = String(localized: "Recording file not found. It may still be downloading from iCloud.")
                 return
             }
 
@@ -99,9 +97,7 @@ class AudioPlayer: NSObject, ObservableObject {
             audioPlayer = player
 
             guard player.play() else {
-                #if DEBUG
-                print("AVAudioPlayer.play() returned false for: \(recording.fileURL.lastPathComponent)")
-                #endif
+                playbackError = String(localized: "Playback could not start.")
                 stop()
                 return
             }
@@ -112,9 +108,7 @@ class AudioPlayer: NSObject, ObservableObject {
             let impactFeedback = UIImpactFeedbackGenerator(style: .light)
             impactFeedback.impactOccurred()
         } catch {
-            #if DEBUG
-            print("Failed to play recording: \(error)")
-            #endif
+            playbackError = String(localized: "Failed to play recording: \(error.localizedDescription)")
             stop()
         }
     }

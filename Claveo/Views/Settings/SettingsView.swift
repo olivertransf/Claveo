@@ -207,6 +207,8 @@ struct SettingsView: View {
                     in: 5...180,
                     step: 5
                 )
+                .accessibilityLabel("Default duration")
+                .accessibilityValue(String(localized: "\(practiceDefaultTime) minutes"))
                 HStack {
                     ForEach([15, 30, 45, 60, 90], id: \.self) { mins in
                         Button {
@@ -216,10 +218,13 @@ struct SettingsView: View {
                                 .font(.subheadline.weight(.medium))
                                 .foregroundColor(practiceDefaultTime == mins ? .white : themeManager.accentColor)
                                 .frame(maxWidth: .infinity)
+                                .frame(minHeight: 44)
                                 .padding(.vertical, 8)
                                 .background(practiceDefaultTime == mins ? themeManager.accentColor : themeManager.accentColor.opacity(0.1))
                                 .cornerRadius(8)
                         }
+                        .accessibilityLabel(String(localized: "\(mins) minutes"))
+                        .accessibilityAddTraits(practiceDefaultTime == mins ? .isSelected : [])
                     }
                 }
             }
@@ -244,10 +249,11 @@ struct SettingsView: View {
                             }
                             .foregroundColor(themeManager.accentColor)
                             .padding(.horizontal, 8)
-                            .padding(.vertical, 6)
+                            .frame(minHeight: 44)
                             .background(themeManager.accentColor.opacity(0.1))
                             .cornerRadius(8)
                         }
+                        .accessibilityLabel(String(localized: "Remove \(option)-minute option"))
                     }
                 }
                 if practiceDurationOptions.count < 6 {
@@ -264,10 +270,11 @@ struct SettingsView: View {
                                         .font(.subheadline)
                                         .foregroundColor(.secondary)
                                         .padding(.horizontal, 8)
-                                        .padding(.vertical, 6)
+                                        .frame(minHeight: 44)
                                         .background(Color.secondary.opacity(0.1))
                                         .cornerRadius(8)
                                 }
+                                .accessibilityLabel(String(localized: "Add \(mins)-minute option"))
                             }
                         }
                     }

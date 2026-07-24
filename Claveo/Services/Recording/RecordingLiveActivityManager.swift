@@ -23,7 +23,11 @@ final class RecordingLiveActivityManager {
         }
 
         let attributes = RecordingActivityAttributes(title: title, startedAt: startedAt)
-        let state = RecordingActivityAttributes.ContentState(isRecording: true, finalDuration: nil)
+        let state = RecordingActivityAttributes.ContentState(
+            isRecording: true,
+            finalDuration: nil,
+            timerAnchor: startedAt
+        )
 
         do {
             activity = try Activity.request(
@@ -42,13 +46,39 @@ final class RecordingLiveActivityManager {
         }
     }
 
+    func pauseRecordingActivity(elapsed: TimeInterval) {
+        guard let activity else { return }
+        let state = RecordingActivityAttributes.ContentState(
+            isRecording: true,
+            finalDuration: elapsed,
+            timerAnchor: nil
+        )
+        Task {
+            await activity.update(ActivityContent(state: state, staleDate: nil))
+        }
+    }
+
+    func resumeRecordingActivity(elapsed: TimeInterval) {
+        guard let activity else { return }
+        let anchor = Date().addingTimeInterval(-elapsed)
+        let state = RecordingActivityAttributes.ContentState(
+            isRecording: true,
+            finalDuration: nil,
+            timerAnchor: anchor
+        )
+        Task {
+            await activity.update(ActivityContent(state: state, staleDate: nil))
+        }
+    }
+
     func endRecordingActivity(finalDuration: TimeInterval, dismissalPolicy: ActivityUIDismissalPolicy = .immediate) {
         guard let activity else { return }
         self.activity = nil
 
         let state = RecordingActivityAttributes.ContentState(
             isRecording: false,
-            finalDuration: finalDuration
+            finalDuration: finalDuration,
+            timerAnchor: nil
         )
 
         Task {

@@ -14,6 +14,7 @@ struct PieceManagementView: View {
     @State private var newPieceComposer = ""
     @State private var editingPiece: Piece?
     @State private var searchText = ""
+    @State private var persistenceError: String?
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject var themeManager: ThemeManager
 
@@ -40,15 +41,19 @@ struct PieceManagementView: View {
                             .textInputAutocapitalization(.words)
                         Button {
                             HapticFeedback.lightImpact()
+                            let trimmedName = newPieceName.trimmingCharacters(in: .whitespacesAndNewlines)
+                            let trimmedComposer = newPieceComposer.trimmingCharacters(in: .whitespacesAndNewlines)
                             let piece = Piece(
-                                name: newPieceName,
-                                composer: newPieceComposer.isEmpty ? nil : newPieceComposer
+                                name: trimmedName,
+                                composer: trimmedComposer.isEmpty ? nil : trimmedComposer
                             )
-                            pieces.append(piece)
-                            pieces.sort { $0.name < $1.name }
-                            savePieces()
-                            newPieceName = ""
-                            newPieceComposer = ""
+                            do {
+                                pieces = try PieceService.upsert(piece)
+                                newPieceName = ""
+                                newPieceComposer = ""
+                            } catch {
+                                persistenceError = error.localizedDescription
+                            }
                         } label: {
                             Label("Add to library", systemImage: "plus.circle.fill")
                                 .frame(maxWidth: .infinity)
@@ -134,17 +139,15 @@ struct PieceManagementView: View {
                 PieceEditSheet(
                     piece: piece,
                     onSave: { updatedPiece in
-                        if let index = pieces.firstIndex(where: { $0.id == updatedPiece.id }) {
-                            pieces[index] = updatedPiece
-                            pieces.sort { $0.name < $1.name }
-                            savePieces()
+                        do {
+                            pieces = try PieceService.upsert(updatedPiece)
+                        } catch {
+                            persistenceError = error.localizedDescription
                         }
                         editingPiece = nil
                     },
                     onDelete: {
-                        pieces.removeAll { $0.id == piece.id }
-                        pieces.sort { $0.name < $1.name }
-                        savePieces()
+                        deletePiece(id: piece.id)
                         editingPiece = nil
                     },
                     onCancel: {
@@ -152,6 +155,14 @@ struct PieceManagementView: View {
                     }
                 )
                 .environmentObject(themeManager)
+            }
+            .alert("Unable to update piece library", isPresented: Binding(
+                get: { persistenceError != nil },
+                set: { if !$0 { persistenceError = nil } }
+            )) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text(persistenceError ?? "")
             }
         }
     }
@@ -189,56 +200,15 @@ struct PieceManagementView: View {
     }
 
     private func deletePiece(id: UUID) {
-        pieces.removeAll { $0.id == id }
-        pieces.sort { $0.name < $1.name }
-        savePieces()
+        do {
+            pieces = try PieceService.delete(id: id)
+        } catch {
+            persistenceError = error.localizedDescription
+        }
     }
 
     private func loadPiecesFromBinding() {
-        let documentsPath = iCloudManager.shared.getDocumentsURL()
-        let fileURL = documentsPath.appendingPathComponent("pieces.json")
-
-        do {
-            let data = try iCloudManager.shared.readFile(from: fileURL)
-            if let decoded = try? JSONDecoder().decode([Piece].self, from: data) {
-                pieces = decoded.sorted { $0.name < $1.name }
-                UserDefaults.standard.set(data, forKey: "pieces_cache")
-                return
-            }
-        } catch {}
-
-        if let data = try? Data(contentsOf: fileURL),
-           let decoded = try? JSONDecoder().decode([Piece].self, from: data) {
-            pieces = decoded.sorted { $0.name < $1.name }
-            UserDefaults.standard.set(data, forKey: "pieces_cache")
-            return
-        }
-
-        if let cachedData = UserDefaults.standard.data(forKey: "pieces_cache"),
-           let decoded = try? JSONDecoder().decode([Piece].self, from: cachedData) {
-            pieces = decoded.sorted { $0.name < $1.name }
-        }
-    }
-
-    private func savePieces() {
-        pieces.sort { $0.name < $1.name }
-        guard let encoded = try? JSONEncoder().encode(pieces) else {
-            #if DEBUG
-            print("Failed to encode pieces")
-            #endif
-            return
-        }
-        let documentsPath = iCloudManager.shared.getDocumentsURL()
-        let fileURL = documentsPath.appendingPathComponent("pieces.json")
-        UserDefaults.standard.set(encoded, forKey: "pieces_cache")
-        do {
-            try iCloudManager.shared.writeFile(data: encoded, to: fileURL)
-        } catch {
-            #if DEBUG
-            print("Failed to save pieces to iCloud: \(error.localizedDescription)")
-            #endif
-            try? encoded.write(to: fileURL, options: [.atomic])
-        }
+        pieces = PieceService.load()
     }
 }
 
@@ -300,9 +270,12 @@ struct PieceEditSheet: View {
                     Button("Save") {
                         let updatedPiece = Piece(
                             id: piece.id,
-                            name: name,
-                            composer: composer.isEmpty ? nil : composer,
-                            createdAt: piece.createdAt
+                            name: name.trimmingCharacters(in: .whitespacesAndNewlines),
+                            composer: composer.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                                ? nil
+                                : composer.trimmingCharacters(in: .whitespacesAndNewlines),
+                            createdAt: piece.createdAt,
+                            lastModified: Date()
                         )
                         onSave(updatedPiece)
                         dismiss()

@@ -24,7 +24,14 @@ struct PracticeEntry: Identifiable, Codable, Equatable {
 
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
-        id = try c.decodeIfPresent(UUID.self, forKey: .id) ?? UUID()
+        guard let decodedID = try c.decodeIfPresent(UUID.self, forKey: .id) else {
+            throw DecodingError.dataCorruptedError(
+                forKey: .id,
+                in: c,
+                debugDescription: "PracticeEntry requires a stable id"
+            )
+        }
+        id = decodedID
         date = try c.decode(Date.self, forKey: .date)
         duration = try c.decode(Int.self, forKey: .duration)
         notes = try c.decodeIfPresent(String.self, forKey: .notes)

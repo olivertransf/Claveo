@@ -53,6 +53,8 @@ struct PracticeEntryDetailView: View {
                                             .font(.caption)
                                     }
                                 }
+                                .accessibilityElement(children: .ignore)
+                                .accessibilityLabel(String(localized: "Rating, \(rating) out of 5"))
 
                                 Text(ratingDescription(rating))
                                     .font(.caption2)
@@ -188,6 +190,10 @@ struct PracticeRecordingPlayer: View {
                                 in: 0...max(recording.duration, 0.1)
                             )
                             .tint(themeManager.accentColor)
+                            .accessibilityLabel("Playback position")
+                            .accessibilityValue(
+                                formatTime(isDragging ? dragValue : (currentTime ?? 0))
+                            )
                             .onChange(of: currentTime) { _, newValue in
                                 guard let newValue = newValue else { return }
                                 
@@ -234,6 +240,7 @@ struct PracticeRecordingPlayer: View {
                                 .font(.system(size: 20))
                         }
                         .frame(maxWidth: .infinity, minHeight: 56)
+                        .accessibilityLabel("Skip back 15 seconds")
                         
                         Button(action: {
                             if isPlaying {
@@ -246,12 +253,14 @@ struct PracticeRecordingPlayer: View {
                                 .font(.system(size: 24))
                         }
                         .frame(maxWidth: .infinity, minHeight: 56)
+                        .accessibilityLabel(isPlaying ? "Pause recording" : "Play recording")
                         
                         Button(action: { player.skipForward(seconds: 15) }) {
                             Image(systemName: "goforward.15")
                                 .font(.system(size: 20))
                         }
                         .frame(maxWidth: .infinity, minHeight: 56)
+                        .accessibilityLabel("Skip forward 15 seconds")
                     }
                 }
             } label: {
@@ -408,7 +417,11 @@ struct EditPracticeView: View {
                                     } label: {
                                         Image(systemName: "xmark.circle.fill")
                                             .foregroundColor(.red)
+                                            .frame(width: 44, height: 44)
                                     }
+                                    .accessibilityLabel(
+                                        String(localized: "Remove recording \(recording.displayName)")
+                                    )
                                 }
                             }
                         }
@@ -436,6 +449,8 @@ struct EditPracticeView: View {
                                         .frame(width: 44, height: 44)
                                         .contentShape(Rectangle())
                                 }
+                                .accessibilityLabel(String(localized: "Rating, \(star) out of 5"))
+                                .accessibilityAddTraits(rating == star ? .isSelected : [])
                             }
                         }
 
@@ -498,16 +513,16 @@ struct EditPracticeView: View {
 
     private func formatDuration(_ minutes: Int) -> String {
         if minutes < 60 {
-            return "\(minutes) minutes"
-        } else {
-            let hours = minutes / 60
-            let mins = minutes % 60
-            if mins == 0 {
-                return "\(hours) hour\(hours == 1 ? "" : "s")"
-            } else {
-                return "\(hours) hour\(hours == 1 ? "" : "s") \(mins) min"
-            }
+            return String(localized: "\(minutes) minutes")
         }
+        let hours = minutes / 60
+        let mins = minutes % 60
+        if mins == 0 {
+            return hours == 1
+                ? String(localized: "\(hours) hour")
+                : String(localized: "\(hours) hours")
+        }
+        return String(localized: "\(hours) hours \(mins) min")
     }
 
     private func ratingDescription(_ rating: Int) -> String {

@@ -59,11 +59,11 @@ extension MetronomeView {
             let calculatedTempo = Int(60.0 / averageInterval)
             metronome.tempo = max(20, min(300, calculatedTempo))
         }
-        
+
+        let clearAfter = now
         DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-            if tapTimes.count > 0 {
-                tapTimes.removeAll()
-            }
+            guard let last = tapTimes.last, last <= clearAfter else { return }
+            tapTimes.removeAll()
         }
     }
     

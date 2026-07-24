@@ -18,7 +18,7 @@ struct AppSettings: Codable, Sendable {
     var metronomeSound: String = MetronomeSound.click.rawValue
     var metronomeEmphasizedSound: String = MetronomeSound.tick.rawValue
     var metronomeNonEmphasizedSound: String = MetronomeSound.click.rawValue
-    var metronomeVolume: Double = 0.7
+    var metronomeVolume: Double = 0.9
     var metronomeHapticEnabled: Bool = true
     var metronomeAutoStopOnTabSwitch: Bool = false
     /// When true, stop the reference tone leaving the Metronome tab. Default false = tone keeps playing in background.
@@ -42,14 +42,18 @@ struct AppSettings: Codable, Sendable {
     // Storage — default false uses iCloud Drive when available
     var storeFilesOnDeviceOnly: Bool = false
 
-    // Navigation
+    // Navigation — lastSelectedTab is device-local (UserDefaults); not authoritative in iCloud.
     var lastSelectedTab: Int = 0
 
     /// Order of main tabs (semantic ids 0…7). First four = bottom bar on compact width; remaining four = More menu / trailing tabs.
     /// Default matches historical layout: Chords before Settings in the overflow strip.
     var tabBarCustomizationOrder: [Int] = [0, 1, 2, 3, 4, 5, 7, 6]
 
+    /// 1 = pre-Exercises tab indices; 2 = Exercises at semantic id 4.
+    var tabSemanticsVersion: Int = 2
+
     static let defaultTabBarCustomizationOrder: [Int] = [0, 1, 2, 3, 4, 5, 7, 6]
+    static let currentTabSemanticsVersion = 2
 
     static func normalizedTabBarOrder(_ order: [Int]) -> [Int] {
         guard order.count == 8, Set(order) == Set(0...7) else {
@@ -77,7 +81,7 @@ struct AppSettings: Codable, Sendable {
         case practiceReminderEnabled, practiceReminderHour, practiceReminderMinute
         case accentColor, colorScheme, showTabBarText
         case storeFilesOnDeviceOnly
-        case lastSelectedTab, tabBarCustomizationOrder
+        case lastSelectedTab, tabBarCustomizationOrder, tabSemanticsVersion
         case metronomeTimeSignature, metronomeBeatPattern
         case noteIdentificationEnabledClefRawValues
         case keySignatureIdentificationEnabledModeRawValues
@@ -93,7 +97,7 @@ extension AppSettings {
         metronomeSound = try c.decodeIfPresent(String.self, forKey: .metronomeSound) ?? MetronomeSound.click.rawValue
         metronomeEmphasizedSound = try c.decodeIfPresent(String.self, forKey: .metronomeEmphasizedSound) ?? MetronomeSound.tick.rawValue
         metronomeNonEmphasizedSound = try c.decodeIfPresent(String.self, forKey: .metronomeNonEmphasizedSound) ?? MetronomeSound.click.rawValue
-        metronomeVolume = try c.decodeIfPresent(Double.self, forKey: .metronomeVolume) ?? 0.7
+        metronomeVolume = try c.decodeIfPresent(Double.self, forKey: .metronomeVolume) ?? 0.9
         metronomeHapticEnabled = try c.decodeIfPresent(Bool.self, forKey: .metronomeHapticEnabled) ?? true
         metronomeAutoStopOnTabSwitch = try c.decodeIfPresent(Bool.self, forKey: .metronomeAutoStopOnTabSwitch) ?? false
         stopToneWhenLeavingMetronomeTab = try c.decodeIfPresent(Bool.self, forKey: .stopToneWhenLeavingMetronomeTab) ?? false
@@ -112,6 +116,8 @@ extension AppSettings {
         lastSelectedTab = try c.decodeIfPresent(Int.self, forKey: .lastSelectedTab) ?? 0
         let rawOrder = try c.decodeIfPresent([Int].self, forKey: .tabBarCustomizationOrder)
         tabBarCustomizationOrder = AppSettings.normalizedTabBarOrder(rawOrder ?? AppSettings.defaultTabBarCustomizationOrder)
+        // Missing version ⇒ legacy pre-Exercises payload (migrate on load).
+        tabSemanticsVersion = try c.decodeIfPresent(Int.self, forKey: .tabSemanticsVersion) ?? 1
         metronomeTimeSignature = try c.decodeIfPresent(String.self, forKey: .metronomeTimeSignature) ?? TimeSignature.fourFour.rawValue
         metronomeBeatPattern = try c.decodeIfPresent([Bool].self, forKey: .metronomeBeatPattern) ?? []
         noteIdentificationEnabledClefRawValues = try c.decodeIfPresent([String].self, forKey: .noteIdentificationEnabledClefRawValues)

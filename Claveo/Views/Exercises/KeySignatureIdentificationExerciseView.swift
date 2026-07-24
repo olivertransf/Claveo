@@ -324,6 +324,12 @@ struct KeySignatureIdentificationExerciseView: View {
                 .frame(height: blockH)
                 .frame(maxWidth: .infinity)
                 .id("\(question.vexKeySpec)-\(question.mode.rawValue)")
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel(
+                    question.mode == .major
+                        ? String(localized: "Major key signature to identify")
+                        : String(localized: "Minor key signature to identify")
+                )
         }
         .padding(.top, 2)
         .padding(.bottom, 0)
@@ -431,6 +437,18 @@ struct KeySignatureIdentificationExerciseView: View {
                 )
         }
         .buttonStyle(KeySigExerciseAnswerButtonStyle())
+        .accessibilityLabel(accessibilityAnswerLabel(letter: letter, accidental: accidental))
+    }
+
+    private func accessibilityAnswerLabel(letter: KSNoteLetter, accidental: KSWrittenAccidental) -> String {
+        switch accidental {
+        case .natural:
+            return String(localized: "\(letter.displayLetter) natural")
+        case .sharp:
+            return String(localized: "\(letter.displayLetter) sharp")
+        case .flat:
+            return String(localized: "\(letter.displayLetter) flat")
+        }
     }
 
     private func select(letter: KSNoteLetter, accidental: KSWrittenAccidental) {

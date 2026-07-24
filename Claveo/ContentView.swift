@@ -63,7 +63,7 @@ struct ContentView: View {
                 .environmentObject(toneGenerator)
                 .environmentObject(themeManager)
         case 2:
-            TunerView()
+            TunerView(isTabSelected: isSelected)
         case 3:
             PracticeView()
         case 4:
