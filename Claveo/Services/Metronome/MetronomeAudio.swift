@@ -163,14 +163,19 @@ extension Metronome {
 
     /// Renders the accent and normal clicks at full scale. User volume is applied
     /// on the player node so changing it never rebuilds the audio graph.
+    /// Sounds are passed in because `SettingsManager.$settings` publishes on `willSet`:
+    /// a subscriber that read the singleton back would still see the previous sounds.
     @discardableResult
-    func makeClickBuffers() -> Bool {
+    func makeClickBuffers(
+        emphasized: MetronomeSound? = nil,
+        normal normalSound: MetronomeSound? = nil
+    ) -> Bool {
         let settings = SettingsManager.shared
         guard let accent = MetronomeAudio.makeBuffer(
-            for: settings.metronomeEmphasizedSoundEnum,
+            for: emphasized ?? settings.metronomeEmphasizedSoundEnum,
             gain: 1
         ), let normal = MetronomeAudio.makeBuffer(
-            for: settings.metronomeNonEmphasizedSoundEnum,
+            for: normalSound ?? settings.metronomeNonEmphasizedSoundEnum,
             gain: 1
         ) else {
             return false
@@ -189,8 +194,11 @@ extension Metronome {
 
     /// Swaps in freshly rendered clicks and re-queues upcoming beats, keeping the
     /// existing beat timeline so the tempo and downbeat do not jump.
-    func reloadClickSounds() {
-        guard makeClickBuffers() else {
+    func reloadClickSounds(
+        emphasized: MetronomeSound? = nil,
+        normal normalSound: MetronomeSound? = nil
+    ) {
+        guard makeClickBuffers(emphasized: emphasized, normal: normalSound) else {
             if isPlaying {
                 failPlayback(with: .audioBuffersUnavailable)
             }

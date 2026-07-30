@@ -101,7 +101,7 @@ extension MetronomeView {
             }
 
             toneGeneratorPanel {
-                HStack(alignment: .top, spacing: 28) {
+                HStack(alignment: .top, spacing: 20) {
                     toneGeneratorControlsColumn
                         .frame(maxWidth: .infinity)
 
@@ -119,7 +119,7 @@ extension MetronomeView {
             sectionLabel(String(localized: "Tone Generator"), systemImage: "waveform.path")
             content()
         }
-        .padding(24)
+        .padding(20)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(panelBackground)
     }
@@ -138,7 +138,7 @@ extension MetronomeView {
     // MARK: - Metronome cards
 
     private var metronomeHeroCard: some View {
-        VStack(spacing: 18) {
+        VStack(spacing: 16) {
             HStack {
                 Label("Tempo", systemImage: "metronome")
                     .font(.subheadline.weight(.semibold))
@@ -479,7 +479,7 @@ extension MetronomeView {
     }
 
     private var toneGeneratorControlsColumn: some View {
-        VStack(spacing: 20) {
+        VStack(spacing: 16) {
             Text(String(format: "%.1f Hz", toneGenerator.frequency))
                 .font(.system(size: isIPad ? 36 : 28, weight: .medium, design: .rounded))
                 .monospacedDigit()

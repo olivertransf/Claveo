@@ -132,7 +132,7 @@ struct Recording: Identifiable, Codable, Equatable, Sendable {
         } else {
             // Show short date for older recordings
             let formatter = DateFormatter()
-            formatter.dateFormat = "M/d"
+            formatter.setLocalizedDateFormatFromTemplate("Md")
             return formatter.string(from: createdAt)
         }
     }

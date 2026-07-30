@@ -197,7 +197,10 @@ class Metronome: ObservableObject {
                 let soundsChanged = configuration.emphasizedSound != previous.emphasizedSound
                     || configuration.normalSound != previous.normalSound
                 if soundsChanged, self.isPlaying {
-                    self.reloadClickSounds()
+                    self.reloadClickSounds(
+                        emphasized: configuration.emphasizedSound,
+                        normal: configuration.normalSound
+                    )
                 }
             }
     }

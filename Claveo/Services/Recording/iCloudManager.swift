@@ -7,6 +7,7 @@
 //  Copyright (c) 2025 Oliver Tran
 
 import Foundation
+import UIKit
 
 extension Notification.Name {
     static let claveoStorageLocationDidChange = Notification.Name("claveoStorageLocationDidChange")
@@ -306,7 +307,9 @@ final class iCloudManager: @unchecked Sendable {
 
     nonisolated func getStorageLocation() -> String {
         if prefersDeviceOnlyStorage {
-            return String(localized: "On This iPhone")
+            return UIDevice.current.userInterfaceIdiom == .pad
+                ? String(localized: "On This iPad")
+                : String(localized: "On This iPhone")
         }
         return isAvailable ? String(localized: "iCloud Drive") : String(localized: "Local Storage")
     }

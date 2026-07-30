@@ -26,10 +26,57 @@ class AudioPlayer: NSObject, ObservableObject {
 
     private var audioPlayer: AVAudioPlayer?
     private var timer: Timer?
+    private var interruptionObserver: NSObjectProtocol?
 
     override init() {
         super.init()
         activatePlaybackSession()
+        observeInterruptions()
+    }
+
+    deinit {
+        if let interruptionObserver {
+            NotificationCenter.default.removeObserver(interruptionObserver)
+        }
+    }
+
+    /// Calls, alarms and Siri stop the player without telling the delegate, which
+    /// would otherwise leave the UI showing a paused file as still playing.
+    private func observeInterruptions() {
+        interruptionObserver = NotificationCenter.default.addObserver(
+            forName: AVAudioSession.interruptionNotification,
+            object: AVAudioSession.sharedInstance(),
+            queue: .main
+        ) { [weak self] notification in
+            let info = notification.userInfo
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                guard
+                    let rawType = info?[AVAudioSessionInterruptionTypeKey] as? UInt,
+                    let type = AVAudioSession.InterruptionType(rawValue: rawType)
+                else { return }
+
+                switch type {
+                case .began:
+                    guard self.isPlaying else { return }
+                    self.audioPlayer?.pause()
+                    self.isPlaying = false
+                    self.stopTimer()
+                case .ended:
+                    let rawOptions = info?[AVAudioSessionInterruptionOptionKey] as? UInt ?? 0
+                    guard
+                        AVAudioSession.InterruptionOptions(rawValue: rawOptions).contains(.shouldResume),
+                        let player = self.audioPlayer
+                    else { return }
+                    self.activatePlaybackSession()
+                    guard player.play() else { return }
+                    self.isPlaying = true
+                    self.startTimer()
+                @unknown default:
+                    break
+                }
+            }
+        }
     }
 
     private func activatePlaybackSession() {
