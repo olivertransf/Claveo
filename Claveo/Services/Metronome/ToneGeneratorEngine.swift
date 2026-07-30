@@ -19,6 +19,8 @@ extension Notification.Name {
 final class ToneGeneratorEngine: ObservableObject {
     static let frequencyMin = 30.0
     static let frequencyMax = 2000.0
+    /// Peak amplitude of the reference tone while playing.
+    private static let playbackAmplitude = 0.32
 
     @Published private(set) var isPlaying = false
     @Published private(set) var frequency: Double = 440
@@ -29,7 +31,7 @@ final class ToneGeneratorEngine: ObservableObject {
         var hz: Double = 440
         /// Smoothed amplitude — render loop interpolates toward targetAmplitude each sample.
         var amplitude: Double = 0
-        /// Desired amplitude: 0.18 when playing, 0 when fading out.
+        /// Desired amplitude: `playbackAmplitude` when playing, 0 when fading out.
         var targetAmplitude: Double = 0
     }
 
@@ -168,7 +170,7 @@ final class ToneGeneratorEngine: ObservableObject {
         let renderState = self.renderState
 
         // Per-sample amplitude step for a ~40 ms fade (avoids clicks on start/stop).
-        let fadeStep = 0.18 / (0.04 * sampleRate)
+        let fadeStep = Self.playbackAmplitude / (0.04 * sampleRate)
 
         let node = AVAudioSourceNode(format: format) { _, _, frameCount, audioBufferList -> OSStatus in
             let abl = UnsafeMutableAudioBufferListPointer(audioBufferList)
@@ -213,7 +215,7 @@ final class ToneGeneratorEngine: ObservableObject {
         // Reset amplitude state so the fade-in starts from silence.
         renderState.lock.lock()
         renderState.amplitude = 0
-        renderState.targetAmplitude = 0.18
+        renderState.targetAmplitude = Self.playbackAmplitude
         renderState.lock.unlock()
 
         do {

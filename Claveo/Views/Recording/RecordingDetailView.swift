@@ -16,6 +16,8 @@ struct RecordingDetailView: View {
     @State private var availablePieces: [Piece] = []
     @State private var showingPiecePicker = false
     @State private var measureStartText = ""
+    /// Grows with Dynamic Type so measure numbers are never clipped.
+    @ScaledMetric(relativeTo: .body) private var measureFieldWidth: CGFloat = 72
     @State private var measureEndText = ""
     @State private var showingTrimSheet = false
     @State private var showingRestoreAlert = false
@@ -98,7 +100,7 @@ struct RecordingDetailView: View {
                             .keyboardType(.numberPad)
                             .textFieldStyle(.claveoCompact)
                             .multilineTextAlignment(.trailing)
-                            .frame(width: 72)
+                            .frame(width: measureFieldWidth)
                             .onChange(of: measureStartText) { _, newValue in
                                 let digitsOnly = newValue.filter(\.isNumber)
                                 if digitsOnly != newValue {
@@ -114,7 +116,7 @@ struct RecordingDetailView: View {
                             .keyboardType(.numberPad)
                             .textFieldStyle(.claveoCompact)
                             .multilineTextAlignment(.trailing)
-                            .frame(width: 72)
+                            .frame(width: measureFieldWidth)
                             .onChange(of: measureEndText) { _, newValue in
                                 let digitsOnly = newValue.filter(\.isNumber)
                                 if digitsOnly != newValue {

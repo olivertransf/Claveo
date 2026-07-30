@@ -383,9 +383,10 @@ class PitchDetector: NSObject, ObservableObject {
                 let note1Name = extractNoteName(note1)
                 let note2Name = extractNoteName(note2)
                 
-                // If same note name (octave relationship) and lower frequency is closer to in-tune
-                if note1Name == note2Name && abs(cents2) < abs(cents1) + 20 {
-                    // Prefer the lower frequency (fundamental)
+                // Only drop an octave when the lower note is clearly more in tune.
+                // An exact octave has the same cents deviation, so a tolerant
+                // comparison here would halve every reading.
+                if note1Name == note2Name && abs(cents2) + 15 < abs(cents1) {
                     return halfFreq
                 }
             }
@@ -429,10 +430,16 @@ class PitchDetector: NSObject, ObservableObject {
         for note in noteBuffer {
             noteCounts[note, default: 0] += 1
         }
-        
-        // Find the note with the highest count
-        let mostCommon = noteCounts.max(by: { $0.value < $1.value })
-        return mostCommon?.key ?? "--"
+
+        // Ties resolve to the most recent reading; dictionary order is unstable
+        // and would otherwise make the displayed note flicker.
+        var best = noteBuffer[noteBuffer.count - 1]
+        var bestCount = noteCounts[best] ?? 0
+        for note in noteBuffer.reversed() where (noteCounts[note] ?? 0) > bestCount {
+            best = note
+            bestCount = noteCounts[note] ?? 0
+        }
+        return best
     }
     
     // Calculate note and cents from frequency

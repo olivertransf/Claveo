@@ -165,7 +165,7 @@ class SettingsManager: ObservableObject {
         settings.metronomeSound = defaults.string(forKey: "metronomeSound") ?? MetronomeSound.click.rawValue
         settings.metronomeEmphasizedSound = defaults.string(forKey: "metronomeEmphasizedSound") ?? MetronomeSound.tick.rawValue
         settings.metronomeNonEmphasizedSound = defaults.string(forKey: "metronomeNonEmphasizedSound") ?? MetronomeSound.click.rawValue
-        settings.metronomeVolume = defaults.object(forKey: "metronomeVolume") as? Double ?? 0.9
+        settings.metronomeVolume = defaults.object(forKey: "metronomeVolume") as? Double ?? 1.0
         settings.metronomeHapticEnabled = defaults.object(forKey: "metronomeHapticEnabled") as? Bool ?? true
         settings.metronomeAutoStopOnTabSwitch = defaults.bool(forKey: "metronomeAutoStopOnTabSwitch")
         settings.stopToneWhenLeavingMetronomeTab = defaults.object(forKey: "stopToneWhenLeavingMetronomeTab") as? Bool ?? false
@@ -408,6 +408,12 @@ class SettingsManager: ObservableObject {
         saveSettings()
     }
 
+    /// Applies a value in memory without persisting it. Use while a control is
+    /// being dragged, then call `update` once on release to write it out.
+    func updateLive<T>(_ keyPath: WritableKeyPath<AppSettings, T>, value: T) {
+        settings[keyPath: keyPath] = value
+    }
+
     func resetSettings() {
         PracticeReminderNotificationService.cancel()
         let defaultShowTabBarText = UIDevice.current.userInterfaceIdiom == .pad
@@ -455,10 +461,6 @@ class SettingsManager: ObservableObject {
     
     // MARK: - Computed Properties for Convenience
     
-    var metronomeSoundEnum: MetronomeSound {
-        MetronomeSound(rawValue: settings.metronomeSound) ?? .click
-    }
-
     var metronomeEmphasizedSoundEnum: MetronomeSound {
         MetronomeSound(rawValue: settings.metronomeEmphasizedSound) ?? .tick
     }
@@ -475,11 +477,6 @@ class SettingsManager: ObservableObject {
         ColorSchemeOption(rawValue: settings.colorScheme) ?? .system
     }
     
-    func setMetronomeSound(_ sound: MetronomeSound) {
-        settings.metronomeSound = sound.rawValue
-        saveSettings()
-    }
-
     func setMetronomeEmphasizedSound(_ sound: MetronomeSound) {
         settings.metronomeEmphasizedSound = sound.rawValue
         saveSettings()

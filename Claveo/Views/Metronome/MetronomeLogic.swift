@@ -11,10 +11,6 @@ import SwiftUI
 
 extension MetronomeView {
     func syncSettingsFromManager() {
-        let sound = settingsManager.metronomeSoundEnum
-        if metronome.soundType != sound {
-            metronome.soundType = sound
-        }
         let hapticEnabled = settingsManager.settings.metronomeHapticEnabled
         if metronome.hapticEnabled != hapticEnabled {
             metronome.hapticEnabled = hapticEnabled
@@ -47,6 +43,10 @@ extension MetronomeView {
     func tapTempo() {
         HapticFeedback.lightImpact()
         let now = Date()
+        // A long pause means a new count-in, not a very slow tempo.
+        if let last = tapTimes.last, now.timeIntervalSince(last) > 2 {
+            tapTimes.removeAll()
+        }
         tapTimes.append(now)
         
         if tapTimes.count > 4 {

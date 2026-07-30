@@ -81,13 +81,6 @@ class Metronome: ObservableObject {
     @Published var customTimeSignature: (top: Int, bottom: Int)? = nil
     @Published var beatPattern: [Bool] = [true, false, false, false]
     @Published var currentBeat: Int = 0
-    @Published var soundType: MetronomeSound = .click {
-        didSet {
-            if isPlaying {
-                rebuildAudioBuffersAndReschedule()
-            }
-        }
-    }
     @Published var hapticEnabled: Bool = true
     
     var interval: TimeInterval = 0.5
@@ -150,10 +143,6 @@ class Metronome: ObservableObject {
             customTimeSignature = (top, bottom)
         }
 
-        // Load saved preferences
-        if let sound = MetronomeSound(rawValue: settings.metronomeSound) {
-            soundType = sound
-        }
         hapticEnabled = settings.metronomeHapticEnabled
 
         updateInterval()
@@ -200,9 +189,15 @@ class Metronome: ObservableObject {
                     gain: settings.metronomeVolume
                 )
                 guard let self, configuration != self.lastAudioConfiguration else { return }
+                let previous = self.lastAudioConfiguration
                 self.lastAudioConfiguration = configuration
-                if self.isPlaying {
-                    self.rebuildAudioBuffersAndReschedule()
+                if configuration.gain != previous.gain {
+                    self.applyVolume(configuration.gain)
+                }
+                let soundsChanged = configuration.emphasizedSound != previous.emphasizedSound
+                    || configuration.normalSound != previous.normalSound
+                if soundsChanged, self.isPlaying {
+                    self.reloadClickSounds()
                 }
             }
     }
