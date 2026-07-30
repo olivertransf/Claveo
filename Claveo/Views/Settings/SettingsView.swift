@@ -330,7 +330,7 @@ struct SettingsView: View {
         } header: {
             Text("Storage")
         } footer: {
-            Text("iCloud Drive is the default when available. Turn it off to keep recordings and app data on this iPhone only without syncing. Changing this affects where new files are saved; existing files stay where they were created.")
+            Text("iCloud Drive is the default when available. Turn it off to keep recordings and app data on this device only without syncing. Changing this affects where new files are saved; existing files stay where they were created.")
         }
     }
 

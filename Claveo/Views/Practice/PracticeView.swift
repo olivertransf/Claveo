@@ -325,7 +325,7 @@ struct PracticeView: View {
         case -1: return String(localized: "Last Week")
         default:
             let formatter = DateFormatter()
-            formatter.dateFormat = "MMM d"
+            formatter.setLocalizedDateFormatFromTemplate("MMM d")
             let end = calendar.date(byAdding: .day, value: 6, to: weekStart) ?? weekStart
             return "\(formatter.string(from: weekStart)) – \(formatter.string(from: end))"
         }
@@ -349,7 +349,7 @@ struct PracticeView: View {
     }
 
     private func formatMinutes(_ minutes: Int) -> String {
-        minutes < 60 ? "\(minutes)m" : String(format: "%.1gh", Double(minutes) / 60)
+        minutes < 60 ? "\(minutes)m" : String(format: "%.1fh", Double(minutes) / 60)
     }
 }
 
@@ -379,7 +379,7 @@ private struct WeekDayCell: View {
 
     private var durationLabel: String? {
         guard isPracticed && minutesPracticed > 0 else { return nil }
-        return minutesPracticed < 60 ? "\(minutesPracticed)m" : String(format: "%.1gh", Double(minutesPracticed) / 60)
+        return minutesPracticed < 60 ? "\(minutesPracticed)m" : String(format: "%.1fh", Double(minutesPracticed) / 60)
     }
 
     var body: some View {

@@ -303,7 +303,8 @@ class PracticeService: ObservableObject {
                 map[cloudEntry.id] = cloudEntry
             }
         }
-        return Array(map.values)
+        // Stable order so an unchanged merge compares equal and skips a rewrite.
+        return map.values.sorted { $0.id.uuidString < $1.id.uuidString }
     }
 
     private func loadFromUserDefaultsReturning() -> [PracticeEntry] {
