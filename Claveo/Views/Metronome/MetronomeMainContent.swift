@@ -60,9 +60,6 @@ extension MetronomeView {
             syncSettingsFromManager()
             syncNoteSelection()
         }
-        .onChange(of: metronome.soundType) { _, _ in
-            settingsManager.setMetronomeSound(metronome.soundType)
-        }
         .onChange(of: metronome.hapticEnabled) { _, _ in
             settingsManager.update(\.metronomeHapticEnabled, value: metronome.hapticEnabled)
         }
@@ -73,9 +70,6 @@ extension MetronomeView {
                 guard let metronome = metronome, metronome.tempo == tempoToSave else { return }
                 settingsManager.update(\.lastMetronomeTempo, value: tempoToSave)
             }
-        }
-        .onChange(of: settingsManager.settings.metronomeSound) { _, _ in
-            syncSettingsFromManager()
         }
         .onChange(of: settingsManager.settings.metronomeHapticEnabled) { _, _ in
             syncSettingsFromManager()
@@ -352,10 +346,9 @@ extension MetronomeView {
                 .font(.subheadline.weight(.semibold))
                 .foregroundStyle(.secondary)
 
-            let columns = Array(
-                repeating: GridItem(.flexible(), spacing: 10),
-                count: max(metronome.beatPattern.count, 1)
-            )
+            // Adaptive so wide meters (up to 16 beats) wrap instead of shrinking
+            // the cells below a tappable size.
+            let columns = [GridItem(.adaptive(minimum: 44, maximum: 90), spacing: 10)]
             LazyVGrid(columns: columns, spacing: 10) {
                 ForEach(Array(metronome.beatPattern.enumerated()), id: \.offset) { index, isAccented in
                     Button {

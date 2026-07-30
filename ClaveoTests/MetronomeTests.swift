@@ -37,6 +37,49 @@ final class MetronomeTests: XCTestCase {
         }
     }
 
+    func testEverySoundIsNormalizedToTheSamePeak() throws {
+        for sound in MetronomeSound.allCases {
+            let buffer = try XCTUnwrap(MetronomeAudio.makeBuffer(for: sound, gain: 1))
+            let samples = try XCTUnwrap(buffer.floatChannelData?[0])
+            let peak = (0..<Int(buffer.frameLength))
+                .map { abs(samples[$0]) }
+                .max() ?? 0
+
+            XCTAssertEqual(Double(peak), MetronomeAudio.normalizedPeak, accuracy: 0.02)
+        }
+    }
+
+    func testClicksEndAtSilenceSoBuffersDoNotPop() throws {
+        for sound in MetronomeSound.allCases {
+            let buffer = try XCTUnwrap(MetronomeAudio.makeBuffer(for: sound, gain: 1))
+            let samples = try XCTUnwrap(buffer.floatChannelData?[0])
+            let lastSample = samples[Int(buffer.frameLength) - 1]
+
+            XCTAssertEqual(lastSample, 0, accuracy: 0.001)
+        }
+    }
+
+    func testLowerVolumeProducesQuieterOutput() throws {
+        func peak(gain: Double) throws -> Float {
+            let buffer = try XCTUnwrap(MetronomeAudio.makeBuffer(for: .click, gain: gain))
+            let samples = try XCTUnwrap(buffer.floatChannelData?[0])
+            return (0..<Int(buffer.frameLength)).map { abs(samples[$0]) }.max() ?? 0
+        }
+
+        XCTAssertGreaterThan(try peak(gain: 1), try peak(gain: 0.5))
+        XCTAssertEqual(try peak(gain: 0), 0)
+    }
+
+    func testPlayerVolumeSpansFullRange() {
+        XCTAssertEqual(MetronomeAudio.playerVolume(for: 0), 0)
+        XCTAssertEqual(MetronomeAudio.playerVolume(for: 1), 1, accuracy: 0.0001)
+        XCTAssertEqual(MetronomeAudio.playerVolume(for: 2), 1, accuracy: 0.0001)
+        XCTAssertLessThan(
+            MetronomeAudio.playerVolume(for: 0.5),
+            MetronomeAudio.playerVolume(for: 0.75)
+        )
+    }
+
     func testTempoAdjustmentRequestsSingleRescheduleAtEnd() async {
         await MainActor.run {
             let metronome = Metronome()

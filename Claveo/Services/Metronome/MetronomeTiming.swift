@@ -26,6 +26,11 @@ struct MetronomeScheduleState {
 }
 
 extension Metronome {
+    /// Beats closer than this are treated as already gone; scheduling them would
+    /// make AVAudioPlayerNode fire them immediately as an extra click.
+    static let minimumScheduleLead: TimeInterval = 0.01
+    static let maximumScheduleLookahead: TimeInterval = 1.5
+
     func updateInterval() {
         interval = 60.0 / Double(tempo)
     }
@@ -43,9 +48,18 @@ extension Metronome {
         updated[index].toggle()
         beatPattern = updated
         SettingsManager.shared.update(\.metronomeBeatPattern, value: updated)
-        if isPlaying {
-            restartTimer()
-        }
+        resyncScheduledBeats()
+    }
+
+    /// Re-queues upcoming beats without touching the beat timeline, so accent and
+    /// sound changes apply on the next beat instead of restarting the tempo.
+    func resyncScheduledBeats() {
+        guard isPlaying, let player = playerNode else { return }
+        player.stop()
+        player.reset()
+        scheduledBeatCount = 0
+        player.play()
+        scheduleBeatsAhead()
     }
     
     func start() {
@@ -76,9 +90,10 @@ extension Metronome {
         currentBeat = -1
         beatCount = 0
         scheduledBeatCount = 0
-        let now = CACurrentMediaTime()
-        startTime = now
-        nextBeatTime = now + audioOutputLatency
+        // The beat timeline starts one output-latency ahead so scheduled audio and
+        // on-screen beats line up instead of the first click landing in the past.
+        startTime = CACurrentMediaTime() + audioOutputLatency
+        nextBeatTime = startTime
         lastBeatTime = 0
         
         scheduleBeatsAhead()
@@ -103,18 +118,11 @@ extension Metronome {
         startupError = error
     }
     
-    func savePreferences() {
-        SettingsManager.shared.setMetronomeSound(soundType)
-        SettingsManager.shared.update(\.metronomeHapticEnabled, value: hapticEnabled)
-    }
-    
     func setTimeSignature(_ signature: TimeSignature) {
         timeSignature = signature
         customTimeSignature = nil
         updateBeatPattern()
-        if isPlaying {
-            restartTimer()
-        }
+        resyncScheduledBeats()
         // Clear custom time signature when selecting a standard one
         SettingsManager.shared.update(\.customTimeSignatureTop, value: nil)
         SettingsManager.shared.update(\.customTimeSignatureBottom, value: nil)
@@ -128,9 +136,7 @@ extension Metronome {
         let validBottom = allowedBottoms.contains(bottom) ? bottom : 4
         customTimeSignature = (clampedTop, validBottom)
         updateBeatPattern()
-        if isPlaying {
-            restartTimer()
-        }
+        resyncScheduledBeats()
         // Save custom time signature and reset beat pattern
         SettingsManager.shared.update(\.customTimeSignatureTop, value: clampedTop)
         SettingsManager.shared.update(\.customTimeSignatureBottom, value: validBottom)
@@ -173,15 +179,22 @@ extension Metronome {
 
         // Schedule from elapsed time, not UI beatCount — avoids silence when the main thread lags.
         let now = CACurrentMediaTime()
-        let elapsedBeats = max(0, Int(floor((now - startTime) / interval)))
-        // Skip past beats so AVAudioPlayerNode does not burst-play late buffers on resume.
-        if scheduledBeatCount < elapsedBeats {
-            scheduledBeatCount = elapsedBeats
+        // Only queue beats that are still ahead of us, so AVAudioPlayerNode never
+        // burst-plays late buffers after a lag spike, resume, or sound change.
+        let firstFutureBeat = max(0, Int(ceil((now + Self.minimumScheduleLead - startTime) / interval)))
+        if scheduledBeatCount < firstFutureBeat {
+            scheduledBeatCount = firstFutureBeat
         }
-        let targetScheduled = elapsedBeats + beatsToScheduleAhead
+        let targetScheduled = firstFutureBeat + beatsToScheduleAhead
         while scheduledBeatCount < targetScheduled {
             let beatNumber = scheduledBeatCount
             let beatTimeInSeconds = startTime + (Double(beatNumber) * interval)
+            // Keep the queue short at slow tempos so accent, sound, and tempo
+            // changes take effect promptly instead of after many queued beats.
+            if beatNumber > firstFutureBeat + 1,
+               beatTimeInSeconds - now > Self.maximumScheduleLookahead {
+                return
+            }
             let beatHostTime = AVAudioTime.hostTime(forSeconds: beatTimeInSeconds)
 
             let beatInMeasure = beatNumber % beatsPerMeasure
@@ -205,10 +218,9 @@ extension Metronome {
         let currentTime = CACurrentMediaTime()
         scheduleBeatsAhead()
 
-        let latency = audioOutputLatency
-        let elapsed = currentTime - startTime - latency
+        let elapsed = currentTime - startTime
         guard elapsed >= -0.001 else {
-            prepareHapticsIfNeeded(timeUntilNextBeat: startTime + latency - currentTime)
+            prepareHapticsIfNeeded(timeUntilNextBeat: startTime - currentTime)
             return
         }
 
@@ -216,7 +228,7 @@ extension Metronome {
         let lastFiredBeatNumber = beatCount > 0 ? beatCount - 1 : -1
         guard latestBeatNumber > lastFiredBeatNumber else {
             let nextBeatNumber = lastFiredBeatNumber + 1
-            let timeUntilNext = startTime + (Double(nextBeatNumber) * interval) + latency - currentTime
+            let timeUntilNext = startTime + (Double(nextBeatNumber) * interval) - currentTime
             prepareHapticsIfNeeded(timeUntilNextBeat: timeUntilNext)
             return
         }
@@ -230,14 +242,14 @@ extension Metronome {
         for beatNumber in (lastFiredBeatNumber + 1)...fireUpTo {
             beatCount = beatNumber + 1
             currentBeat = beatNumber % beatsPerMeasure
-            lastBeatTime = startTime + (Double(beatNumber) * interval) + latency
+            lastBeatTime = startTime + (Double(beatNumber) * interval)
 
             if beatNumber == fireUpTo {
                 triggerHapticForCurrentBeat()
             }
         }
 
-        nextBeatTime = startTime + (Double(beatCount) * interval) + latency
+        nextBeatTime = startTime + (Double(beatCount) * interval)
         prepareHapticsIfNeeded(timeUntilNextBeat: nextBeatTime - currentTime)
     }
 
@@ -261,9 +273,8 @@ extension Metronome {
     
     func restartTimer() {
         guard isPlaying else { return }
-        let currentTime = CACurrentMediaTime()
-        startTime = currentTime
-        nextBeatTime = currentTime + audioOutputLatency
+        startTime = CACurrentMediaTime() + audioOutputLatency
+        nextBeatTime = startTime
         beatCount = 0
         scheduledBeatCount = 0
         lastBeatTime = 0

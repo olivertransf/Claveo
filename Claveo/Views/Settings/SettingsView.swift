@@ -13,6 +13,8 @@ struct SettingsView: View {
     @Environment(\.openURL) private var openURL
     @StateObject private var settingsManager = SettingsManager.shared
     @State private var manualFrequencyText = ""
+    /// Grows with Dynamic Type so the Hz value is never clipped.
+    @ScaledMetric(relativeTo: .body) private var frequencyFieldWidth: CGFloat = 76
     @FocusState private var isFrequencyFieldFocused: Bool
     @State private var practiceDefaultTime: Int = SettingsManager.shared.settings.defaultPracticeTime
     @State private var practiceDurationOptions: [Int] = {
@@ -143,7 +145,7 @@ struct SettingsView: View {
                     TextField("Hz", text: $manualFrequencyText)
                         .keyboardType(.decimalPad)
                         .multilineTextAlignment(.trailing)
-                        .frame(width: 76)
+                        .frame(width: frequencyFieldWidth)
                         .textFieldStyle(.claveoCompact)
                         .focused($isFrequencyFieldFocused)
                         .onSubmit {

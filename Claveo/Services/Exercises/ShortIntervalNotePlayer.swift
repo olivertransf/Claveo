@@ -51,7 +51,7 @@ enum ShortIntervalNoteSynthesizer {
             phase += inc
             if phase >= twoPi { phase -= twoPi }
 
-            out[i] = Float(env * sum * 0.22)
+            out[i] = Float(env * sum * 0.34)
         }
         return out
     }
@@ -90,7 +90,7 @@ enum ShortIntervalNoteSynthesizer {
             if ph1 >= twoPi { ph1 -= twoPi }
             if ph2 >= twoPi { ph2 -= twoPi }
 
-            out[i] = Float(env * sum * 0.11)
+            out[i] = Float(env * sum * 0.17)
         }
         return out
     }

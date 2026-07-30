@@ -262,13 +262,6 @@ struct ContentView: View {
             userInfo: ["index": newIndex]
         )
     }
-
-    private var tabBarHeight: CGFloat {
-        let safeBottom = UIApplication.shared.connectedScenes
-            .compactMap { $0 as? UIWindowScene }
-            .first?.windows.first?.safeAreaInsets.bottom ?? 0
-        return 49 + safeBottom
-    }
 }
 
 // MARK: - UIKit More-tab interception
@@ -374,6 +367,8 @@ private struct MoreMenuView: View {
                             )
                         Text(tab.name)
                             .font(.system(size: 10, weight: .medium))
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.75)
                             .foregroundStyle(
                                 selectedTabIndex == tab.tag
                                     ? themeManager.accentColor
@@ -384,6 +379,8 @@ private struct MoreMenuView: View {
                     .padding(.vertical, 7)
                     .contentShape(Rectangle())
                 }
+                .accessibilityLabel(tab.name)
+                .accessibilityAddTraits(selectedTabIndex == tab.tag ? [.isButton, .isSelected] : .isButton)
             }
         }
         .background(.ultraThinMaterial)

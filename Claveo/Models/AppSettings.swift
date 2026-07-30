@@ -18,7 +18,7 @@ struct AppSettings: Codable, Sendable {
     var metronomeSound: String = MetronomeSound.click.rawValue
     var metronomeEmphasizedSound: String = MetronomeSound.tick.rawValue
     var metronomeNonEmphasizedSound: String = MetronomeSound.click.rawValue
-    var metronomeVolume: Double = 0.9
+    var metronomeVolume: Double = 1.0
     var metronomeHapticEnabled: Bool = true
     var metronomeAutoStopOnTabSwitch: Bool = false
     /// When true, stop the reference tone leaving the Metronome tab. Default false = tone keeps playing in background.
@@ -97,7 +97,7 @@ extension AppSettings {
         metronomeSound = try c.decodeIfPresent(String.self, forKey: .metronomeSound) ?? MetronomeSound.click.rawValue
         metronomeEmphasizedSound = try c.decodeIfPresent(String.self, forKey: .metronomeEmphasizedSound) ?? MetronomeSound.tick.rawValue
         metronomeNonEmphasizedSound = try c.decodeIfPresent(String.self, forKey: .metronomeNonEmphasizedSound) ?? MetronomeSound.click.rawValue
-        metronomeVolume = try c.decodeIfPresent(Double.self, forKey: .metronomeVolume) ?? 0.9
+        metronomeVolume = try c.decodeIfPresent(Double.self, forKey: .metronomeVolume) ?? 1.0
         metronomeHapticEnabled = try c.decodeIfPresent(Bool.self, forKey: .metronomeHapticEnabled) ?? true
         metronomeAutoStopOnTabSwitch = try c.decodeIfPresent(Bool.self, forKey: .metronomeAutoStopOnTabSwitch) ?? false
         stopToneWhenLeavingMetronomeTab = try c.decodeIfPresent(Bool.self, forKey: .stopToneWhenLeavingMetronomeTab) ?? false

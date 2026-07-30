@@ -2539,6 +2539,16 @@
     "Metronome Unavailable" : {
 
     },
+    "Metronome Volume" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Volumen del metrónomo"
+          }
+        }
+      }
+    },
     "Microphone access is required to detect pitch." : {
       "extractionState" : "stale",
       "localizations" : {
@@ -4252,6 +4262,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Toca un día arriba o usa + para registrar tu primera sesión de práctica."
+          }
+        }
+      }
+    },
+    "Tap a sound to hear it. Metronome volume is combined with the system volume." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toca un sonido para escucharlo. El volumen del metrónomo se combina con el volumen del sistema."
           }
         }
       }
