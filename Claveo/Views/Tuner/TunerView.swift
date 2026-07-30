@@ -229,7 +229,7 @@ struct TunerView: View {
         }
         .frame(maxWidth: 1180)
         .frame(maxWidth: .infinity)
-        .padding(.horizontal, 28)
+        .padding(.horizontal, 32)
         .padding(.top, 24)
     }
 
@@ -298,7 +298,7 @@ struct TunerView: View {
 
             listeningControlButton
         }
-        .padding(isIPad ? 28 : 20)
+        .padding(isIPad ? 24 : 20)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .background(panelBackground)
     }
@@ -339,7 +339,7 @@ struct TunerView: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
-        .padding(isIPad ? 28 : 20)
+        .padding(isIPad ? 24 : 20)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .background(panelBackground)
     }
