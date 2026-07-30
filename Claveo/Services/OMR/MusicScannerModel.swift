@@ -165,7 +165,10 @@ final class MusicScannerModel: @unchecked Sendable {
         }
         context.setFillColor(CGColor(srgbRed: 0.5, green: 0.5, blue: 0.5, alpha: 1))
         context.fill(CGRect(x: 0, y: 0, width: targetSize, height: targetSize))
-        context.draw(cropped, in: CGRect(x: 0, y: 0, width: width, height: height))
+        // Stretch the crop over the whole canvas: callers map detections back with
+        // scale = cropSize / targetSize, which a padded (unscaled) draw would break —
+        // edge slices had every box offset by the padding.
+        context.draw(cropped, in: CGRect(x: 0, y: 0, width: targetSize, height: targetSize))
         return context.makeImage() ?? cropped
     }
 

@@ -82,13 +82,19 @@ private struct IntervalQuestion: Equatable {
     let lowerMidi: Int
     let upperMidi: Int
 
-    static func random() -> IntervalQuestion {
-        let interval = EarTrainingInterval.allCases.randomElement() ?? .majorThird
-        let s = interval.semitones
-        let minRoot = 58
-        let maxRoot = 76 - s
-        let root = Int.random(in: minRoot...maxRoot)
-        return IntervalQuestion(interval: interval, lowerMidi: root, upperMidi: root + s)
+    /// Never repeats `previous`: an identical question would leave the answer
+    /// feedback on screen and skip replaying the interval.
+    static func random(excluding previous: IntervalQuestion? = nil) -> IntervalQuestion {
+        for _ in 0..<8 {
+            let interval = EarTrainingInterval.allCases.randomElement() ?? .majorThird
+            let s = interval.semitones
+            let root = Int.random(in: 58...(76 - s))
+            let question = IntervalQuestion(interval: interval, lowerMidi: root, upperMidi: root + s)
+            if question != previous {
+                return question
+            }
+        }
+        return IntervalQuestion(interval: .octave, lowerMidi: 60, upperMidi: 72)
     }
 }
 
@@ -291,7 +297,8 @@ struct IntervalEarTrainingExerciseView: View {
             if correct {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.55) {
                     withAnimation(.easeInOut(duration: 0.2)) {
-                        question = IntervalQuestion.random()
+                        feedback = nil
+                        question = IntervalQuestion.random(excluding: question)
                     }
                 }
             }

@@ -191,8 +191,13 @@ extension RecordingListView {
                         .cornerRadius(8)
 
                     if settingsManager.settings.storeFilesOnDeviceOnly {
-                        Label("Files are stored on this iPhone only", systemImage: "iphone")
-                            .foregroundColor(.secondary)
+                        if UIDevice.current.userInterfaceIdiom == .pad {
+                            Label("Files are stored on this iPad only", systemImage: "ipad")
+                                .foregroundColor(.secondary)
+                        } else {
+                            Label("Files are stored on this iPhone only", systemImage: "iphone")
+                                .foregroundColor(.secondary)
+                        }
                     } else if iCloudManager.shared.isAvailable {
                         Label("Files will automatically sync to iCloud Drive", systemImage: "icloud.fill")
                             .foregroundColor(themeManager.accentColor)
