@@ -13,7 +13,7 @@ struct MetronomeSubdivisionPicker: View {
     let selection: MetronomeSubdivision
     let onSelect: (MetronomeSubdivision) -> Void
 
-    private let columns = [GridItem(.adaptive(minimum: 72, maximum: 120), spacing: 10)]
+    private let columns = [GridItem(.adaptive(minimum: 64, maximum: 108), spacing: 8)]
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -54,11 +54,11 @@ struct MetronomeSubdivisionPicker: View {
 
             MetronomeSubdivisionGlyph(subdivision: subdivision)
                 .foregroundStyle(glyphColor(selected: isSelected))
-                .padding(.horizontal, 6)
-                .padding(.vertical, 6)
+                .padding(.horizontal, 5)
+                .padding(.vertical, 4)
         }
         .frame(maxWidth: .infinity)
-        .frame(height: 58)
+        .frame(height: 50)
     }
 
     private func cellFill(isSelected: Bool) -> Color {
@@ -118,8 +118,8 @@ struct MetronomeSubdivisionGlyph: View {
         let headWidth: CGFloat = 9.5
         let headHeight: CGFloat = 7
         let stemXOffset = headWidth * 0.36
-        let stemLength: CGFloat = 13
-        let headY = size.height * 0.62
+        let stemLength: CGFloat = 16
+        let headY = size.height * 0.68
         let beamY = headY - stemLength
         let xs = noteXs(
             count: noteCount,
@@ -181,11 +181,11 @@ struct MetronomeSubdivisionGlyph: View {
         let spacing: CGFloat
         switch count {
         case 4:
-            spacing = 8.5
+            spacing = 10
         case 3:
-            spacing = 9.5
-        default:
             spacing = 11
+        default:
+            spacing = 13
         }
 
         var gaps = Array(repeating: spacing, count: count - 1)
