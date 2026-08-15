@@ -23,6 +23,7 @@ struct Recording: Identifiable, Codable, Equatable, Sendable {
     var lastModified: Date
     var storageLocation: RecordingStorageLocation?
     var isDeleted: Bool
+    var keepDownloaded: Bool
     
     // Metadata fields
     var name: String
@@ -37,10 +38,10 @@ struct Recording: Identifiable, Codable, Equatable, Sendable {
     var originalDuration: TimeInterval? // Original duration before trimming
     
     enum CodingKeys: String, CodingKey {
-        case id, fileName, createdAt, duration, lastModified, storageLocation, isDeleted, name, tags, piece, measureStart, measureEnd, notes, originalFileName, originalDuration
+        case id, fileName, createdAt, duration, lastModified, storageLocation, isDeleted, keepDownloaded, name, tags, piece, measureStart, measureEnd, notes, originalFileName, originalDuration
     }
     
-    init(id: UUID = UUID(), fileName: String, createdAt: Date = Date(), duration: TimeInterval, name: String = "", tags: [String] = [], piece: String? = nil, measureStart: Int? = nil, measureEnd: Int? = nil, notes: String = "", originalFileName: String? = nil, originalDuration: TimeInterval? = nil, lastModified: Date? = nil, storageLocation: RecordingStorageLocation? = nil, isDeleted: Bool = false) {
+    init(id: UUID = UUID(), fileName: String, createdAt: Date = Date(), duration: TimeInterval, name: String = "", tags: [String] = [], piece: String? = nil, measureStart: Int? = nil, measureEnd: Int? = nil, notes: String = "", originalFileName: String? = nil, originalDuration: TimeInterval? = nil, lastModified: Date? = nil, storageLocation: RecordingStorageLocation? = nil, isDeleted: Bool = false, keepDownloaded: Bool = false) {
         self.id = id
         self.fileName = fileName
         self.createdAt = createdAt
@@ -48,6 +49,7 @@ struct Recording: Identifiable, Codable, Equatable, Sendable {
         self.lastModified = lastModified ?? createdAt
         self.storageLocation = storageLocation
         self.isDeleted = isDeleted
+        self.keepDownloaded = keepDownloaded
         self.name = name
         self.tags = tags
         self.piece = piece
@@ -67,6 +69,7 @@ struct Recording: Identifiable, Codable, Equatable, Sendable {
         lastModified = try container.decodeIfPresent(Date.self, forKey: .lastModified) ?? createdAt
         storageLocation = try container.decodeIfPresent(RecordingStorageLocation.self, forKey: .storageLocation)
         isDeleted = try container.decodeIfPresent(Bool.self, forKey: .isDeleted) ?? false
+        keepDownloaded = try container.decodeIfPresent(Bool.self, forKey: .keepDownloaded) ?? false
         name = try container.decodeIfPresent(String.self, forKey: .name) ?? ""
         tags = try container.decodeIfPresent([String].self, forKey: .tags) ?? []
         piece = try container.decodeIfPresent(String.self, forKey: .piece)
@@ -187,17 +190,7 @@ struct Recording: Identifiable, Codable, Equatable, Sendable {
         return originalFileName != nil && originalDuration != nil
     }
     
-    nonisolated func shareableFileURL(documentsBase: URL) throws -> URL {
-        let originalURL = documentsBase.appendingPathComponent(fileName)
-        let fileExtension = originalURL.pathExtension
-        
-        let fallbackTitle: String = {
-            let formatter = DateFormatter()
-            formatter.dateStyle = .medium
-            formatter.timeStyle = .short
-            return formatter.string(from: createdAt)
-        }()
-        let rawName = name.isEmpty ? "Recording \(fallbackTitle)" : name
+    nonisolated static func sanitizedExportFileName(_ rawName: String) -> String {
         let sanitizedName = rawName
             .replacingOccurrences(of: "/", with: "-")
             .replacingOccurrences(of: "\\", with: "-")
@@ -209,19 +202,23 @@ struct Recording: Identifiable, Codable, Equatable, Sendable {
             .replacingOccurrences(of: ">", with: "-")
             .replacingOccurrences(of: "|", with: "-")
             .trimmingCharacters(in: .whitespacesAndNewlines)
-        
-        let shareableFileName = sanitizedName.isEmpty ? "Recording" : sanitizedName
-        let tempFileName = "\(shareableFileName)-\(id.uuidString.prefix(8)).\(fileExtension)"
-        
-        let tempDirectory = FileManager.default.temporaryDirectory
-        let tempURL = tempDirectory.appendingPathComponent(tempFileName)
-        
-        if FileManager.default.fileExists(atPath: tempURL.path) {
-            try FileManager.default.removeItem(at: tempURL)
+        return sanitizedName.isEmpty ? "Recording" : sanitizedName
+    }
+
+    nonisolated func shareableFileURL(documentsBase: URL) throws -> URL {
+        let originalURL = documentsBase.appendingPathComponent(fileName)
+        let fileExtension = originalURL.pathExtension
+        let shareableFileName = Self.sanitizedExportFileName(displayName)
+        let exportFolder = FileManager.default.temporaryDirectory
+            .appendingPathComponent("export-\(id.uuidString)", isDirectory: true)
+        if FileManager.default.fileExists(atPath: exportFolder.path) {
+            try FileManager.default.removeItem(at: exportFolder)
         }
-        
+        try FileManager.default.createDirectory(at: exportFolder, withIntermediateDirectories: true)
+        let tempURL = exportFolder.appendingPathComponent(
+            fileExtension.isEmpty ? shareableFileName : "\(shareableFileName).\(fileExtension)"
+        )
         try FileManager.default.copyItem(at: originalURL, to: tempURL)
-        
         return tempURL
     }
 
@@ -229,6 +226,43 @@ struct Recording: Identifiable, Codable, Equatable, Sendable {
     func shareableFileURL() throws -> URL {
         let sourceURL = fileURL
         return try shareableFileURL(documentsBase: sourceURL.deletingLastPathComponent())
+    }
+
+    var resolvedStorageLocation: RecordingStorageLocation {
+        if let storageLocation { return storageLocation }
+        if FileManager.default.isUbiquitousItem(at: fileURL) {
+            return .iCloud
+        }
+        return iCloudManager.shared.storageLocation(containing: fileName, preferred: nil) ?? .device
+    }
+
+    var isStoredIniCloud: Bool {
+        resolvedStorageLocation == .iCloud || FileManager.default.isUbiquitousItem(at: fileURL)
+    }
+
+    var isUbiquitousFileDownloaded: Bool {
+        let values = try? fileURL.resourceValues(forKeys: [
+            .isUbiquitousItemKey,
+            .ubiquitousItemDownloadingStatusKey
+        ])
+        guard values?.isUbiquitousItem == true else { return true }
+        return values?.ubiquitousItemDownloadingStatus != .some(.notDownloaded)
+    }
+
+    var storageSystemImage: String {
+        if isStoredIniCloud {
+            return isUbiquitousFileDownloaded ? "icloud" : "icloud.and.arrow.down"
+        }
+        return "folder"
+    }
+
+    var storageAccessibilityLabel: String {
+        if isStoredIniCloud {
+            return isUbiquitousFileDownloaded
+                ? String(localized: "Stored in iCloud")
+                : String(localized: "Stored in iCloud, not downloaded")
+        }
+        return String(localized: "Stored on this device")
     }
 }
 

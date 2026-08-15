@@ -32,6 +32,26 @@ extension RecordingListView {
         }
     }
     
+    func toggleKeepDownloaded(_ recording: Recording) {
+        var updated = recording
+        updated.keepDownloaded.toggle()
+        if !updated.keepDownloaded {
+            player.pauseIfPlaying(recording)
+        }
+        do {
+            if updated.keepDownloaded {
+                try iCloudManager.shared.startKeepingDownloaded(at: recording.fileURL)
+            } else {
+                try iCloudManager.shared.removeLocalDownload(at: recording.fileURL)
+            }
+        } catch {
+            #if DEBUG
+            print("Failed to update iCloud download: \(error)")
+            #endif
+        }
+        recorder.updateRecording(updated)
+    }
+
     func exportSelectedRecordings() {
         let recordings = filteredRecordings.filter { selectedRecordingIds.contains($0.id) }
         var urls: [URL] = []
@@ -148,6 +168,9 @@ extension RecordingListView {
             onExport: {
                 recordingToShare = recording
             },
+            onToggleKeepDownloaded: {
+                toggleKeepDownloaded(recording)
+            },
             isSelectionMode: isSelectingRecordings,
             isSelected: selectedRecordingIds.contains(recording.id),
             onToggleSelection: {
@@ -181,6 +204,18 @@ extension RecordingListView {
                             preview: SharePreview(recording.displayName, icon: Image(systemName: "waveform"))
                         ) {
                             Label("Export", systemImage: "square.and.arrow.up")
+                        }
+                    }
+
+                    if recording.isStoredIniCloud {
+                        Button {
+                            toggleKeepDownloaded(recording)
+                        } label: {
+                            if recording.keepDownloaded {
+                                Label("Remove Download", systemImage: "icloud.and.arrow.down")
+                            } else {
+                                Label("Keep Downloaded", systemImage: "arrow.down.circle")
+                            }
                         }
                     }
                     

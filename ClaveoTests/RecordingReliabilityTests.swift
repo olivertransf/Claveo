@@ -17,6 +17,7 @@ final class RecordingReliabilityTests: XCTestCase {
         let recording = try JSONDecoder().decode(Recording.self, from: data)
 
         XCTAssertNil(recording.storageLocation)
+        XCTAssertFalse(recording.keepDownloaded)
         XCTAssertEqual(recording.lastModified, createdAt)
     }
 
@@ -34,6 +35,46 @@ final class RecordingReliabilityTests: XCTestCase {
         )
 
         XCTAssertEqual(decoded.storageLocation, .device)
+        XCTAssertFalse(decoded.keepDownloaded)
+    }
+
+    func testKeepDownloadedRoundTrips() throws {
+        let recording = Recording(
+            fileName: "pinned.m4a",
+            createdAt: Date(timeIntervalSince1970: 100),
+            duration: 2,
+            storageLocation: .iCloud,
+            keepDownloaded: true
+        )
+
+        let decoded = try JSONDecoder().decode(
+            Recording.self,
+            from: JSONEncoder().encode(recording)
+        )
+
+        XCTAssertTrue(decoded.keepDownloaded)
+        XCTAssertEqual(decoded.storageLocation, .iCloud)
+    }
+
+    func testShareableFileUsesRecordingDisplayName() throws {
+        let documents = FileManager.default.temporaryDirectory
+            .appendingPathComponent("share-test-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: documents, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: documents) }
+
+        let source = documents.appendingPathComponent("uuid-on-disk.m4a")
+        try Data("audio".utf8).write(to: source)
+
+        let recording = Recording(
+            fileName: "uuid-on-disk.m4a",
+            createdAt: Date(timeIntervalSince1970: 100),
+            duration: 2,
+            name: "Etude / Op. 10"
+        )
+        let url = try recording.shareableFileURL(documentsBase: documents)
+        defer { try? FileManager.default.removeItem(at: url.deletingLastPathComponent()) }
+
+        XCTAssertEqual(url.lastPathComponent, "Etude - Op. 10.m4a")
     }
 
     @MainActor

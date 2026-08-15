@@ -318,6 +318,16 @@ final class iCloudManager: @unchecked Sendable {
         getDocumentsURL().path
     }
 
+    nonisolated func startKeepingDownloaded(at url: URL) throws {
+        guard FileManager.default.isUbiquitousItem(at: url) else { return }
+        try FileManager.default.startDownloadingUbiquitousItem(at: url)
+    }
+
+    nonisolated func removeLocalDownload(at url: URL) throws {
+        guard FileManager.default.isUbiquitousItem(at: url) else { return }
+        try FileManager.default.evictUbiquitousItem(at: url)
+    }
+
     nonisolated private static func resolveUbiquityDocumentsURL(
         containerIdentifier: String,
         fileCoordinator: NSFileCoordinator

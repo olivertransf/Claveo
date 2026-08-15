@@ -25,6 +25,7 @@ struct RecordingRowView: View {
     let onDelete: () -> Void
     let onTrim: () -> Void
     let onExport: () -> Void
+    var onToggleKeepDownloaded: (() -> Void)? = nil
     var isSelectionMode: Bool = false
     var isSelected: Bool = false
     var onToggleSelection: (() -> Void)? = nil
@@ -97,6 +98,11 @@ struct RecordingRowView: View {
                 Text(listDateText)
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
+
+                Image(systemName: recording.storageSystemImage)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .accessibilityLabel(recording.storageAccessibilityLabel)
 
                 if hasNotes {
                     Image(systemName: "text.bubble")
@@ -393,6 +399,19 @@ struct RecordingRowView: View {
                 Label("Export", systemImage: "square.and.arrow.up")
             }
             .disabled(!FileManager.default.fileExists(atPath: recording.fileURL.path))
+
+            if recording.isStoredIniCloud, onToggleKeepDownloaded != nil {
+                Divider()
+                Button {
+                    onToggleKeepDownloaded?()
+                } label: {
+                    if recording.keepDownloaded {
+                        Label("Remove Download", systemImage: "icloud.and.arrow.down")
+                    } else {
+                        Label("Keep Downloaded", systemImage: "arrow.down.circle")
+                    }
+                }
+            }
         } label: {
             Image(systemName: "ellipsis")
                 .font(.body.weight(.semibold))

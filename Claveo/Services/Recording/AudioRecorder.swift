@@ -98,6 +98,7 @@ class AudioRecorder: NSObject, ObservableObject {
         )
         let active = merged.filter { !$0.isDeleted }
         recordings = pinStorageLocations(in: active)
+        refreshKeepDownloadedFiles()
         let metadataChanged =
             mutationRevision != revisionAtStart
             || recordings != previousActive
@@ -677,8 +678,15 @@ class AudioRecorder: NSObject, ObservableObject {
             String(recording.measureEnd ?? 0),
             recording.originalFileName ?? "",
             String(recording.originalDuration ?? 0),
-            recording.isDeleted ? "1" : "0"
+            recording.isDeleted ? "1" : "0",
+            recording.keepDownloaded ? "1" : "0"
         ].joined(separator: "\u{1E}")
+    }
+
+    private func refreshKeepDownloadedFiles() {
+        for recording in recordings where recording.keepDownloaded && recording.isStoredIniCloud {
+            try? iCloudManager.shared.startKeepingDownloaded(at: recording.fileURL)
+        }
     }
 
     private func pinStorageLocations(in values: [Recording]) -> [Recording] {

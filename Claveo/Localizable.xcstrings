@@ -2271,6 +2271,16 @@
         }
       }
     },
+    "Keep Downloaded" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mantener descargado"
+          }
+        }
+      }
+    },
     "Last Week" : {
       "localizations" : {
         "es" : {
@@ -3433,9 +3443,6 @@
         }
       }
     },
-    "Playback could not resume." : {
-
-    },
     "Playback could not start." : {
 
     },
@@ -3747,6 +3754,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Quitar opción de %lld minutos"
+          }
+        }
+      }
+    },
+    "Remove Download" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eliminar descarga"
           }
         }
       }
@@ -4293,6 +4310,36 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Almacenamiento"
+          }
+        }
+      }
+    },
+    "Stored in iCloud" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Guardado en iCloud"
+          }
+        }
+      }
+    },
+    "Stored in iCloud, not downloaded" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Guardado en iCloud, no descargado"
+          }
+        }
+      }
+    },
+    "Stored on this device" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Guardado en este dispositivo"
           }
         }
       }
