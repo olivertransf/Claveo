@@ -59,7 +59,17 @@ struct PreviewRecordingListView: View {
                                 isExpanded: Binding(
                                     get: { expandedRecordingId == recording.id },
                                     set: { newValue in
-                                        expandedRecordingId = newValue ? recording.id : nil
+                                        if newValue {
+                                            if let current = player.currentRecording, current.id != recording.id {
+                                                player.pause()
+                                            }
+                                            expandedRecordingId = recording.id
+                                        } else {
+                                            player.pauseIfPlaying(recording)
+                                            if expandedRecordingId == recording.id {
+                                                expandedRecordingId = nil
+                                            }
+                                        }
                                     }
                                 ),
                                 isPlaying: player.isPlaying && player.currentRecording?.id == recording.id,
@@ -78,7 +88,7 @@ struct PreviewRecordingListView: View {
                                     }
                                 },
                                 onSeek: { time in
-                                    player.seek(to: time)
+                                    player.seek(recording, to: time)
                                 },
                                 onSpeedChange: { speed in
                                     player.playbackRate = speed

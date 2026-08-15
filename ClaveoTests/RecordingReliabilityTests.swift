@@ -198,4 +198,19 @@ final class RecordingReliabilityTests: XCTestCase {
         XCTAssertEqual(scrubbed[0].linkedRecordingIds, [retainedID])
         XCTAssertGreaterThan(scrubbed[0].lastModified, entry.lastModified)
     }
+
+    @MainActor
+    func testSeekBeforePlayRemembersPosition() {
+        let player = AudioPlayer()
+        let recording = Recording(
+            fileName: "missing-for-seek-test.m4a",
+            createdAt: Date(timeIntervalSince1970: 1),
+            duration: 40
+        )
+
+        player.seek(recording, to: 12.5)
+
+        XCTAssertEqual(player.currentTime, 12.5, accuracy: 0.001)
+        XCTAssertFalse(player.isPlaying)
+    }
 }

@@ -11,6 +11,9 @@ import UIKit
 
 extension RecordingListView {
     func beginRecordingSelectionMode() {
+        if player.isPlaying {
+            player.pause()
+        }
         expandedRecordingId = nil
         isSelectingRecordings = true
         selectedRecordingIds.removeAll()
@@ -84,7 +87,17 @@ extension RecordingListView {
         let isExpandedBinding = Binding<Bool>(
             get: { expandedRecordingId == recording.id },
             set: { newValue in
-                expandedRecordingId = newValue ? recording.id : nil
+                if newValue {
+                    if let current = player.currentRecording, current.id != recording.id {
+                        player.pause()
+                    }
+                    expandedRecordingId = recording.id
+                } else {
+                    player.pauseIfPlaying(recording)
+                    if expandedRecordingId == recording.id {
+                        expandedRecordingId = nil
+                    }
+                }
             }
         )
         
@@ -108,7 +121,7 @@ extension RecordingListView {
                 }
             },
             onSeek: { time in
-                player.seek(to: time)
+                player.seek(recording, to: time)
             },
             onSpeedChange: { speed in
                 player.playbackRate = speed

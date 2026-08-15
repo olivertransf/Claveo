@@ -27,6 +27,7 @@ class AudioPlayer: NSObject, ObservableObject {
     private var audioPlayer: AVAudioPlayer?
     private var timer: Timer?
     private var interruptionObserver: NSObjectProtocol?
+    private var pendingSeek: (id: UUID, time: TimeInterval)?
 
     override init() {
         super.init()
@@ -114,50 +115,27 @@ class AudioPlayer: NSObject, ObservableObject {
         activatePlaybackSession()
         playbackError = nil
 
-        if currentRecording?.id == recording.id, let player = audioPlayer {
-            player.enableRate = true
-            player.rate = playbackRate
-            guard player.play() else {
-                playbackError = String(localized: "Playback could not resume.")
-                return
-            }
-            isPlaying = true
-            startTimer()
+        let startTime = resumeTime(for: recording)
+
+        if currentRecording?.id != recording.id || audioPlayer == nil {
+            guard load(recording, startTime: startTime) else { return }
+        } else if let player = audioPlayer {
+            player.currentTime = min(max(0, startTime), player.duration)
+            currentTime = player.currentTime
+        }
+
+        guard let player = audioPlayer else { return }
+        player.enableRate = true
+        player.rate = playbackRate
+        guard player.play() else {
+            playbackError = String(localized: "Playback could not start.")
             return
         }
+        isPlaying = true
+        startTimer()
 
-        stop()
-
-        do {
-            guard FileManager.default.fileExists(atPath: recording.fileURL.path) else {
-                playbackError = String(localized: "Recording file not found. It may still be downloading from iCloud.")
-                return
-            }
-
-            let player = try AVAudioPlayer(contentsOf: recording.fileURL)
-            player.delegate = self
-            player.enableRate = true
-            player.prepareToPlay()
-            player.rate = playbackRate
-            duration = player.duration
-            currentRecording = recording
-            audioPlayer = player
-
-            guard player.play() else {
-                playbackError = String(localized: "Playback could not start.")
-                stop()
-                return
-            }
-
-            isPlaying = true
-            startTimer()
-
-            let impactFeedback = UIImpactFeedbackGenerator(style: .light)
-            impactFeedback.impactOccurred()
-        } catch {
-            playbackError = String(localized: "Failed to play recording: \(error.localizedDescription)")
-            stop()
-        }
+        let impactFeedback = UIImpactFeedbackGenerator(style: .light)
+        impactFeedback.impactOccurred()
     }
 
     func pause() {
@@ -176,46 +154,124 @@ class AudioPlayer: NSObject, ObservableObject {
         currentTime = 0
         duration = 0
         currentRecording = nil
+        pendingSeek = nil
         stopTimer()
     }
 
+    func pauseIfPlaying(_ recording: Recording) {
+        guard currentRecording?.id == recording.id, isPlaying else { return }
+        pause()
+    }
+
+    func seek(_ recording: Recording, to time: TimeInterval) {
+        let clamped = max(0, time)
+        pendingSeek = (recording.id, clamped)
+        currentTime = clamped
+
+        if currentRecording?.id != recording.id || audioPlayer == nil {
+            _ = load(recording, startTime: clamped)
+            return
+        }
+
+        applySeek(clamped)
+    }
+
     func seek(to time: TimeInterval) {
-        guard let player = audioPlayer else { return }
-        let wasPlaying = isPlaying
-
-        if wasPlaying {
-            player.pause()
+        if let recording = currentRecording {
+            seek(recording, to: time)
+            return
         }
-
-        player.currentTime = time
-        currentTime = time
-
-        if wasPlaying {
-            player.play()
-        }
+        currentTime = max(0, time)
     }
 
     func skipBackward(seconds: TimeInterval = 15) {
-        guard let player = audioPlayer else { return }
         let wasPlaying = isPlaying
-        let newTime = max(0, player.currentTime - seconds)
-        seek(to: newTime)
-        if wasPlaying {
-            player.play()
-            isPlaying = true
-            startTimer()
+        let base = audioPlayer?.currentTime ?? currentTime
+        let newTime = max(0, base - seconds)
+        if let recording = currentRecording {
+            seek(recording, to: newTime)
+        } else {
+            seek(to: newTime)
+        }
+        if wasPlaying, let recording = currentRecording {
+            play(recording)
         }
     }
 
     func skipForward(seconds: TimeInterval = 15) {
-        guard let player = audioPlayer else { return }
         let wasPlaying = isPlaying
-        let newTime = min(duration, player.currentTime + seconds)
-        seek(to: newTime)
+        let limit = duration > 0 ? duration : .greatestFiniteMagnitude
+        let base = audioPlayer?.currentTime ?? currentTime
+        let newTime = min(limit, base + seconds)
+        if let recording = currentRecording {
+            seek(recording, to: newTime)
+        } else {
+            seek(to: newTime)
+        }
+        if wasPlaying, let recording = currentRecording {
+            play(recording)
+        }
+    }
+
+    private func resumeTime(for recording: Recording) -> TimeInterval {
+        if currentRecording?.id == recording.id, let player = audioPlayer {
+            return player.currentTime
+        }
+        if let pendingSeek, pendingSeek.id == recording.id {
+            return pendingSeek.time
+        }
+        if currentRecording?.id == recording.id {
+            return currentTime
+        }
+        return 0
+    }
+
+    @discardableResult
+    private func load(_ recording: Recording, startTime: TimeInterval) -> Bool {
+        activatePlaybackSession()
+        playbackError = nil
+
+        audioPlayer?.stop()
+        audioPlayer = nil
+        isPlaying = false
+        stopTimer()
+
+        do {
+            guard FileManager.default.fileExists(atPath: recording.fileURL.path) else {
+                playbackError = String(localized: "Recording file not found. It may still be downloading from iCloud.")
+                return false
+            }
+
+            let player = try AVAudioPlayer(contentsOf: recording.fileURL)
+            player.delegate = self
+            player.enableRate = true
+            player.prepareToPlay()
+            player.rate = playbackRate
+            duration = player.duration
+            currentRecording = recording
+            audioPlayer = player
+            applySeek(startTime)
+            return true
+        } catch {
+            playbackError = String(localized: "Failed to play recording: \(error.localizedDescription)")
+            return false
+        }
+    }
+
+    private func applySeek(_ time: TimeInterval) {
+        guard let player = audioPlayer else { return }
+        let clamped = min(max(0, time), max(player.duration, 0))
+        let wasPlaying = isPlaying
+        if wasPlaying {
+            player.pause()
+        }
+        player.currentTime = clamped
+        currentTime = clamped
+        if let recording = currentRecording {
+            pendingSeek = (recording.id, clamped)
+        }
         if wasPlaying {
             player.play()
-            isPlaying = true
-            startTimer()
         }
     }
 

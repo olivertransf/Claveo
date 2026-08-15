@@ -98,7 +98,19 @@ struct PracticeEntryDetailView: View {
                                         player: player,
                                         isExpanded: Binding(
                                             get: { expandedRecordingId == recording.id },
-                                            set: { expandedRecordingId = $0 ? recording.id : nil }
+                                            set: { newValue in
+                                                if newValue {
+                                                    if let current = player.currentRecording, current.id != recording.id {
+                                                        player.pause()
+                                                    }
+                                                    expandedRecordingId = recording.id
+                                                } else {
+                                                    player.pauseIfPlaying(recording)
+                                                    if expandedRecordingId == recording.id {
+                                                        expandedRecordingId = nil
+                                                    }
+                                                }
+                                            }
                                         ),
                                         isPlaying: player.isPlaying && player.currentRecording?.id == recording.id,
                                         currentTime: player.currentRecording?.id == recording.id ? player.currentTime : nil,
@@ -184,7 +196,7 @@ struct PracticeRecordingPlayer: View {
                                         if !isDragging {
                                             isDragging = true
                                         }
-                                        player.seek(to: newValue)
+                                        player.seek(recording, to: newValue)
                                     }
                                 ),
                                 in: 0...max(recording.duration, 0.1)
