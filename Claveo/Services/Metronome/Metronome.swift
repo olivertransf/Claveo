@@ -258,8 +258,10 @@ class Metronome: ObservableObject {
     var playerNode: AVAudioPlayerNode?
     var accentBuffer: AVAudioPCMBuffer?
     var normalBuffer: AVAudioPCMBuffer?
+    var quietNormalBuffer: AVAudioPCMBuffer?
     var accentBufferConverted: AVAudioPCMBuffer? // Pre-converted buffers
     var normalBufferConverted: AVAudioPCMBuffer? // Pre-converted buffers
+    var quietNormalBufferConverted: AVAudioPCMBuffer?
 
     /// Estimated delay from scheduled host time until the user hears output.
     var audioOutputLatency: TimeInterval {

@@ -112,8 +112,8 @@ struct MetronomeSubdivisionGlyph: View {
 
         let hasTriplet = subdivision == .triplet
 
-        let headWidth: CGFloat = 9.5
-        let headHeight: CGFloat = 7
+        let headWidth: CGFloat = 8
+        let headHeight: CGFloat = 5.8
         let stemXOffset = headWidth * 0.36
         let stemLength: CGFloat = 16
         let headY = size.height * 0.68
@@ -126,9 +126,9 @@ struct MetronomeSubdivisionGlyph: View {
 
         for (index, x) in xs.enumerated() {
             let isDownbeat = index == 0
-            let noteWidth = isDownbeat ? headWidth * 1.22 : headWidth
-            let noteHeight = isDownbeat ? headHeight * 1.22 : headHeight
-            let stemWidth: CGFloat = isDownbeat ? 2.1 : 1.7
+            let noteWidth = isDownbeat ? headWidth * 1.12 : headWidth
+            let noteHeight = isDownbeat ? headHeight * 1.12 : headHeight
+            let stemWidth: CGFloat = isDownbeat ? 1.85 : 1.6
             drawNotehead(in: context, center: CGPoint(x: x, y: headY), width: noteWidth, height: noteHeight)
             var stem = Path()
             stem.move(to: CGPoint(x: x + stemXOffset, y: headY - 0.2))

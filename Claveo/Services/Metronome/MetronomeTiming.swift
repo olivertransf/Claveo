@@ -213,7 +213,9 @@ extension Metronome {
             )
 
             for click in clicks {
-                let buffer = click.isAccent ? accentBufferConverted : normalBufferConverted
+                let buffer = click.isAccent
+                    ? accentBufferConverted
+                    : (click.gain < 1 ? quietNormalBufferConverted : normalBufferConverted)
                 guard let audioBuffer = buffer else {
                     scheduleState.recordSchedule(succeeded: false)
                     return

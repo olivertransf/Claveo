@@ -80,13 +80,17 @@ enum MetronomeSubdivision: String, CaseIterable, Identifiable, Sendable {
             guard time >= now + minimumLead else { return nil }
             return MetronomeScheduledClick(
                 hostTimeSeconds: time,
-                isAccent: offset == 0 && (beatIsAccent || beatOffsets.count > 1)
+                isAccent: offset == 0 && beatIsAccent,
+                gain: offset == 0 ? 1 : MetronomeScheduledClick.subdivisionTickGain
             )
         }
     }
 }
 
 struct MetronomeScheduledClick: Equatable, Sendable {
+    static let subdivisionTickGain: Float = 0.48
+
     let hostTimeSeconds: TimeInterval
     let isAccent: Bool
+    let gain: Float
 }

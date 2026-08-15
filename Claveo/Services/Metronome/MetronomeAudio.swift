@@ -11,10 +11,10 @@ enum MetronomeAudio {
     static let sampleRate = 44_100.0
     static let maximumSampleMagnitude: Float = 0.97
     /// Peak every click is normalized to, so all sounds are equally loud.
-    static let normalizedPeak = 0.95
+    static let normalizedPeak = 0.97
     /// Saturation amount applied after normalization: raises perceived loudness
     /// (more energy per click) without pushing the peak past `normalizedPeak`.
-    private static let saturationDrive = 2.4
+    private static let saturationDrive = 3.4
     /// Fade applied to the tail of a click so the buffer never ends mid-waveform.
     private static let releaseDuration = 0.004
 
@@ -22,7 +22,7 @@ enum MetronomeAudio {
     /// the slider stays usable while 100% stays at full output.
     static func playerVolume(for gain: Double) -> Float {
         let clamped = min(max(gain, 0), 1)
-        return Float(pow(clamped, 1.2))
+        return Float(pow(clamped, 0.7))
     }
 
     static func makeBuffer(for sound: MetronomeSound, gain: Double) -> AVAudioPCMBuffer? {
@@ -92,25 +92,25 @@ enum MetronomeAudio {
     private static func specification(for sound: MetronomeSound) -> SoundSpecification {
         switch sound {
         case .click:
-            return SoundSpecification(duration: 0.04, frequencies: [1_000, 2_000], decayRate: 80)
+            return SoundSpecification(duration: 0.045, frequencies: [1_000, 2_000], decayRate: 64)
         case .woodBlock:
-            return SoundSpecification(duration: 0.08, frequencies: [420, 760, 1_180], decayRate: 45)
+            return SoundSpecification(duration: 0.09, frequencies: [420, 760, 1_180], decayRate: 36)
         case .bell:
-            return SoundSpecification(duration: 0.14, frequencies: [600, 1_205, 1_810], decayRate: 22)
+            return SoundSpecification(duration: 0.16, frequencies: [600, 1_205, 1_810], decayRate: 18)
         case .beep:
-            return SoundSpecification(duration: 0.06, frequencies: [880], decayRate: 40, attackRate: 800)
+            return SoundSpecification(duration: 0.07, frequencies: [880], decayRate: 32, attackRate: 800)
         case .tick:
-            return SoundSpecification(duration: 0.03, frequencies: [2_000, 3_900], decayRate: 110)
+            return SoundSpecification(duration: 0.035, frequencies: [2_000, 3_900], decayRate: 88)
         case .cowbell:
-            return SoundSpecification(duration: 0.12, frequencies: [800, 1_180, 1_600], decayRate: 24)
+            return SoundSpecification(duration: 0.13, frequencies: [800, 1_180, 1_600], decayRate: 19)
         case .triangle:
-            return SoundSpecification(duration: 0.18, frequencies: [1_200, 2_410, 3_615], decayRate: 18)
+            return SoundSpecification(duration: 0.2, frequencies: [1_200, 2_410, 3_615], decayRate: 14)
         case .marimba:
-            return SoundSpecification(duration: 0.2, frequencies: [300, 600, 1_200], decayRate: 13, attackRate: 120)
+            return SoundSpecification(duration: 0.22, frequencies: [300, 600, 1_200], decayRate: 10, attackRate: 120)
         case .drum:
-            return SoundSpecification(duration: 0.14, frequencies: [100, 205], decayRate: 18, noiseMix: 0.35)
+            return SoundSpecification(duration: 0.16, frequencies: [100, 205], decayRate: 14, noiseMix: 0.35)
         case .chimes:
-            return SoundSpecification(duration: 0.24, frequencies: [500, 1_005, 1_515, 2_030], decayRate: 11)
+            return SoundSpecification(duration: 0.26, frequencies: [500, 1_005, 1_515, 2_030], decayRate: 9)
         }
     }
 
@@ -171,20 +171,26 @@ extension Metronome {
         normal normalSound: MetronomeSound? = nil
     ) -> Bool {
         let settings = SettingsManager.shared
+        let resolvedNormal = normalSound ?? settings.metronomeNonEmphasizedSoundEnum
         guard let accent = MetronomeAudio.makeBuffer(
             for: emphasized ?? settings.metronomeEmphasizedSoundEnum,
             gain: 1
         ), let normal = MetronomeAudio.makeBuffer(
-            for: normalSound ?? settings.metronomeNonEmphasizedSoundEnum,
+            for: resolvedNormal,
             gain: 1
+        ), let quietNormal = MetronomeAudio.makeBuffer(
+            for: resolvedNormal,
+            gain: Double(MetronomeScheduledClick.subdivisionTickGain)
         ) else {
             return false
         }
 
         accentBuffer = accent
         normalBuffer = normal
+        quietNormalBuffer = quietNormal
         accentBufferConverted = accent
         normalBufferConverted = normal
+        quietNormalBufferConverted = quietNormal
         return true
     }
 
@@ -216,7 +222,9 @@ extension Metronome {
         playerNode = nil
         accentBuffer = nil
         normalBuffer = nil
+        quietNormalBuffer = nil
         accentBufferConverted = nil
         normalBufferConverted = nil
+        quietNormalBufferConverted = nil
     }
 }
