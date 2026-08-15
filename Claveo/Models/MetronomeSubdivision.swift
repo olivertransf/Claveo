@@ -11,6 +11,8 @@ enum MetronomeSubdivision: String, CaseIterable, Identifiable, Sendable {
     case eighths
     case triplet
     case sixteenths
+    case eighthsThenSixteenths
+    case sixteenthsThenEighths
     case dottedEighthSixteenth
     case sixteenthDottedEighth
 
@@ -27,6 +29,10 @@ enum MetronomeSubdivision: String, CaseIterable, Identifiable, Sendable {
             return [0, 1.0 / 3.0, 2.0 / 3.0]
         case .sixteenths:
             return [0, 0.25, 0.5, 0.75]
+        case .eighthsThenSixteenths:
+            return [0, 1.0 / 3.0, 2.0 / 3.0, 5.0 / 6.0]
+        case .sixteenthsThenEighths:
+            return [0, 1.0 / 6.0, 1.0 / 3.0, 2.0 / 3.0]
         case .dottedEighthSixteenth:
             return [0, 0.75]
         case .sixteenthDottedEighth:
@@ -44,6 +50,10 @@ enum MetronomeSubdivision: String, CaseIterable, Identifiable, Sendable {
             return String(localized: "Triplet")
         case .sixteenths:
             return String(localized: "Sixteenths")
+        case .eighthsThenSixteenths:
+            return String(localized: "Eighths and sixteenths")
+        case .sixteenthsThenEighths:
+            return String(localized: "Sixteenths and eighths")
         case .dottedEighthSixteenth:
             return String(localized: "Dotted eighth and sixteenth")
         case .sixteenthDottedEighth:
@@ -70,7 +80,7 @@ enum MetronomeSubdivision: String, CaseIterable, Identifiable, Sendable {
             guard time >= now + minimumLead else { return nil }
             return MetronomeScheduledClick(
                 hostTimeSeconds: time,
-                isAccent: offset == 0 && beatIsAccent
+                isAccent: offset == 0 && (beatIsAccent || beatOffsets.count > 1)
             )
         }
     }

@@ -99,7 +99,7 @@ struct MetronomeSubdivisionGlyph: View {
         case .triplet:
             noteCount = 3
             dottedIndices = []
-        case .sixteenths:
+        case .sixteenths, .eighthsThenSixteenths, .sixteenthsThenEighths:
             noteCount = 4
             dottedIndices = []
         case .dottedEighthSixteenth:
@@ -111,9 +111,6 @@ struct MetronomeSubdivisionGlyph: View {
         }
 
         let hasTriplet = subdivision == .triplet
-        let hasSecondaryBeam = subdivision == .sixteenths
-            || subdivision == .dottedEighthSixteenth
-            || subdivision == .sixteenthDottedEighth
 
         let headWidth: CGFloat = 9.5
         let headHeight: CGFloat = 7
@@ -128,14 +125,18 @@ struct MetronomeSubdivisionGlyph: View {
         )
 
         for (index, x) in xs.enumerated() {
-            drawNotehead(in: context, center: CGPoint(x: x, y: headY), width: headWidth, height: headHeight)
+            let isDownbeat = index == 0
+            let noteWidth = isDownbeat ? headWidth * 1.22 : headWidth
+            let noteHeight = isDownbeat ? headHeight * 1.22 : headHeight
+            let stemWidth: CGFloat = isDownbeat ? 2.1 : 1.7
+            drawNotehead(in: context, center: CGPoint(x: x, y: headY), width: noteWidth, height: noteHeight)
             var stem = Path()
             stem.move(to: CGPoint(x: x + stemXOffset, y: headY - 0.2))
             stem.addLine(to: CGPoint(x: x + stemXOffset, y: beamY))
-            context.stroke(stem, with: .foreground, lineWidth: 1.7)
+            context.stroke(stem, with: .foreground, lineWidth: stemWidth)
 
             if dottedIndices.contains(index) {
-                drawDot(in: context, noteX: x, headY: headY, headWidth: headWidth)
+                drawDot(in: context, noteX: x, headY: headY, headWidth: noteWidth)
             }
         }
 
@@ -151,6 +152,16 @@ struct MetronomeSubdivisionGlyph: View {
         case .sixteenths:
             drawBeam(in: context, from: stems.first, to: stems.last, y: beamY, height: beamHeight)
             drawBeam(in: context, from: stems.first, to: stems.last, y: secondBeamY, height: beamHeight)
+        case .eighthsThenSixteenths:
+            drawBeam(in: context, from: stems.first, to: stems.last, y: beamY, height: beamHeight)
+            if stems.count == 4 {
+                drawBeam(in: context, from: stems[2], to: stems[3], y: secondBeamY, height: beamHeight)
+            }
+        case .sixteenthsThenEighths:
+            drawBeam(in: context, from: stems.first, to: stems.last, y: beamY, height: beamHeight)
+            if stems.count == 4 {
+                drawBeam(in: context, from: stems[0], to: stems[1], y: secondBeamY, height: beamHeight)
+            }
         case .dottedEighthSixteenth:
             drawBeam(in: context, from: stems.first, to: stems.last, y: beamY, height: beamHeight)
             if let right = stems.last, let left = stems.first {

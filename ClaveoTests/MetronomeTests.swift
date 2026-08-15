@@ -129,6 +129,9 @@ final class MetronomeTests: XCTestCase {
         XCTAssertEqual(MetronomeSubdivision.quarter.beatOffsets, [0])
         XCTAssertEqual(MetronomeSubdivision.eighths.beatOffsets, [0, 0.5])
         XCTAssertEqual(MetronomeSubdivision.sixteenths.beatOffsets, [0, 0.25, 0.5, 0.75])
+        XCTAssertEqual(MetronomeSubdivision.eighthsThenSixteenths.beatOffsets.count, 4)
+        XCTAssertEqual(MetronomeSubdivision.eighthsThenSixteenths.beatOffsets[1], 1.0 / 3.0, accuracy: 0.000_001)
+        XCTAssertEqual(MetronomeSubdivision.sixteenthsThenEighths.beatOffsets[1], 1.0 / 6.0, accuracy: 0.000_001)
         XCTAssertEqual(MetronomeSubdivision.dottedEighthSixteenth.beatOffsets, [0, 0.75])
         XCTAssertEqual(MetronomeSubdivision.sixteenthDottedEighth.beatOffsets, [0, 0.25])
         XCTAssertEqual(MetronomeSubdivision.triplet.beatOffsets.count, 3)
@@ -136,7 +139,7 @@ final class MetronomeTests: XCTestCase {
         XCTAssertEqual(MetronomeSubdivision.triplet.beatOffsets[2], 2.0 / 3.0, accuracy: 0.000_001)
     }
 
-    func testSubdivisionAccentsOnlyTheDownbeatOfAccentedBeats() {
+    func testSubdivisionAccentsEveryDownbeat() {
         let sixteenths = MetronomeSubdivision.sixteenths.scheduledClicks(
             beatNumber: 0,
             startTime: 0,
@@ -157,7 +160,18 @@ final class MetronomeTests: XCTestCase {
             now: -1,
             minimumLead: 0
         )
-        XCTAssertEqual(weakBeat.map(\.isAccent), [false, false, false, false])
+        XCTAssertEqual(weakBeat.map(\.isAccent), [true, false, false, false])
+
+        let quarters = MetronomeSubdivision.quarter.scheduledClicks(
+            beatNumber: 1,
+            startTime: 0,
+            interval: 1,
+            beatsPerMeasure: 4,
+            beatPattern: [true, false, false, false],
+            now: -1,
+            minimumLead: 0
+        )
+        XCTAssertEqual(quarters.map(\.isAccent), [false])
     }
 
     func testSubdivisionDropsClicksThatHaveAlreadyPassed() {
