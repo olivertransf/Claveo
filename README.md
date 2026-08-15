@@ -15,7 +15,6 @@ A free music practice companion for **iPhone** and **iPad**: record sessions, ru
 - **Chord & scale reference** — Diatonic chords and scales by root; major and relative minor
 - **Music dictionary** — Searchable terms with SMuFL notation symbols, browsable by category
 - **Layout** — Reorder eight tabs (four on bar + More on iPhone), accent colors, light/dark mode
-- **OMR (beta)** — Scan sheet music from photos or PDFs with CoreML object detection
 - **Sync** — Optional iCloud Drive sync across iPhone and iPad, or device-only storage
 
 Roadmap and web copy live in the repo; see the [site roadmap](https://claveo-app.vercel.app/roadmap) for planned work.
@@ -65,7 +64,7 @@ Production deploys use the root **`netlify.toml`** (publish `web/dist`, SPA fall
 
 | Area | Stack |
 |------|--------|
-| App | Swift, SwiftUI, AVFoundation, CoreML (OMR) |
+| App | Swift, SwiftUI, AVFoundation |
 | Packages (SPM) | [Tuna](https://github.com/alladinian/Tuna) (pitch detection), [VexFoundation](https://github.com/migueldeicaza/VexFoundation) (staff rendering in exercises) |
 | Site | Svelte, Vite |
 

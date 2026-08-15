@@ -18,13 +18,6 @@
         "Piece library for recordings, non-destructive trim, variable playback speed, and practice entries that can link to takes—with iCloud-friendly sync when you sign in.",
     },
     {
-      title: "Optical Music Recognition (OMR)",
-      status: "BETA",
-      shipped: false,
-      description:
-        "Scan and explore sheet music from photos or PDFs. Experimental tooling inside the app for digitizing and analyzing scores.",
-    },
-    {
       title: "Enhanced Practice Analytics",
       shipped: false,
       description:

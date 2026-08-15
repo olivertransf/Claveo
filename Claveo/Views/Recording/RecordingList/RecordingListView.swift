@@ -38,7 +38,6 @@ struct RecordingListView: View {
     @State var newPieceComposer: String = ""
     @State var editingPiece: Piece?
     @State var showingStorageInfo = false
-    @State var showingOMRScanner = false
     @State var recordingToShare: Recording?
     @State var isSelectingRecordings = false
     @State var selectedRecordingIds = Set<UUID>()

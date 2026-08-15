@@ -69,14 +69,6 @@ extension RecordingListView {
                 } else {
                     ToolbarItemGroup(placement: .navigationBarLeading) {
                         Button {
-                            showingOMRScanner = true
-                        } label: {
-                            Image(systemName: "doc.text.viewfinder")
-                                .symbolRenderingMode(.monochrome)
-                        }
-                        .accessibilityLabel("OMR Scanner")
-
-                        Button {
                             availablePieces = loadAvailablePieces()
                             showingPiecesManagement = true
                         } label: {
@@ -162,10 +154,6 @@ extension RecordingListView {
             .searchable(text: $searchText, isPresented: $isSearchFocused, prompt: "Search recordings")
         }
 
-        .fullScreenCover(isPresented: $showingOMRScanner) {
-            OMRScannerView()
-                .environmentObject(themeManager)
-        }
         .sheet(isPresented: $showingStorageInfo) {
             StorageInfoView()
                 .environmentObject(themeManager)

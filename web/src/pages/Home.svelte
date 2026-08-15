@@ -161,10 +161,6 @@
         <h3>Your layout</h3>
         <p>Four tabs plus More. One Settings screen—accent color and light or dark mode.</p>
       </div>
-      <div class="feature-card feature-card-beta">
-        <h3>Optical Music Recognition <span class="beta-badge">BETA</span></h3>
-        <p>Scan photos or PDFs toward editable sheet music.</p>
-      </div>
     </div>
   </div>
 
