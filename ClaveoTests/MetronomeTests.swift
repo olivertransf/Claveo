@@ -125,6 +125,76 @@ final class MetronomeTests: XCTestCase {
         }
     }
 
+    func testSubdivisionOffsetsMatchMusicalValues() {
+        XCTAssertEqual(MetronomeSubdivision.quarter.beatOffsets, [0])
+        XCTAssertEqual(MetronomeSubdivision.eighths.beatOffsets, [0, 0.5])
+        XCTAssertEqual(MetronomeSubdivision.sixteenths.beatOffsets, [0, 0.25, 0.5, 0.75])
+        XCTAssertEqual(MetronomeSubdivision.dottedEighthSixteenth.beatOffsets, [0, 0.75])
+        XCTAssertEqual(MetronomeSubdivision.sixteenthDottedEighth.beatOffsets, [0, 0.25])
+        XCTAssertEqual(MetronomeSubdivision.triplet.beatOffsets.count, 3)
+        XCTAssertEqual(MetronomeSubdivision.triplet.beatOffsets[1], 1.0 / 3.0, accuracy: 0.000_001)
+        XCTAssertEqual(MetronomeSubdivision.triplet.beatOffsets[2], 2.0 / 3.0, accuracy: 0.000_001)
+    }
+
+    func testSubdivisionAccentsOnlyTheDownbeatOfAccentedBeats() {
+        let sixteenths = MetronomeSubdivision.sixteenths.scheduledClicks(
+            beatNumber: 0,
+            startTime: 0,
+            interval: 1,
+            beatsPerMeasure: 4,
+            beatPattern: [true, false, false, false],
+            now: -1,
+            minimumLead: 0
+        )
+        XCTAssertEqual(sixteenths.map(\.isAccent), [true, false, false, false])
+
+        let weakBeat = MetronomeSubdivision.sixteenths.scheduledClicks(
+            beatNumber: 1,
+            startTime: 0,
+            interval: 1,
+            beatsPerMeasure: 4,
+            beatPattern: [true, false, false, false],
+            now: -1,
+            minimumLead: 0
+        )
+        XCTAssertEqual(weakBeat.map(\.isAccent), [false, false, false, false])
+    }
+
+    func testSubdivisionDropsClicksThatHaveAlreadyPassed() {
+        let remaining = MetronomeSubdivision.eighths.scheduledClicks(
+            beatNumber: 0,
+            startTime: 0,
+            interval: 1,
+            beatsPerMeasure: 4,
+            beatPattern: [true, false, false, false],
+            now: 0.4,
+            minimumLead: 0.01
+        )
+
+        XCTAssertEqual(remaining.count, 1)
+        XCTAssertEqual(remaining[0].hostTimeSeconds, 0.5, accuracy: 0.000_1)
+        XCTAssertFalse(remaining[0].isAccent)
+    }
+
+    func testSetSubdivisionUpdatesPublishedValue() async {
+        await MainActor.run {
+            let metronome = Metronome()
+            metronome.setSubdivision(.triplet)
+            XCTAssertEqual(metronome.subdivision, .triplet)
+            metronome.setSubdivision(.dottedEighthSixteenth)
+            XCTAssertEqual(metronome.subdivision, .dottedEighthSixteenth)
+        }
+    }
+
+    func testMissingSubdivisionSettingDecodesAsQuarter() throws {
+        let data = try JSONSerialization.data(withJSONObject: [
+            "a4ReferenceFrequency": 440.0,
+            "defaultPracticeTime": 30
+        ])
+        let settings = try JSONDecoder().decode(AppSettings.self, from: data)
+        XCTAssertEqual(settings.metronomeSubdivision, MetronomeSubdivision.quarter.rawValue)
+    }
+
     func testStartupErrorProvidesUsefulDescription() {
         let error = MetronomeStartupError.audioEngineFailed("The audio route is unavailable.")
 

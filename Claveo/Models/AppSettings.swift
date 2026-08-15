@@ -65,6 +65,7 @@ struct AppSettings: Codable, Sendable {
     // Metronome pattern
     var metronomeTimeSignature: String = TimeSignature.fourFour.rawValue
     var metronomeBeatPattern: [Bool] = []
+    var metronomeSubdivision: String = MetronomeSubdivision.quarter.rawValue
 
     /// Clef names enabled for Note Identification (`ClefName.rawValue`: treble, bass, alto, tenor).
     var noteIdentificationEnabledClefRawValues: [String] = ["treble", "bass", "alto", "tenor"]
@@ -82,7 +83,7 @@ struct AppSettings: Codable, Sendable {
         case accentColor, colorScheme, showTabBarText
         case storeFilesOnDeviceOnly
         case lastSelectedTab, tabBarCustomizationOrder, tabSemanticsVersion
-        case metronomeTimeSignature, metronomeBeatPattern
+        case metronomeTimeSignature, metronomeBeatPattern, metronomeSubdivision
         case noteIdentificationEnabledClefRawValues
         case keySignatureIdentificationEnabledModeRawValues
     }
@@ -120,6 +121,7 @@ extension AppSettings {
         tabSemanticsVersion = try c.decodeIfPresent(Int.self, forKey: .tabSemanticsVersion) ?? 1
         metronomeTimeSignature = try c.decodeIfPresent(String.self, forKey: .metronomeTimeSignature) ?? TimeSignature.fourFour.rawValue
         metronomeBeatPattern = try c.decodeIfPresent([Bool].self, forKey: .metronomeBeatPattern) ?? []
+        metronomeSubdivision = try c.decodeIfPresent(String.self, forKey: .metronomeSubdivision) ?? MetronomeSubdivision.quarter.rawValue
         noteIdentificationEnabledClefRawValues = try c.decodeIfPresent([String].self, forKey: .noteIdentificationEnabledClefRawValues)
             ?? ["treble", "bass", "alto", "tenor"]
         keySignatureIdentificationEnabledModeRawValues = try c.decodeIfPresent([String].self, forKey: .keySignatureIdentificationEnabledModeRawValues)

@@ -227,6 +227,8 @@ class SettingsManager: ObservableObject {
            let decoded = try? JSONDecoder().decode([Bool].self, from: data) {
             settings.metronomeBeatPattern = decoded
         }
+        settings.metronomeSubdivision = defaults.string(forKey: "metronomeSubdivision")
+            ?? MetronomeSubdivision.quarter.rawValue
 
         if let data = defaults.data(forKey: "noteIdentificationEnabledClefRawValues"),
            let decoded = try? JSONDecoder().decode([String].self, from: data) {
@@ -325,6 +327,7 @@ class SettingsManager: ObservableObject {
         if let encoded = try? JSONEncoder().encode(settings.metronomeBeatPattern) {
             defaults.set(encoded, forKey: "metronomeBeatPattern")
         }
+        defaults.set(settings.metronomeSubdivision, forKey: "metronomeSubdivision")
 
         if let encoded = try? JSONEncoder().encode(settings.noteIdentificationEnabledClefRawValues) {
             defaults.set(encoded, forKey: "noteIdentificationEnabledClefRawValues")
@@ -453,6 +456,7 @@ class SettingsManager: ObservableObject {
             "tabBarCustomizationOrder",
             "metronomeTimeSignature",
             "metronomeBeatPattern",
+            "metronomeSubdivision",
             "noteIdentificationEnabledClefRawValues",
             "keySignatureIdentificationEnabledModeRawValues"
         ].forEach { defaults.removeObject(forKey: $0) }

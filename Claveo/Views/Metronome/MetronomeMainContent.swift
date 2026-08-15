@@ -200,6 +200,10 @@ extension MetronomeView {
                 timeSignatureMenu
             }
 
+            MetronomeSubdivisionPicker(selection: metronome.subdivision) { subdivision in
+                metronome.setSubdivision(subdivision)
+            }
+
             beatPatternSection
 
             if !favoriteTempos.isEmpty {

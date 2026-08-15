@@ -80,6 +80,7 @@ class Metronome: ObservableObject {
     @Published var timeSignature: TimeSignature = .fourFour
     @Published var customTimeSignature: (top: Int, bottom: Int)? = nil
     @Published var beatPattern: [Bool] = [true, false, false, false]
+    @Published var subdivision: MetronomeSubdivision = .quarter
     @Published var currentBeat: Int = 0
     @Published var hapticEnabled: Bool = true
     
@@ -144,6 +145,9 @@ class Metronome: ObservableObject {
         }
 
         hapticEnabled = settings.metronomeHapticEnabled
+        if let savedSubdivision = MetronomeSubdivision(rawValue: settings.metronomeSubdivision) {
+            subdivision = savedSubdivision
+        }
 
         updateInterval()
         updateBeatPattern()

@@ -1428,6 +1428,16 @@
         }
       }
     },
+    "Dotted eighth and sixteenth" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Corchea con puntillo y semicorchea"
+          }
+        }
+      }
+    },
     "Drag a row using the handle on the right to reorder. The first four tabs sit on the bottom bar; the rest are in More." : {
       "localizations" : {
         "es" : {
@@ -1624,6 +1634,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Excluido de la práctica"
+          }
+        }
+      }
+    },
+    "Eighths" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Corcheas"
           }
         }
       }
@@ -1995,6 +2015,16 @@
         }
       }
     },
+    "Has notes" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tiene anotaciones"
+          }
+        }
+      }
+    },
     "How did it go?" : {
       "localizations" : {
         "es" : {
@@ -2076,6 +2106,7 @@
       }
     },
     "iCloud Drive is the default when available. Turn it off to keep recordings and app data on this iPhone only without syncing. Changing this affects where new files are saved; existing files stay where they were created." : {
+      "extractionState" : "stale",
       "localizations" : {
         "es" : {
           "stringUnit" : {
@@ -2417,6 +2448,7 @@
       }
     },
     "Loud" : {
+      "extractionState" : "stale",
       "localizations" : {
         "es" : {
           "stringUnit" : {
@@ -3535,7 +3567,18 @@
         }
       }
     },
+    "Quarter" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Negra"
+          }
+        }
+      }
+    },
     "Quiet" : {
+      "extractionState" : "stale",
       "localizations" : {
         "es" : {
           "stringUnit" : {
@@ -4226,6 +4269,36 @@
         }
       }
     },
+    "Subdivisions" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Subdivisiones"
+          }
+        }
+      }
+    },
+    "Sixteenth and dotted eighth" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Semicorchea y corchea con puntillo"
+          }
+        }
+      }
+    },
+    "Sixteenths" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Semicorcheas"
+          }
+        }
+      }
+    },
     "System" : {
       "localizations" : {
         "es" : {
@@ -4622,6 +4695,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tritono"
+          }
+        }
+      }
+    },
+    "Triplet" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tresillo"
           }
         }
       }

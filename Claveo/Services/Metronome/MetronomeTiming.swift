@@ -41,6 +41,13 @@ extension Metronome {
         beatPattern = pattern
     }
 
+    func setSubdivision(_ next: MetronomeSubdivision) {
+        guard next != subdivision else { return }
+        subdivision = next
+        SettingsManager.shared.update(\.metronomeSubdivision, value: next.rawValue)
+        resyncScheduledBeats()
+    }
+
     func toggleBeatAccent(at index: Int) {
         guard beatPattern.indices.contains(index) else { return }
 
@@ -195,19 +202,27 @@ extension Metronome {
                beatTimeInSeconds - now > Self.maximumScheduleLookahead {
                 return
             }
-            let beatHostTime = AVAudioTime.hostTime(forSeconds: beatTimeInSeconds)
+            let clicks = subdivision.scheduledClicks(
+                beatNumber: beatNumber,
+                startTime: startTime,
+                interval: interval,
+                beatsPerMeasure: beatsPerMeasure,
+                beatPattern: beatPattern,
+                now: now,
+                minimumLead: Self.minimumScheduleLead
+            )
 
-            let beatInMeasure = beatNumber % beatsPerMeasure
-            let isAccent = beatInMeasure < beatPattern.count && beatPattern[beatInMeasure]
+            for click in clicks {
+                let buffer = click.isAccent ? accentBufferConverted : normalBufferConverted
+                guard let audioBuffer = buffer else {
+                    scheduleState.recordSchedule(succeeded: false)
+                    return
+                }
 
-            let buffer = isAccent ? accentBufferConverted : normalBufferConverted
-            guard let audioBuffer = buffer else {
-                scheduleState.recordSchedule(succeeded: false)
-                return
+                let audioTime = AVAudioTime(hostTime: AVAudioTime.hostTime(forSeconds: click.hostTimeSeconds))
+                player.scheduleBuffer(audioBuffer, at: audioTime, options: [], completionHandler: nil)
             }
 
-            let audioTime = AVAudioTime(hostTime: beatHostTime)
-            player.scheduleBuffer(audioBuffer, at: audioTime, options: [], completionHandler: nil)
             scheduleState.recordSchedule(succeeded: true)
         }
     }

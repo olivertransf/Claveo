@@ -139,7 +139,7 @@
       </div>
       <div class="feature-card">
         <h3>Metronome</h3>
-        <p>Tap tempo, custom meters, accents, saved tempos, haptics, reference tone.</p>
+        <p>Tap tempo, custom meters, accents, subdivisions, saved tempos, haptics, reference tone.</p>
       </div>
       <div class="feature-card">
         <h3>Precision Tuner</h3>

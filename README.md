@@ -9,7 +9,7 @@ A free music practice companion for **iPhone** and **iPad**: record sessions, ru
 - **Recording** — Practice takes with live waveform, piece library, tags, non-destructive trim, variable playback speed (0.5x–2x), search/filter, bulk export, and share
 - **Live Activity** — Dynamic Island and lock screen status while recording
 - **Practice journal** — Minutes, notes, 1–5 star ratings, streaks, week calendar, stats; link entries to recordings; daily reminder notifications
-- **Metronome** — Tap tempo, standard and custom time signatures, per-beat accents, saved tempos, haptics, reference tone generator
+- **Metronome** — Tap tempo, standard and custom time signatures, per-beat accents, subdivisions (eighths, triplets, sixteenths, dotted), saved tempos, haptics, reference tone generator
 - **Tuner** — Live mic pitch detection; cents deviation display; custom A4 reference (400–480 Hz)
 - **Exercises** — Note reading on the staff (treble/bass/alto/tenor), key signature ID, interval ear training
 - **Chord & scale reference** — Diatonic chords and scales by root; major and relative minor
