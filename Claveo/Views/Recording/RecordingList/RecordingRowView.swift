@@ -28,7 +28,6 @@ struct RecordingRowView: View {
     var isSelectionMode: Bool = false
     var isSelected: Bool = false
     var onToggleSelection: (() -> Void)? = nil
-    @Environment(\.colorScheme) var colorScheme
     @State private var isDragging = false
     @State private var dragValue: TimeInterval = 0
     @State private var displayTime: TimeInterval = 0
@@ -42,58 +41,98 @@ struct RecordingRowView: View {
         isDragging ? dragValue : displayTime
     }
 
-    private let transportButtonSize: CGFloat = 44
+    private let transportHitSize: CGFloat = 44
     private let playButtonSize: CGFloat = 52
 
-    private var rowSubtitle: String {
-        var parts: [String] = [recording.relativeDateString]
-        if let piece = recording.piece, !piece.isEmpty {
-            parts.append(piece)
-        }
-        return parts.joined(separator: " · ")
+    private var listDateText: String {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .none
+        return formatter.string(from: recording.createdAt)
     }
-    
-    @ViewBuilder
-    private var rowSummaryLabel: some View {
-        HStack(alignment: .center, spacing: 12) {
-            VStack(alignment: .leading, spacing: 3) {
-                Text(recording.displayName)
-                    .font(.body.weight(.semibold))
-                    .foregroundStyle(.primary)
-                    .lineLimit(isExpanded ? 2 : 1)
 
-                Text(rowSubtitle)
+    private var hasNotes: Bool {
+        !recording.notes.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
+    private var speedLabel: String {
+        if playbackRate.truncatingRemainder(dividingBy: 1) == 0 {
+            return String(format: "%.0f×", playbackRate)
+        }
+        return String(format: "%g×", playbackRate)
+    }
+
+    @ViewBuilder
+    private var rowHeader: some View {
+        HStack(alignment: isExpanded ? .top : .firstTextBaseline, spacing: 12) {
+            headerText
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .contentShape(Rectangle())
+                .onTapGesture(perform: toggleExpanded)
+                .allowsHitTesting(!isSelectionMode)
+
+            if isExpanded {
+                moreActionsMenu
+            } else {
+                Text(recording.formattedDuration)
+                    .font(.body)
+                    .foregroundStyle(.secondary)
+                    .monospacedDigit()
+                    .contentShape(Rectangle())
+                    .onTapGesture(perform: toggleExpanded)
+                    .allowsHitTesting(!isSelectionMode)
+            }
+        }
+        .padding(.vertical, 2)
+    }
+
+    private var headerText: some View {
+        VStack(alignment: .leading, spacing: 3) {
+            Text(recording.displayName)
+                .font(.body.weight(.semibold))
+                .foregroundStyle(.primary)
+                .lineLimit(isExpanded ? 2 : 1)
+
+            HStack(alignment: .center, spacing: 5) {
+                Text(listDateText)
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
-                    .lineLimit(1)
 
-                if isExpanded, !recording.tags.isEmpty {
-                    Text(recording.tags.map { RecordingTag.localizedName(for: $0) }.joined(separator: " · "))
+                if hasNotes {
+                    Image(systemName: "text.bubble")
                         .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .accessibilityLabel(String(localized: "Has notes"))
+                }
+
+                if let piece = recording.piece, !piece.isEmpty {
+                    Text("·")
+                        .font(.subheadline)
                         .foregroundStyle(.tertiary)
+                    Text(piece)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
                         .lineLimit(1)
                 }
             }
+            .lineLimit(1)
 
-            Spacer(minLength: 8)
-
-            VStack(alignment: .trailing, spacing: 4) {
-                Text(recording.formattedDuration)
-                    .font(.subheadline.weight(.medium))
-                    .foregroundStyle(isPlaying ? themeManager.accentColor : .secondary)
-                    .monospacedDigit()
-
-                if isPlaying {
-                    Image(systemName: "waveform")
-                        .font(.caption.weight(.semibold))
-                        .foregroundStyle(themeManager.accentColor)
-                        .symbolEffect(.variableColor.iterative, options: .repeating, isActive: isPlaying)
-                }
+            if isExpanded, !recording.tags.isEmpty {
+                Text(recording.tags.map { RecordingTag.localizedName(for: $0) }.joined(separator: " · "))
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
+                    .lineLimit(1)
             }
         }
-        .padding(.vertical, isExpanded ? 4 : 6)
     }
-    
+
+    private func toggleExpanded() {
+        HapticFeedback.lightImpact()
+        withAnimation(.easeInOut(duration: 0.22)) {
+            isExpanded.toggle()
+        }
+    }
+
     var body: some View {
         Group {
             if isSelectionMode {
@@ -102,20 +141,14 @@ struct RecordingRowView: View {
                         Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
                             .font(.title2)
                             .foregroundStyle(isSelected ? themeManager.accentColor : Color.secondary)
-                        rowSummaryLabel
+                        rowHeader
                     }
                     .contentShape(Rectangle())
                 }
+                .buttonStyle(.plain)
             } else {
-                VStack(alignment: .leading, spacing: isExpanded ? 10 : 0) {
-                    rowSummaryLabel
-                        .contentShape(Rectangle())
-                        .onTapGesture {
-                            HapticFeedback.lightImpact()
-                            withAnimation(.easeInOut(duration: 0.22)) {
-                                isExpanded.toggle()
-                            }
-                        }
+                VStack(alignment: .leading, spacing: isExpanded ? 4 : 0) {
+                    rowHeader
 
                     if isExpanded {
                         playerPanel
@@ -125,44 +158,22 @@ struct RecordingRowView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
         }
-        .claveoListRowChrome(hideSeparator: isExpanded, showsBackground: false)
-        .modifier(RecordingRowBackgroundModifier(
-            isPlaying: isPlaying,
-            isExpanded: isExpanded,
-            fillColor: rowFillColor
-        ))
-    }
-
-    private var rowFillColor: Color {
-        if isPlaying {
-            return themeManager.accentColor.opacity(colorScheme == .dark ? 0.2 : 0.1)
-        }
-        if isExpanded {
-            return Color(.secondarySystemGroupedBackground)
-        }
-        return .clear
-    }
-
-    private var transportButtonFill: Color {
-        if isExpanded || isPlaying {
-            return colorScheme == .dark
-                ? Color(.systemBackground).opacity(0.55)
-                : Color(.secondarySystemGroupedBackground)
-        }
-        return Color(.tertiarySystemFill)
+        .claveoListRowChrome(hideSeparator: false, showsBackground: true)
+        .listRowInsets(EdgeInsets(top: 12, leading: 20, bottom: isExpanded ? 16 : 12, trailing: 16))
     }
 
     private var playerPanel: some View {
-        VStack(alignment: .leading, spacing: 18) {
+        VStack(alignment: .leading, spacing: 10) {
             waveformScrubber
                 .frame(maxWidth: .infinity)
+                .padding(.top, 10)
 
             timelineLabels
 
             playerControls
         }
-        .padding(.top, 16)
-        .padding(.bottom, 10)
+        .padding(.horizontal, 4)
+        .padding(.bottom, 4)
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
@@ -296,27 +307,31 @@ struct RecordingRowView: View {
     private var timelineLabels: some View {
         HStack {
             Text(formatTime(currentDisplayTime))
-                .font(.system(.caption, design: .monospaced))
+                .font(.caption)
                 .foregroundStyle(.secondary)
+                .monospacedDigit()
 
             Spacer()
 
             let remaining = max(0, duration - currentDisplayTime)
-            Text(isPlaying ? "-\(formatTime(remaining))" : formatTime(duration))
-                .font(.system(.caption, design: .monospaced))
+            Text("-\(formatTime(remaining))")
+                .font(.caption)
                 .foregroundStyle(.secondary)
+                .monospacedDigit()
         }
     }
 
     private var playerControls: some View {
         HStack(spacing: 0) {
-            moreActionsMenu
+            speedMenu
+                .frame(width: transportHitSize, alignment: .leading)
 
-            Spacer(minLength: 12)
+            Spacer(minLength: 8)
 
-            HStack(spacing: 22) {
-                transportCircleButton(
+            HStack(spacing: 28) {
+                transportIconButton(
                     systemImage: "gobackward.15",
+                    font: .title2,
                     accessibilityLabel: String(localized: "Back 15 seconds"),
                     action: onSkipBackward
                 )
@@ -326,46 +341,39 @@ struct RecordingRowView: View {
                     onPlayPause()
                 } label: {
                     Image(systemName: isPlaying ? "pause.fill" : "play.fill")
-                        .font(.title3.weight(.semibold))
-                        .foregroundStyle(.white)
+                        .font(.system(size: 32, weight: .regular))
+                        .foregroundStyle(.primary)
                         .offset(x: isPlaying ? 0 : 2)
                         .frame(width: playButtonSize, height: playButtonSize)
-                        .background(themeManager.accentColor, in: Circle())
+                        .contentShape(Rectangle())
                 }
                 .buttonStyle(.borderless)
                 .accessibilityLabel(isPlaying ? String(localized: "Pause") : String(localized: "Play"))
 
-                transportCircleButton(
+                transportIconButton(
                     systemImage: "goforward.15",
+                    font: .title2,
                     accessibilityLabel: String(localized: "Forward 15 seconds"),
                     action: onSkipForward
                 )
             }
 
-            Spacer(minLength: 12)
+            Spacer(minLength: 8)
 
-            transportCircleButton(
+            transportIconButton(
                 systemImage: "trash",
+                font: .body.weight(.medium),
                 accessibilityLabel: String(localized: "Delete"),
-                foregroundColor: .red,
-                role: .destructive,
+                foregroundColor: themeManager.accentColor,
                 action: onDelete
             )
+            .frame(width: transportHitSize, alignment: .trailing)
         }
-        .padding(.top, 8)
+        .padding(.top, 6)
     }
 
     private var moreActionsMenu: some View {
         Menu {
-            Menu("Playback Speed") {
-                speedMenuButton(rate: 0.75, label: "0.75×")
-                speedMenuButton(rate: 1.0, label: "1×")
-                speedMenuButton(rate: 1.25, label: "1.25×")
-                speedMenuButton(rate: 1.5, label: "1.5×")
-            }
-
-            Divider()
-
             Button {
                 onEdit()
             } label: {
@@ -385,32 +393,50 @@ struct RecordingRowView: View {
             }
             .disabled(!FileManager.default.fileExists(atPath: recording.fileURL.path))
         } label: {
-            transportButtonLabel(systemImage: "ellipsis")
+            Image(systemName: "ellipsis")
+                .font(.body.weight(.semibold))
+                .foregroundStyle(themeManager.accentColor)
+                .frame(width: transportHitSize, height: transportHitSize, alignment: .trailing)
+                .contentShape(Rectangle())
         }
         .buttonStyle(.borderless)
         .accessibilityLabel(String(localized: "More recording actions"))
     }
 
-    private func transportButtonLabel(systemImage: String, foregroundColor: Color = .primary) -> some View {
-        Image(systemName: systemImage)
-            .font(.body.weight(.semibold))
-            .foregroundStyle(foregroundColor)
-            .frame(width: transportButtonSize, height: transportButtonSize)
-            .background(transportButtonFill, in: Circle())
+    private var speedMenu: some View {
+        Menu {
+            speedMenuButton(rate: 0.75, label: "0.75×")
+            speedMenuButton(rate: 1.0, label: "1×")
+            speedMenuButton(rate: 1.25, label: "1.25×")
+            speedMenuButton(rate: 1.5, label: "1.5×")
+        } label: {
+            Text(speedLabel)
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(themeManager.accentColor)
+                .frame(width: transportHitSize, height: transportHitSize, alignment: .leading)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.borderless)
+        .accessibilityLabel(String(localized: "Playback Speed"))
+        .accessibilityValue(speedLabel)
     }
 
-    private func transportCircleButton(
+    private func transportIconButton(
         systemImage: String,
+        font: Font,
         accessibilityLabel: String,
         foregroundColor: Color = .primary,
-        role: ButtonRole? = nil,
         action: @escaping () -> Void
     ) -> some View {
-        Button(role: role) {
+        Button {
             HapticFeedback.lightImpact()
             action()
         } label: {
-            transportButtonLabel(systemImage: systemImage, foregroundColor: foregroundColor)
+            Image(systemName: systemImage)
+                .font(font)
+                .foregroundStyle(foregroundColor)
+                .frame(width: transportHitSize, height: transportHitSize)
+                .contentShape(Rectangle())
         }
         .buttonStyle(.borderless)
         .accessibilityLabel(accessibilityLabel)
@@ -444,33 +470,15 @@ struct RecordingRowView: View {
         RunLoop.main.add(newTimer, forMode: .common)
         smoothUpdateTimer = newTimer
     }
-    
+
     private func stopSmoothTimer() {
         smoothUpdateTimer?.invalidate()
         smoothUpdateTimer = nil
     }
-    
+
     private func formatTime(_ time: TimeInterval) -> String {
         let minutes = Int(time) / 60
         let seconds = Int(time) % 60
         return String(format: "%d:%02d", minutes, seconds)
     }
 }
-
-private struct RecordingRowBackgroundModifier: ViewModifier {
-    let isPlaying: Bool
-    let isExpanded: Bool
-    let fillColor: Color
-
-    func body(content: Content) -> some View {
-        content.listRowBackground(
-            ZStack {
-                Color(.secondarySystemGroupedBackground)
-                if isPlaying || isExpanded {
-                    fillColor
-                }
-            }
-        )
-    }
-}
-
