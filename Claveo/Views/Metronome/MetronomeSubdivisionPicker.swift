@@ -54,8 +54,8 @@ struct MetronomeSubdivisionPicker: View {
 
             MetronomeSubdivisionGlyph(subdivision: subdivision)
                 .foregroundStyle(glyphColor(selected: isSelected))
-                .padding(.horizontal, 8)
-                .padding(.vertical, 8)
+                .padding(.horizontal, 6)
+                .padding(.vertical, 6)
         }
         .frame(maxWidth: .infinity)
         .frame(height: 58)
@@ -115,25 +115,24 @@ struct MetronomeSubdivisionGlyph: View {
             || subdivision == .dottedEighthSixteenth
             || subdivision == .sixteenthDottedEighth
 
-        let topPad = hasTriplet ? size.height * 0.22 : size.height * 0.12
-        let headY = size.height * 0.74
-        let beamY = topPad
-        let headWidth = min(max(size.width * 0.16, 7), 10)
-        let headHeight = headWidth * 0.68
-        let stemXOffset = headWidth * 0.38
+        let headWidth: CGFloat = 9.5
+        let headHeight: CGFloat = 7
+        let stemXOffset = headWidth * 0.36
+        let stemLength: CGFloat = 13
+        let headY = size.height * 0.62
+        let beamY = headY - stemLength
         let xs = noteXs(
             count: noteCount,
             width: size.width,
-            dottedIndices: dottedIndices,
-            headWidth: headWidth
+            dottedIndices: dottedIndices
         )
 
         for (index, x) in xs.enumerated() {
             drawNotehead(in: context, center: CGPoint(x: x, y: headY), width: headWidth, height: headHeight)
             var stem = Path()
-            stem.move(to: CGPoint(x: x + stemXOffset, y: headY - 0.4))
+            stem.move(to: CGPoint(x: x + stemXOffset, y: headY - 0.2))
             stem.addLine(to: CGPoint(x: x + stemXOffset, y: beamY))
-            context.stroke(stem, with: .foreground, lineWidth: 1.35)
+            context.stroke(stem, with: .foreground, lineWidth: 1.7)
 
             if dottedIndices.contains(index) {
                 drawDot(in: context, noteX: x, headY: headY, headWidth: headWidth)
@@ -141,7 +140,8 @@ struct MetronomeSubdivisionGlyph: View {
         }
 
         let stems = xs.map { $0 + stemXOffset }
-        let beamHeight: CGFloat = hasSecondaryBeam ? 2.15 : 2.4
+        let beamHeight: CGFloat = 2.6
+        let secondBeamY = beamY + beamHeight + 1.6
 
         switch subdivision {
         case .quarter:
@@ -150,62 +150,63 @@ struct MetronomeSubdivisionGlyph: View {
             drawBeam(in: context, from: stems.first, to: stems.last, y: beamY, height: beamHeight)
         case .sixteenths:
             drawBeam(in: context, from: stems.first, to: stems.last, y: beamY, height: beamHeight)
-            drawBeam(in: context, from: stems.first, to: stems.last, y: beamY + beamHeight + 2.1, height: beamHeight)
+            drawBeam(in: context, from: stems.first, to: stems.last, y: secondBeamY, height: beamHeight)
         case .dottedEighthSixteenth:
             drawBeam(in: context, from: stems.first, to: stems.last, y: beamY, height: beamHeight)
             if let right = stems.last, let left = stems.first {
-                drawPartialBeam(in: context, fromX: right, towardX: left, y: beamY + beamHeight + 2.1, height: beamHeight)
+                drawPartialBeam(in: context, fromX: right, towardX: left, y: secondBeamY, height: beamHeight)
             }
         case .sixteenthDottedEighth:
             drawBeam(in: context, from: stems.first, to: stems.last, y: beamY, height: beamHeight)
             if let left = stems.first, let right = stems.last {
-                drawPartialBeam(in: context, fromX: left, towardX: right, y: beamY + beamHeight + 2.1, height: beamHeight)
+                drawPartialBeam(in: context, fromX: left, towardX: right, y: secondBeamY, height: beamHeight)
             }
         }
 
-        if hasTriplet {
-            let label = Text("3").font(.system(size: 10, weight: .bold, design: .rounded))
+        if hasTriplet, let first = stems.first, let last = stems.last {
+            let label = Text("3").font(.system(size: 9, weight: .bold))
             context.draw(
                 context.resolve(label),
-                at: CGPoint(x: size.width / 2, y: max(7, beamY - 8)),
+                at: CGPoint(x: (first + last) / 2, y: beamY - 6.5),
                 anchor: .center
             )
         }
     }
 
-    private func noteXs(count: Int, width: CGFloat, dottedIndices: Set<Int>, headWidth: CGFloat) -> [CGFloat] {
+    private func noteXs(count: Int, width: CGFloat, dottedIndices: Set<Int>) -> [CGFloat] {
         if count == 1 {
             return [width / 2]
         }
 
-        let sidePad = width * (count >= 4 ? 0.14 : 0.2)
-        let usable = max(width - sidePad * 2, 1)
-        var gaps = Array(repeating: 1.0, count: count - 1)
-        for index in dottedIndices where index < gaps.count {
-            gaps[index] += 0.28
+        let spacing: CGFloat
+        switch count {
+        case 4:
+            spacing = 8.5
+        case 3:
+            spacing = 9.5
+        default:
+            spacing = 11
         }
-        let gapTotal = gaps.reduce(0, +)
-        var x = sidePad
+
+        var gaps = Array(repeating: spacing, count: count - 1)
+        for index in dottedIndices where index < gaps.count {
+            gaps[index] += 3.5
+        }
+
+        let groupWidth = gaps.reduce(0, +)
+        var x = (width - groupWidth) / 2
         var xs: [CGFloat] = [x]
         for gap in gaps {
-            x += usable * CGFloat(gap / gapTotal)
+            x += gap
             xs.append(x)
         }
-
-        if dottedIndices.contains(count - 1) {
-            let overflow = xs[count - 1] + headWidth * 0.95 - (width - 2)
-            if overflow > 0 {
-                xs = xs.map { $0 - overflow }
-            }
-        }
-
         return xs
     }
 
     private func drawNotehead(in context: GraphicsContext, center: CGPoint, width: CGFloat, height: CGFloat) {
         var context = context
         context.translateBy(x: center.x, y: center.y)
-        context.rotate(by: .degrees(-20))
+        context.rotate(by: .degrees(-18))
         let rect = CGRect(x: -width / 2, y: -height / 2, width: width, height: height)
         context.fill(Path(ellipseIn: rect), with: .foreground)
     }
