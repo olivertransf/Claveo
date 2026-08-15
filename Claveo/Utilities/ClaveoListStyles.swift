@@ -14,6 +14,10 @@ extension View {
             .listSectionSeparator(.visible, edges: .all)
     }
 
+    func claveoPlainListStyle() -> some View {
+        listStyle(.plain)
+    }
+
     func claveoListRowChrome(hideSeparator: Bool = false, showsBackground: Bool = true) -> some View {
         modifier(ClaveoListRowChromeModifier(hideSeparator: hideSeparator, showsBackground: showsBackground))
     }

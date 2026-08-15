@@ -12,7 +12,7 @@ extension RecordingListView {
     var unifiedView: some View {
         NavigationStack {
             ZStack {
-                Color(.systemGroupedBackground)
+                Color(.systemBackground)
                     .ignoresSafeArea()
 
                 mainContentView

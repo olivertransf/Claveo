@@ -72,13 +72,11 @@ extension RecordingListView {
 
     var recordingsList: some View {
         List {
-            Section {
-                ForEach(filteredRecordings) { recording in
-                    recordingRow(for: recording)
-                }
+            ForEach(filteredRecordings) { recording in
+                recordingRow(for: recording)
             }
         }
-        .claveoInsetGroupedListStyle()
+        .claveoPlainListStyle()
     }
     
     @ViewBuilder

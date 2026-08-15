@@ -158,7 +158,8 @@ struct RecordingRowView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
         }
-        .claveoListRowChrome(hideSeparator: false, showsBackground: true)
+        .claveoListRowChrome(hideSeparator: false, showsBackground: false)
+        .listRowBackground(Color(.systemBackground))
         .listRowInsets(EdgeInsets(top: 12, leading: 20, bottom: isExpanded ? 16 : 12, trailing: 16))
     }
 
