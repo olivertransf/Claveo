@@ -31,9 +31,6 @@ extension RecordingListView {
         .onAppear {
             syncSplitSelection()
         }
-        .onChange(of: filteredRecordings.map(\.id)) { _, _ in
-            syncSplitSelection()
-        }
         .onChange(of: horizontalSizeClass) { _, _ in
             syncSplitSelection()
         }
@@ -69,7 +66,7 @@ extension RecordingListView {
 
     var recordingsColumnBody: some View {
         ZStack {
-            Color(.systemBackground)
+            Color(.systemGroupedBackground)
                 .ignoresSafeArea(edges: usesSplitPlayback ? [] : .all)
 
             mainContentView
@@ -95,7 +92,7 @@ extension RecordingListView {
         .safeAreaInset(edge: .bottom, spacing: 0) {
             VStack(spacing: 10) {
                 if recorder.isRecording && !usesSplitPlayback {
-                    recordingIndicatorView
+                    LiveRecordingIndicatorView(meter: recorder.meter, isRecording: true)
                 }
 
                 recordingButtonOverlay
@@ -164,7 +161,7 @@ extension RecordingListView {
         .padding(.horizontal, 16)
         .padding(.top, 0)
         .padding(.bottom, 8)
-        .background(Color(.systemBackground))
+        .background(Color(.systemGroupedBackground))
     }
 
     func splitSidebarIcon(_ systemImage: String) -> some View {
@@ -359,42 +356,6 @@ extension RecordingListView {
             : "line.3.horizontal.decrease.circle"
     }
     
-    var recordingIndicatorView: some View {
-        GeometryReader { geometry in
-            let isPhone = UIDevice.current.userInterfaceIdiom == .phone
-            let horizontalPadding: CGFloat = 48
-            let waveformWidth = isPhone
-                ? geometry.size.width - horizontalPadding
-                : (geometry.size.width - horizontalPadding) * 0.5
-            let waveformHeight = isPhone ? min(waveformWidth * 0.12, 50) : 60
-            let barPitch: CGFloat = 5.5
-            let maxBars = max(isPhone ? 60 : 70, Int(waveformWidth / barPitch))
-
-            VStack(spacing: 12) {
-                HStack(spacing: 10) {
-                    Circle()
-                        .fill(Color.red)
-                        .frame(width: 10, height: 10)
-                        .opacity(recorder.isRecording ? 1 : 0.45)
-                        .symbolEffect(.pulse, options: .repeating, isActive: recorder.isRecording)
-
-                    Text(formatTime(recorder.recordingTime))
-                        .font(.system(.title3, design: .monospaced))
-                        .fontWeight(.semibold)
-                        .foregroundColor(.white)
-                }
-
-                LiveWaveformView(audioLevels: recorder.waveformLevels, maxBars: maxBars)
-                    .frame(width: waveformWidth, height: waveformHeight)
-                    .frame(maxWidth: .infinity)
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
-        }
-        .frame(height: 96)
-        .padding(.horizontal, 24)
-        .padding(.top, 8)
-    }
-    
     var recordingButtonOverlay: some View {
         Button(action: {
             if recorder.isRecording {
@@ -453,6 +414,53 @@ struct ConditionalSearchableModifier: ViewModifier {
         } else {
             content
         }
+    }
+}
+
+struct LiveRecordingIndicatorView: View {
+    @ObservedObject var meter: RecordingMeter
+    let isRecording: Bool
+
+    var body: some View {
+        GeometryReader { geometry in
+            let isPhone = UIDevice.current.userInterfaceIdiom == .phone
+            let horizontalPadding: CGFloat = 48
+            let waveformWidth = isPhone
+                ? geometry.size.width - horizontalPadding
+                : (geometry.size.width - horizontalPadding) * 0.5
+            let waveformHeight = isPhone ? min(waveformWidth * 0.12, 50) : 60
+            let barPitch: CGFloat = 5.5
+            let maxBars = max(isPhone ? 60 : 70, Int(waveformWidth / barPitch))
+
+            VStack(spacing: 12) {
+                HStack(spacing: 10) {
+                    Circle()
+                        .fill(Color.red)
+                        .frame(width: 10, height: 10)
+                        .opacity(isRecording ? 1 : 0.45)
+                        .symbolEffect(.pulse, options: .repeating, isActive: isRecording)
+
+                    Text(Self.formatTime(meter.recordingTime))
+                        .font(.system(.title3, design: .monospaced))
+                        .fontWeight(.semibold)
+                        .foregroundColor(.white)
+                }
+
+                LiveWaveformView(audioLevels: meter.waveformLevels, maxBars: maxBars)
+                    .frame(width: waveformWidth, height: waveformHeight)
+                    .frame(maxWidth: .infinity)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+        }
+        .frame(height: 96)
+        .padding(.horizontal, 24)
+        .padding(.top, 8)
+    }
+
+    private static func formatTime(_ time: TimeInterval) -> String {
+        let minutes = Int(time) / 60
+        let seconds = Int(time) % 60
+        return String(format: "%d:%02d", minutes, seconds)
     }
 }
 

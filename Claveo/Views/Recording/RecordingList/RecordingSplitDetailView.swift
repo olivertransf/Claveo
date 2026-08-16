@@ -11,10 +11,7 @@ import SwiftUI
 struct RecordingSplitDetailView: View {
     @EnvironmentObject var themeManager: ThemeManager
     let recording: Recording
-    let isPlaying: Bool
-    let currentTime: TimeInterval?
-    let duration: TimeInterval
-    let playbackRate: Float
+    @ObservedObject var player: AudioPlayer
     let onPlayPause: () -> Void
     let onSeek: (TimeInterval) -> Void
     let onSpeedChange: (Float) -> Void
@@ -26,8 +23,12 @@ struct RecordingSplitDetailView: View {
     let onDelete: () -> Void
     var onToggleKeepDownloaded: (() -> Void)? = nil
 
-    private var fileExists: Bool {
-        FileManager.default.fileExists(atPath: recording.fileURL.path)
+    private var isPlaying: Bool {
+        player.isPlaying && player.currentRecording?.id == recording.id
+    }
+
+    private var currentTime: TimeInterval? {
+        player.currentRecording?.id == recording.id ? player.currentTime : nil
     }
 
     var body: some View {
@@ -41,8 +42,8 @@ struct RecordingSplitDetailView: View {
                 recording: recording,
                 isPlaying: isPlaying,
                 currentTime: currentTime,
-                duration: duration,
-                playbackRate: playbackRate,
+                duration: recording.duration,
+                playbackRate: player.playbackRate,
                 waveformHeight: 168,
                 showsDeleteInTransport: false,
                 onPlayPause: onPlayPause,
@@ -108,7 +109,7 @@ struct RecordingSplitDetailView: View {
             editAction(
                 title: String(localized: "Export"),
                 systemImage: "square.and.arrow.up",
-                enabled: fileExists,
+                enabled: recording.isLocallyAvailable,
                 action: onExport
             )
             if recording.isStoredIniCloud, onToggleKeepDownloaded != nil {

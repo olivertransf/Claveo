@@ -53,7 +53,8 @@ struct PreviewRecordingListView: View {
                     }
                 } else {
                     List {
-                        ForEach(sortedRecordings) { recording in
+                        Section {
+                            ForEach(sortedRecordings) { recording in
                             RecordingRowView(
                                 recording: recording,
                                 isExpanded: Binding(
@@ -146,8 +147,9 @@ struct PreviewRecordingListView: View {
                                 .tint(.blue)
                             }
                         }
+                        }
                     }
-                    .claveoPlainListStyle()
+                    .claveoInsetGroupedListStyle()
                 }
             }
             .onAppear {

@@ -18,13 +18,26 @@ class AudioRecorder: NSObject, ObservableObject {
 
     @Published var isRecording = false
     @Published var recordings: [Recording] = []
-    @Published var recordingTime: TimeInterval = 0
-    @Published var audioLevel: Float = 0.0
-    @Published var waveformLevels: [Float] = []
     @Published var permissionError: String?
     @Published var recordingError: String?
     @Published var newlyCreatedRecordingId: UUID?
     @Published private(set) var isLoadingRecordings = false
+    let meter = RecordingMeter()
+
+    var recordingTime: TimeInterval {
+        get { meter.recordingTime }
+        set { meter.recordingTime = newValue }
+    }
+
+    var audioLevel: Float {
+        get { meter.audioLevel }
+        set { meter.audioLevel = newValue }
+    }
+
+    var waveformLevels: [Float] {
+        get { meter.waveformLevels }
+        set { meter.waveformLevels = newValue }
+    }
 
     private var hasLoadedFromDisk = false
     private var audioRecorder: AVAudioRecorder?
@@ -97,7 +110,7 @@ class AudioRecorder: NSObject, ObservableObject {
             uniqueKeysWithValues: merged.filter(\.isDeleted).map { ($0.id, $0) }
         )
         let active = merged.filter { !$0.isDeleted }
-        recordings = pinStorageLocations(in: active)
+        recordings = await recordingsWithLocalAvailability(pinStorageLocations(in: active))
         refreshKeepDownloadedFiles()
         let metadataChanged =
             mutationRevision != revisionAtStart
@@ -228,10 +241,8 @@ class AudioRecorder: NSObject, ObservableObject {
 
         levelTimer?.invalidate()
         levelTimer = nil
-        audioLevel = 0.0
-        waveformLevels = []
+        meter.reset()
         recordingStartedAt = nil
-        recordingTime = 0
     }
 
     private func activateRecordingAudioSession() throws {
@@ -359,8 +370,7 @@ class AudioRecorder: NSObject, ObservableObject {
             currentRecordingURL = fileURL
             pendingStorageLocation = storageLocation
             recordingStartedAt = Date()
-            recordingTime = 0
-            waveformLevels = [] // Reset waveform buffer
+            meter.reset()
             if let recordingStartedAt {
                 RecordingLiveActivityManager.shared.startRecordingActivity(startedAt: recordingStartedAt)
             }
@@ -413,11 +423,8 @@ class AudioRecorder: NSObject, ObservableObject {
         levelTimer?.invalidate()
         levelTimer = nil
 
-        audioLevel = 0.0
-        waveformLevels = [] // Clear waveform buffer
-
+        meter.reset()
         recordingStartedAt = nil
-        recordingTime = 0
     }
 
     private func finalizeRecording(successfully: Bool) {
@@ -684,23 +691,70 @@ class AudioRecorder: NSObject, ObservableObject {
     }
 
     private func refreshKeepDownloadedFiles() {
-        for recording in recordings where recording.keepDownloaded && recording.isStoredIniCloud {
-            try? iCloudManager.shared.startKeepingDownloaded(at: recording.fileURL)
+        let urls = recordings.compactMap { recording -> URL? in
+            guard recording.keepDownloaded, recording.isStoredIniCloud else { return nil }
+            return recording.fileURL
+        }
+        Task.detached(priority: .utility) {
+            for url in urls {
+                try? iCloudManager.shared.startKeepingDownloaded(at: url)
+            }
         }
     }
 
     private func pinStorageLocations(in values: [Recording]) -> [Recording] {
         values.map { recording in
+            guard recording.storageLocation == nil else { return recording }
             guard let location = iCloudManager.shared.storageLocation(
                 containing: recording.fileName,
-                preferred: recording.storageLocation
-            ), location != recording.storageLocation else {
+                preferred: nil
+            ) else {
                 return recording
             }
             var pinned = recording
             pinned.storageLocation = location
             return pinned
         }
+    }
+
+    private func recordingsWithLocalAvailability(_ values: [Recording]) async -> [Recording] {
+        let snapshots = values.map { (fileName: $0.fileName, location: $0.storageLocation) }
+        let roots = iCloudManager.shared.knownStorageRoots()
+        let defaultRoot = iCloudManager.shared.getDocumentsURL()
+        let availability = await Task.detached(priority: .utility) {
+            snapshots.map { item in
+                let url = iCloudManager.resolvedFileURL(
+                    fileName: item.fileName,
+                    pinnedLocation: item.location,
+                    roots: roots,
+                    defaultRoot: defaultRoot
+                )
+                return Self.isFileLocallyAvailable(at: url, storageLocation: item.location)
+            }
+        }.value
+
+        return zip(values, availability).map { recording, available in
+            guard recording.isLocallyAvailable != available else { return recording }
+            var updated = recording
+            updated.isLocallyAvailable = available
+            return updated
+        }
+    }
+
+    nonisolated private static func isFileLocallyAvailable(
+        at url: URL,
+        storageLocation: RecordingStorageLocation?
+    ) -> Bool {
+        if storageLocation == .iCloud {
+            let values = try? url.resourceValues(forKeys: [
+                .isUbiquitousItemKey,
+                .ubiquitousItemDownloadingStatusKey
+            ])
+            if values?.isUbiquitousItem == true {
+                return values?.ubiquitousItemDownloadingStatus != .some(.notDownloaded)
+            }
+        }
+        return FileManager.default.fileExists(atPath: url.path)
     }
 
     private nonisolated static func normalizedMeterLevel(averageDB: Float, peakDB: Float) -> Float {
@@ -726,8 +780,7 @@ extension AudioRecorder: AVAudioRecorderDelegate {
                 RecordingLiveActivityManager.shared.endRecordingActivity(finalDuration: recordingTime, dismissalPolicy: .immediate)
                 levelTimer?.invalidate()
                 levelTimer = nil
-                audioLevel = 0.0
-                waveformLevels = []
+                meter.reset()
             }
             if pendingFinalizationURL == nil {
                 pendingFinalizationURL = recorderURL

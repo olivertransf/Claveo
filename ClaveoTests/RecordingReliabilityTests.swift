@@ -21,6 +21,79 @@ final class RecordingReliabilityTests: XCTestCase {
         XCTAssertEqual(recording.lastModified, createdAt)
     }
 
+    func testListStorageIconsUsePinAndCachedAvailability() {
+        let device = Recording(
+            fileName: "device.m4a",
+            createdAt: Date(timeIntervalSince1970: 1),
+            duration: 1,
+            storageLocation: .device
+        )
+        XCTAssertEqual(device.storageSystemImage, "folder")
+        XCTAssertFalse(device.isStoredIniCloud)
+        XCTAssertEqual(device.storageAccessibilityLabel, String(localized: "Stored on this device"))
+
+        let cloud = Recording(
+            fileName: "cloud.m4a",
+            createdAt: Date(timeIntervalSince1970: 1),
+            duration: 1,
+            storageLocation: .iCloud
+        )
+        XCTAssertEqual(cloud.storageSystemImage, "icloud")
+        XCTAssertTrue(cloud.isStoredIniCloud)
+        XCTAssertEqual(cloud.storageAccessibilityLabel, String(localized: "Stored in iCloud"))
+
+        var notDownloaded = cloud
+        notDownloaded.isLocallyAvailable = false
+        XCTAssertEqual(notDownloaded.storageSystemImage, "icloud.and.arrow.down")
+        XCTAssertEqual(
+            notDownloaded.storageAccessibilityLabel,
+            String(localized: "Stored in iCloud, not downloaded")
+        )
+    }
+
+    func testUnpinnedRecordingsUseDeviceListIcon() {
+        let unpinned = Recording(
+            fileName: "legacy.m4a",
+            createdAt: Date(timeIntervalSince1970: 1),
+            duration: 1
+        )
+        XCTAssertNil(unpinned.storageLocation)
+        XCTAssertEqual(unpinned.storageSystemImage, "folder")
+        XCTAssertFalse(unpinned.isStoredIniCloud)
+    }
+
+    func testLocalAvailabilityIsNotPersisted() throws {
+        var recording = Recording(
+            fileName: "cloud.m4a",
+            createdAt: Date(timeIntervalSince1970: 100),
+            duration: 2,
+            storageLocation: .iCloud
+        )
+        recording.isLocallyAvailable = false
+
+        let decoded = try JSONDecoder().decode(
+            Recording.self,
+            from: JSONEncoder().encode(recording)
+        )
+
+        XCTAssertTrue(decoded.isLocallyAvailable)
+        XCTAssertEqual(decoded.storageLocation, .iCloud)
+    }
+
+    func testPinnedFileURLTrustsPinWithoutScanningOtherRoots() {
+        let device = URL(fileURLWithPath: "/tmp/claveo-device", isDirectory: true)
+        let cloud = URL(fileURLWithPath: "/tmp/claveo-cloud", isDirectory: true)
+
+        let pinned = iCloudManager.resolvedFileURL(
+            fileName: "recording.m4a",
+            pinnedLocation: .device,
+            roots: [.device: device, .iCloud: cloud],
+            defaultRoot: device
+        )
+
+        XCTAssertEqual(pinned, device.appendingPathComponent("recording.m4a"))
+    }
+
     func testRecordingStorageLocationRoundTrips() throws {
         let recording = Recording(
             fileName: "pinned.m4a",

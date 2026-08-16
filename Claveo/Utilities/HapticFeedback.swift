@@ -1,29 +1,24 @@
-//
-//  HapticFeedback.swift
-//  Claveo
-//
-//  Copyright (c) 2025 Oliver Tran
-
 import SwiftUI
 import UIKit
 
 enum HapticFeedback {
+    private static let lightGenerator = UIImpactFeedbackGenerator(style: .light)
+    private static let mediumGenerator = UIImpactFeedbackGenerator(style: .medium)
+    private static let selectionGenerator = UISelectionFeedbackGenerator()
+
     static func lightImpact() {
-        let generator = UIImpactFeedbackGenerator(style: .light)
-        generator.prepare()
-        generator.impactOccurred()
+        lightGenerator.impactOccurred()
+        lightGenerator.prepare()
     }
 
     static func mediumImpact() {
-        let generator = UIImpactFeedbackGenerator(style: .medium)
-        generator.prepare()
-        generator.impactOccurred()
+        mediumGenerator.impactOccurred()
+        mediumGenerator.prepare()
     }
 
     static func selection() {
-        let generator = UISelectionFeedbackGenerator()
-        generator.prepare()
-        generator.selectionChanged()
+        selectionGenerator.selectionChanged()
+        selectionGenerator.prepare()
     }
 }
 

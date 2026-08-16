@@ -25,12 +25,15 @@ class PracticeService: ObservableObject {
     // The source of truth including deleted items
     private var allEntries: [PracticeEntry] = [] {
         didSet {
-            // Update the UI-facing list whenever the source changes
-            practiceEntries = allEntries
-                .filter { !$0.isDeleted }
-                .sorted { $0.date > $1.date }
+            applyActiveEntries(from: allEntries)
         }
     }
+
+    private var entriesByDay: [Date: [PracticeEntry]] = [:]
+    private var cachedCurrentStreak = 0
+    private var cachedTotalPracticeDays = 0
+    private var cachedThisWeekPracticeTime = 0
+    private var cachedAverageRating: Double?
 
     private let entriesKey = "practiceEntries"
     private let entriesFileName = "practiceEntries.json"
@@ -43,25 +46,17 @@ class PracticeService: ObservableObject {
     private var hasPerformedInitialCloudSync = false
 
     init() {
-        allEntries = loadFromUserDefaultsReturning()
+        let loaded = loadFromUserDefaultsReturning()
+        allEntries = loaded
+        applyActiveEntries(from: loaded)
 
-        // Listen for app becoming active to sync entries
         NotificationCenter.default.addObserver(
             forName: UIApplication.willEnterForegroundNotification,
             object: nil,
             queue: .main
         ) { [weak self] _ in
             Task { @MainActor [weak self] in
-                await self?.syncFromiCloudIfReady()
-            }
-        }
-
-        NotificationCenter.default.addObserver(
-            forName: UIApplication.didBecomeActiveNotification,
-            object: nil,
-            queue: .main
-        ) { [weak self] _ in
-            Task { @MainActor [weak self] in
+                self?.rebuildStatsCache()
                 await self?.syncFromiCloudIfReady()
             }
         }
@@ -136,12 +131,11 @@ class PracticeService: ObservableObject {
     }
 
     var totalPracticeDays: Int {
-        let uniqueDates = Set(practiceEntries.map { Calendar.current.startOfDay(for: $0.date) })
-        return uniqueDates.count
+        cachedTotalPracticeDays
     }
 
     var currentStreak: Int {
-        calculateCurrentStreak()
+        cachedCurrentStreak
     }
 
     var longestStreak: Int {
@@ -154,11 +148,7 @@ class PracticeService: ObservableObject {
     }
 
     var thisWeekPracticeTime: Int {
-        let calendar = Calendar.current
-        guard let weekStart = calendar.date(from: calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: Date())) else {
-            return 0
-        }
-        return practiceEntries.filter { $0.date >= weekStart }.reduce(0) { $0 + $1.duration }
+        cachedThisWeekPracticeTime
     }
 
     var thisMonthPracticeTime: Int {
@@ -171,29 +161,71 @@ class PracticeService: ObservableObject {
 
     // MARK: - Streak Calculations
 
-    private func calculateCurrentStreak() -> Int {
+    private func applyActiveEntries(from entries: [PracticeEntry]) {
+        practiceEntries = entries
+            .filter { !$0.isDeleted }
+            .sorted { $0.date > $1.date }
+        rebuildStatsCache()
+    }
+
+    private func rebuildStatsCache() {
         let calendar = Calendar.current
-        let today = calendar.startOfDay(for: Date())
+        let now = Date()
+        entriesByDay = Self.dayIndex(from: practiceEntries, calendar: calendar)
+        cachedCurrentStreak = Self.currentStreak(dayIndex: entriesByDay, now: now, calendar: calendar)
+        cachedTotalPracticeDays = entriesByDay.count
+        let weekStart = calendar.date(
+            from: calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: now)
+        ) ?? calendar.startOfDay(for: now)
+        cachedThisWeekPracticeTime = practiceEntries.reduce(0) { partial, entry in
+            partial + (entry.date >= weekStart ? entry.duration : 0)
+        }
+        cachedAverageRating = Self.averageRating(from: practiceEntries)
+    }
+
+    static func dayIndex(
+        from entries: [PracticeEntry],
+        calendar: Calendar = .current
+    ) -> [Date: [PracticeEntry]] {
+        Dictionary(grouping: entries) { calendar.startOfDay(for: $0.date) }
+    }
+
+    static func currentStreak(
+        dayIndex: [Date: [PracticeEntry]],
+        now: Date = Date(),
+        calendar: Calendar = .current
+    ) -> Int {
+        let today = calendar.startOfDay(for: now)
         var streak = 0
         var checkDate = today
-
-        // Check if practiced today
-        let todayEntries = practiceEntries.filter { calendar.isDate($0.date, inSameDayAs: today) }
-        if todayEntries.isEmpty {
-            // If no practice today, check yesterday
-            checkDate = calendar.date(byAdding: .day, value: -1, to: today)!
+        if dayIndex[today] == nil {
+            guard let yesterday = calendar.date(byAdding: .day, value: -1, to: today) else {
+                return 0
+            }
+            checkDate = yesterday
         }
-
-        while true {
-            let dayEntries = practiceEntries.filter { calendar.isDate($0.date, inSameDayAs: checkDate) }
-            if dayEntries.isEmpty {
+        while dayIndex[checkDate] != nil {
+            streak += 1
+            guard let previous = calendar.date(byAdding: .day, value: -1, to: checkDate) else {
                 break
             }
-            streak += 1
-            checkDate = calendar.date(byAdding: .day, value: -1, to: checkDate)!
+            checkDate = previous
         }
-
         return streak
+    }
+
+    static func entries(
+        on date: Date,
+        dayIndex: [Date: [PracticeEntry]],
+        calendar: Calendar = .current
+    ) -> [PracticeEntry] {
+        dayIndex[calendar.startOfDay(for: date)] ?? []
+    }
+
+    static func averageRating(from entries: [PracticeEntry]) -> Double? {
+        let ratedEntries = entries.compactMap(\.rating)
+        guard !ratedEntries.isEmpty else { return nil }
+        return Double(ratedEntries.reduce(0, +)) / Double(ratedEntries.count)
     }
 
     private func calculateLongestStreak() -> Int {
@@ -389,17 +421,14 @@ class PracticeService: ObservableObject {
     // MARK: - Helper Methods
 
     func entriesForDate(_ date: Date) -> [PracticeEntry] {
-        let calendar = Calendar.current
-        return practiceEntries.filter { calendar.isDate($0.date, inSameDayAs: date) }
+        Self.entries(on: date, dayIndex: entriesByDay)
     }
 
     func hasPracticeOnDate(_ date: Date) -> Bool {
-        return !entriesForDate(date).isEmpty
+        !entriesForDate(date).isEmpty
     }
 
     func averageRating() -> Double? {
-        let ratedEntries = practiceEntries.compactMap { $0.rating }
-        guard !ratedEntries.isEmpty else { return nil }
-        return Double(ratedEntries.reduce(0, +)) / Double(ratedEntries.count)
+        cachedAverageRating
     }
 }

@@ -43,9 +43,7 @@ struct PracticeEntry: Identifiable, Codable, Equatable {
 
     // Computed properties
     var formattedDate: String {
-        let formatter = DateFormatter()
-        formatter.dateStyle = .medium
-        return formatter.string(from: date)
+        PracticeDateFormatters.medium.string(from: date)
     }
 
     var formattedDuration: String {
@@ -77,4 +75,12 @@ struct PracticeEntry: Identifiable, Codable, Equatable {
         self.lastModified = lastModified
         self.isDeleted = isDeleted
     }
+}
+
+private enum PracticeDateFormatters {
+    static let medium: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        return formatter
+    }()
 }

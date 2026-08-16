@@ -176,18 +176,31 @@ final class iCloudManager: @unchecked Sendable {
         fileName: String,
         pinnedLocation: RecordingStorageLocation?
     ) -> URL {
-        let roots = knownStorageRoots()
-        if let existing = Self.existingFileURL(
+        Self.resolvedFileURL(
             fileName: fileName,
             pinnedLocation: pinnedLocation,
+            roots: knownStorageRoots(),
+            defaultRoot: getDocumentsURL()
+        )
+    }
+
+    nonisolated static func resolvedFileURL(
+        fileName: String,
+        pinnedLocation: RecordingStorageLocation?,
+        roots: [RecordingStorageLocation: URL],
+        defaultRoot: URL
+    ) -> URL {
+        if let pinnedLocation, let pinnedRoot = roots[pinnedLocation] {
+            return pinnedRoot.appendingPathComponent(fileName)
+        }
+        if let existing = existingFileURL(
+            fileName: fileName,
+            pinnedLocation: nil,
             roots: roots
         ) {
             return existing
         }
-        if let pinnedLocation, let pinnedRoot = roots[pinnedLocation] {
-            return pinnedRoot.appendingPathComponent(fileName)
-        }
-        return getDocumentsURL().appendingPathComponent(fileName)
+        return defaultRoot.appendingPathComponent(fileName)
     }
 
     nonisolated func storageLocation(

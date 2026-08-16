@@ -35,10 +35,7 @@ struct RecordingRowView: View {
     private let transportHitSize: CGFloat = 44
 
     private var listDateText: String {
-        let formatter = DateFormatter()
-        formatter.dateStyle = .medium
-        formatter.timeStyle = .none
-        return formatter.string(from: recording.createdAt)
+        recording.listDateText
     }
 
     private var hasNotes: Bool {
@@ -169,33 +166,25 @@ struct RecordingRowView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
         }
-        .claveoListRowChrome(hideSeparator: false, showsBackground: false)
+        .claveoListRowChrome()
         .listRowBackground(rowBackground)
-        .listRowInsets(splitRowInsets)
+        .listRowInsets(rowInsets)
     }
 
-    private var splitRowInsets: EdgeInsets {
-        if allowsInlineExpansion {
-            return EdgeInsets(top: 16, leading: 24, bottom: showsInlinePlayer ? 20 : 16, trailing: 22)
-        }
-        return EdgeInsets(top: 14, leading: 22, bottom: 14, trailing: 20)
+    private var rowInsets: EdgeInsets {
+        EdgeInsets(
+            top: showsInlinePlayer ? 14 : 12,
+            leading: 16,
+            bottom: showsInlinePlayer ? 16 : 12,
+            trailing: 16
+        )
     }
 
-    @ViewBuilder
-    private var rowBackground: some View {
-        if allowsInlineExpansion {
-            Color(.systemBackground)
-        } else {
-            ZStack {
-                Color(.systemBackground)
-                if isSplitFocused {
-                    RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .fill(themeManager.accentColor.opacity(0.16))
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 2)
-                }
-            }
+    private var rowBackground: Color {
+        if isSplitFocused {
+            return themeManager.accentColor.opacity(0.16)
         }
+        return Color(.secondarySystemGroupedBackground)
     }
 
     private var moreActionsMenu: some View {
@@ -217,7 +206,7 @@ struct RecordingRowView: View {
             } label: {
                 Label("Export", systemImage: "square.and.arrow.up")
             }
-            .disabled(!FileManager.default.fileExists(atPath: recording.fileURL.path))
+            .disabled(!recording.isLocallyAvailable)
 
             if recording.isStoredIniCloud, onToggleKeepDownloaded != nil {
                 Divider()

@@ -17,8 +17,7 @@ struct RecordingListView: View {
     @EnvironmentObject var themeManager: ThemeManager
     @Environment(\.horizontalSizeClass) var horizontalSizeClass
     @ObservedObject var recorder = AudioRecorder.shared
-    @StateObject var player = AudioPlayer()
-    @StateObject var settingsManager = SettingsManager.shared
+    @State var player = AudioPlayer()
     @State var showingDeleteAlert = false
     @State var showingRecordingErrorAlert = false
     @State var showingPlaybackErrorAlert = false
@@ -43,6 +42,7 @@ struct RecordingListView: View {
     @State var isSelectingRecordings = false
     @State var selectedRecordingIds = Set<UUID>()
     @State var bulkShareSession: BulkShareSession?
+    @State var playbackErrorMessage: String?
     
     @State var filteredRecordings: [Recording] = []
 
@@ -71,6 +71,7 @@ struct RecordingListView: View {
         }
 
         filteredRecordings = filtered.sorted { $0.createdAt > $1.createdAt }
+        syncSplitSelection()
     }
     
     var body: some View {
@@ -124,7 +125,11 @@ struct RecordingListView: View {
             showingPlaybackErrorAlert: $showingPlaybackErrorAlert,
             recordingToDelete: $recordingToDelete,
             recorder: recorder,
-            player: player
+            playbackError: playbackErrorMessage,
+            onDismissPlaybackError: {
+                player.playbackError = nil
+                playbackErrorMessage = nil
+            }
         ))
         .onChange(of: recorder.newlyCreatedRecordingId) { _, newId in
             handleNewRecording(newId)
@@ -138,6 +143,10 @@ struct RecordingListView: View {
         .onChange(of: searchText) { _, _ in refreshFilteredRecordings() }
         .onChange(of: selectedTag) { _, _ in refreshFilteredRecordings() }
         .onChange(of: selectedPiece) { _, _ in refreshFilteredRecordings() }
+        .onReceive(player.$playbackError) { newValue in
+            playbackErrorMessage = newValue
+            showingPlaybackErrorAlert = newValue != nil
+        }
         .sheet(item: $recordingToShare) { recording in
             if FileManager.default.fileExists(atPath: recording.fileURL.path) {
                 if let shareableURL = try? recording.shareableFileURL() {
@@ -166,7 +175,8 @@ private struct RecordingListAlertsModifier: ViewModifier {
     @Binding var showingPlaybackErrorAlert: Bool
     @Binding var recordingToDelete: Recording?
     @ObservedObject var recorder: AudioRecorder
-    @ObservedObject var player: AudioPlayer
+    let playbackError: String?
+    let onDismissPlaybackError: () -> Void
 
     func body(content: Content) -> some View {
         content
@@ -205,19 +215,16 @@ private struct RecordingListAlertsModifier: ViewModifier {
             }
             .alert("Playback Error", isPresented: $showingPlaybackErrorAlert) {
                 Button("OK") {
-                    player.playbackError = nil
+                    onDismissPlaybackError()
                 }
             } message: {
-                Text(player.playbackError ?? String(localized: "Playback failed."))
+                Text(playbackError ?? String(localized: "Playback failed."))
             }
             .onChange(of: recorder.permissionError) { _, newValue in
                 showingPermissionAlert = newValue != nil
             }
             .onChange(of: recorder.recordingError) { _, newValue in
                 showingRecordingErrorAlert = newValue != nil
-            }
-            .onChange(of: player.playbackError) { _, newValue in
-                showingPlaybackErrorAlert = newValue != nil
             }
     }
 }

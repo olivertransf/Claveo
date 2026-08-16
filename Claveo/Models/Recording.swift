@@ -24,6 +24,8 @@ struct Recording: Identifiable, Codable, Equatable, Sendable {
     var storageLocation: RecordingStorageLocation?
     var isDeleted: Bool
     var keepDownloaded: Bool
+    /// Cached iCloud/local file presence. Not persisted; refreshed off the main thread.
+    var isLocallyAvailable: Bool
     
     // Metadata fields
     var name: String
@@ -41,7 +43,7 @@ struct Recording: Identifiable, Codable, Equatable, Sendable {
         case id, fileName, createdAt, duration, lastModified, storageLocation, isDeleted, keepDownloaded, name, tags, piece, measureStart, measureEnd, notes, originalFileName, originalDuration
     }
     
-    init(id: UUID = UUID(), fileName: String, createdAt: Date = Date(), duration: TimeInterval, name: String = "", tags: [String] = [], piece: String? = nil, measureStart: Int? = nil, measureEnd: Int? = nil, notes: String = "", originalFileName: String? = nil, originalDuration: TimeInterval? = nil, lastModified: Date? = nil, storageLocation: RecordingStorageLocation? = nil, isDeleted: Bool = false, keepDownloaded: Bool = false) {
+    init(id: UUID = UUID(), fileName: String, createdAt: Date = Date(), duration: TimeInterval, name: String = "", tags: [String] = [], piece: String? = nil, measureStart: Int? = nil, measureEnd: Int? = nil, notes: String = "", originalFileName: String? = nil, originalDuration: TimeInterval? = nil, lastModified: Date? = nil, storageLocation: RecordingStorageLocation? = nil, isDeleted: Bool = false, keepDownloaded: Bool = false, isLocallyAvailable: Bool = true) {
         self.id = id
         self.fileName = fileName
         self.createdAt = createdAt
@@ -50,6 +52,7 @@ struct Recording: Identifiable, Codable, Equatable, Sendable {
         self.storageLocation = storageLocation
         self.isDeleted = isDeleted
         self.keepDownloaded = keepDownloaded
+        self.isLocallyAvailable = isLocallyAvailable
         self.name = name
         self.tags = tags
         self.piece = piece
@@ -70,6 +73,7 @@ struct Recording: Identifiable, Codable, Equatable, Sendable {
         storageLocation = try container.decodeIfPresent(RecordingStorageLocation.self, forKey: .storageLocation)
         isDeleted = try container.decodeIfPresent(Bool.self, forKey: .isDeleted) ?? false
         keepDownloaded = try container.decodeIfPresent(Bool.self, forKey: .keepDownloaded) ?? false
+        isLocallyAvailable = true
         name = try container.decodeIfPresent(String.self, forKey: .name) ?? ""
         tags = try container.decodeIfPresent([String].self, forKey: .tags) ?? []
         piece = try container.decodeIfPresent(String.self, forKey: .piece)
@@ -85,10 +89,7 @@ struct Recording: Identifiable, Codable, Equatable, Sendable {
     }
     
     var formattedDate: String {
-        let formatter = DateFormatter()
-        formatter.dateStyle = .medium
-        formatter.timeStyle = .short
-        return formatter.string(from: createdAt)
+        RecordingDateFormatters.mediumDateTime.string(from: createdAt)
     }
     
     var relativeDateString: String {
@@ -96,24 +97,13 @@ struct Recording: Identifiable, Codable, Equatable, Sendable {
         let now = Date()
         
         if calendar.isDateInToday(createdAt) {
-            let formatter = DateFormatter()
-            formatter.timeStyle = .short
-            return formatter.string(from: createdAt)
+            return RecordingDateFormatters.shortTime.string(from: createdAt)
         } else if calendar.isDateInYesterday(createdAt) {
-            let formatter = DateFormatter()
-            formatter.timeStyle = .short
-            return String(localized: "Yesterday, \(formatter.string(from: createdAt))")
+            return String(localized: "Yesterday, \(RecordingDateFormatters.shortTime.string(from: createdAt))")
         } else if calendar.dateInterval(of: .weekOfYear, for: now)?.contains(createdAt) ?? false {
-            // Show day name for this week
-            let formatter = DateFormatter()
-            formatter.dateFormat = "EEEE"
-            return formatter.string(from: createdAt)
+            return RecordingDateFormatters.weekday.string(from: createdAt)
         } else {
-            // Show full date for older recordings
-            let formatter = DateFormatter()
-            formatter.dateStyle = .medium
-            formatter.timeStyle = .none
-            return formatter.string(from: createdAt)
+            return RecordingDateFormatters.mediumDate.string(from: createdAt)
         }
     }
     
@@ -122,22 +112,18 @@ struct Recording: Identifiable, Codable, Equatable, Sendable {
         let now = Date()
         
         if calendar.isDateInToday(createdAt) {
-            let formatter = DateFormatter()
-            formatter.timeStyle = .short
-            return formatter.string(from: createdAt)
+            return RecordingDateFormatters.shortTime.string(from: createdAt)
         } else if calendar.isDateInYesterday(createdAt) {
             return String(localized: "Yesterday")
         } else if calendar.dateInterval(of: .weekOfYear, for: now)?.contains(createdAt) ?? false {
-            // Show abbreviated day name for this week
-            let formatter = DateFormatter()
-            formatter.dateFormat = "EEE"
-            return formatter.string(from: createdAt)
+            return RecordingDateFormatters.shortWeekday.string(from: createdAt)
         } else {
-            // Show short date for older recordings
-            let formatter = DateFormatter()
-            formatter.setLocalizedDateFormatFromTemplate("Md")
-            return formatter.string(from: createdAt)
+            return RecordingDateFormatters.monthDay.string(from: createdAt)
         }
+    }
+    
+    var listDateText: String {
+        RecordingDateFormatters.mediumDate.string(from: createdAt)
     }
     
     var formattedDuration: String {
@@ -229,41 +215,66 @@ struct Recording: Identifiable, Codable, Equatable, Sendable {
     }
 
     var resolvedStorageLocation: RecordingStorageLocation {
-        if let storageLocation { return storageLocation }
-        if FileManager.default.isUbiquitousItem(at: fileURL) {
-            return .iCloud
-        }
-        return iCloudManager.shared.storageLocation(containing: fileName, preferred: nil) ?? .device
+        storageLocation ?? .device
     }
 
     var isStoredIniCloud: Bool {
-        resolvedStorageLocation == .iCloud || FileManager.default.isUbiquitousItem(at: fileURL)
-    }
-
-    var isUbiquitousFileDownloaded: Bool {
-        let values = try? fileURL.resourceValues(forKeys: [
-            .isUbiquitousItemKey,
-            .ubiquitousItemDownloadingStatusKey
-        ])
-        guard values?.isUbiquitousItem == true else { return true }
-        return values?.ubiquitousItemDownloadingStatus != .some(.notDownloaded)
+        storageLocation == .iCloud
     }
 
     var storageSystemImage: String {
-        if isStoredIniCloud {
-            return isUbiquitousFileDownloaded ? "icloud" : "icloud.and.arrow.down"
-        }
-        return "folder"
+        guard isStoredIniCloud else { return "folder" }
+        return isLocallyAvailable ? "icloud" : "icloud.and.arrow.down"
     }
 
     var storageAccessibilityLabel: String {
         if isStoredIniCloud {
-            return isUbiquitousFileDownloaded
+            return isLocallyAvailable
                 ? String(localized: "Stored in iCloud")
                 : String(localized: "Stored in iCloud, not downloaded")
         }
         return String(localized: "Stored on this device")
     }
+}
+
+private enum RecordingDateFormatters {
+    static let mediumDateTime: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .short
+        return formatter
+    }()
+
+    static let mediumDate: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .none
+        return formatter
+    }()
+
+    static let shortTime: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.timeStyle = .short
+        return formatter
+    }()
+
+    static let weekday: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "EEEE"
+        return formatter
+    }()
+
+    static let shortWeekday: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "EEE"
+        return formatter
+    }()
+
+    static let monthDay: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.setLocalizedDateFormatFromTemplate("Md")
+        return formatter
+    }()
 }
 
 struct RecordingFileTransferable: Transferable {

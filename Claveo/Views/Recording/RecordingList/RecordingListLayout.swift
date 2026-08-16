@@ -43,8 +43,10 @@ extension RecordingListView {
         do {
             if updated.keepDownloaded {
                 try iCloudManager.shared.startKeepingDownloaded(at: recording.fileURL)
+                updated.isLocallyAvailable = true
             } else {
                 try iCloudManager.shared.removeLocalDownload(at: recording.fileURL)
+                updated.isLocallyAvailable = false
             }
         } catch {
             #if DEBUG
@@ -95,24 +97,15 @@ extension RecordingListView {
         return false
     }
 
-    @ViewBuilder
     var recordingsList: some View {
-        let list = List {
-            ForEach(filteredRecordings) { recording in
-                recordingRow(for: recording)
+        List {
+            Section {
+                ForEach(filteredRecordings) { recording in
+                    recordingRow(for: recording)
+                }
             }
         }
-        .claveoPlainListStyle()
-
-        if usesSplitPlayback {
-            list
-                .scrollContentBackground(.hidden)
-                .contentMargins(.top, 6, for: .scrollContent)
-                .contentMargins(.horizontal, 4, for: .scrollContent)
-        } else {
-            list
-                .contentMargins(.vertical, 6, for: .scrollContent)
-        }
+        .claveoInsetGroupedListStyle()
     }
     
     @ViewBuilder
@@ -133,56 +126,70 @@ extension RecordingListView {
                 }
             }
         )
-        
-        let row = RecordingRowView(
-            recording: recording,
-            isExpanded: isExpandedBinding,
-            isPlaying: player.isPlaying && player.currentRecording?.id == recording.id,
-            currentTime: player.currentRecording?.id == recording.id ? player.currentTime : nil,
-            duration: recording.duration,
-            playbackRate: player.playbackRate,
-            onPlayPause: {
-                playPause(recording)
-            },
-            onSeek: { time in
-                player.seek(recording, to: time)
-            },
-            onSpeedChange: { speed in
-                player.playbackRate = speed
-            },
-            onSkipBackward: {
-                player.skipBackward(seconds: 15)
-            },
-            onSkipForward: {
-                player.skipForward(seconds: 15)
-            },
-            onEdit: {
-                selectedRecording = recording
-            },
-            onDelete: {
-                recordingToDelete = recording
-                showingDeleteAlert = true
-            },
-            onTrim: {
-                if player.currentRecording?.id == recording.id {
-                    player.stop()
-                }
-                recordingToTrim = recording
-            },
-            onExport: {
-                recordingToShare = recording
-            },
-            onToggleKeepDownloaded: {
-                toggleKeepDownloaded(recording)
-            },
-            isSelectionMode: isSelectingRecordings,
-            isSelected: selectedRecordingIds.contains(recording.id),
-            onToggleSelection: {
-                toggleRecordingSelection(recording.id)
-            },
-            allowsInlineExpansion: !usesSplitPlayback,
-            isSplitFocused: usesSplitPlayback && expandedRecordingId == recording.id
-        )
+
+        let observesPlayback = !usesSplitPlayback && expandedRecordingId == recording.id
+        let row = Group {
+            if observesPlayback {
+                PlaybackObservingRecordingRow(
+                    recording: recording,
+                    player: player,
+                    isExpanded: isExpandedBinding,
+                    onPlayPause: { playPause(recording) },
+                    onSeek: { player.seek(recording, to: $0) },
+                    onSpeedChange: { player.playbackRate = $0 },
+                    onSkipBackward: { player.skipBackward(seconds: 15) },
+                    onSkipForward: { player.skipForward(seconds: 15) },
+                    onEdit: { selectedRecording = recording },
+                    onDelete: {
+                        recordingToDelete = recording
+                        showingDeleteAlert = true
+                    },
+                    onTrim: {
+                        if player.currentRecording?.id == recording.id {
+                            player.stop()
+                        }
+                        recordingToTrim = recording
+                    },
+                    onExport: { recordingToShare = recording },
+                    onToggleKeepDownloaded: { toggleKeepDownloaded(recording) },
+                    isSelectionMode: isSelectingRecordings,
+                    isSelected: selectedRecordingIds.contains(recording.id),
+                    onToggleSelection: { toggleRecordingSelection(recording.id) }
+                )
+            } else {
+                RecordingRowView(
+                    recording: recording,
+                    isExpanded: isExpandedBinding,
+                    isPlaying: false,
+                    currentTime: nil,
+                    duration: recording.duration,
+                    playbackRate: 1,
+                    onPlayPause: { playPause(recording) },
+                    onSeek: { player.seek(recording, to: $0) },
+                    onSpeedChange: { player.playbackRate = $0 },
+                    onSkipBackward: { player.skipBackward(seconds: 15) },
+                    onSkipForward: { player.skipForward(seconds: 15) },
+                    onEdit: { selectedRecording = recording },
+                    onDelete: {
+                        recordingToDelete = recording
+                        showingDeleteAlert = true
+                    },
+                    onTrim: {
+                        if player.currentRecording?.id == recording.id {
+                            player.stop()
+                        }
+                        recordingToTrim = recording
+                    },
+                    onExport: { recordingToShare = recording },
+                    onToggleKeepDownloaded: { toggleKeepDownloaded(recording) },
+                    isSelectionMode: isSelectingRecordings,
+                    isSelected: selectedRecordingIds.contains(recording.id),
+                    onToggleSelection: { toggleRecordingSelection(recording.id) },
+                    allowsInlineExpansion: !usesSplitPlayback,
+                    isSplitFocused: usesSplitPlayback && expandedRecordingId == recording.id
+                )
+            }
+        }
         
         if isSelectingRecordings {
             row
@@ -204,7 +211,7 @@ extension RecordingListView {
                         Label("Trim", systemImage: "scissors")
                     }
                     
-                    if FileManager.default.fileExists(atPath: recording.fileURL.path) {
+                    if recording.isLocallyAvailable {
                         ShareLink(
                             item: RecordingFileTransferable(recording: recording),
                             preview: SharePreview(recording.displayName, icon: Image(systemName: "waveform"))
@@ -240,7 +247,7 @@ extension RecordingListView {
                         Label("Delete", systemImage: "trash")
                     }
                     
-                    if FileManager.default.fileExists(atPath: recording.fileURL.path) {
+                    if recording.isLocallyAvailable {
                         Button {
                             recordingToShare = recording
                         } label: {
@@ -287,14 +294,11 @@ extension RecordingListView {
     @ViewBuilder
     var splitDetailColumn: some View {
         if recorder.isRecording {
-            splitLiveRecordingCard
+            LiveRecordingSplitCard(meter: recorder.meter, isRecording: true)
         } else if let recording = focusedRecording {
             RecordingSplitDetailView(
                 recording: recording,
-                isPlaying: player.isPlaying && player.currentRecording?.id == recording.id,
-                currentTime: player.currentRecording?.id == recording.id ? player.currentTime : nil,
-                duration: recording.duration,
-                playbackRate: player.playbackRate,
+                player: player,
                 onPlayPause: { playPause(recording) },
                 onSeek: { player.seek(recording, to: $0) },
                 onSpeedChange: { player.playbackRate = $0 },
@@ -326,44 +330,6 @@ extension RecordingListView {
         }
     }
 
-    var splitLiveRecordingCard: some View {
-        VStack(spacing: 20) {
-            HStack(spacing: 10) {
-                Circle()
-                    .fill(Color.red)
-                    .frame(width: 10, height: 10)
-                    .opacity(recorder.isRecording ? 1 : 0.45)
-                    .symbolEffect(.pulse, options: .repeating, isActive: recorder.isRecording)
-
-                Text(formatTime(recorder.recordingTime))
-                    .font(.system(.title, design: .monospaced))
-                    .fontWeight(.semibold)
-                    .foregroundStyle(.primary)
-            }
-
-            GeometryReader { geometry in
-                let barPitch: CGFloat = 5.5
-                let maxBars = max(80, Int(geometry.size.width / barPitch))
-                LiveWaveformView(
-                    audioLevels: recorder.waveformLevels,
-                    maxBars: maxBars,
-                    barColor: .primary
-                )
-                .frame(width: geometry.size.width, height: geometry.size.height)
-            }
-            .frame(height: 88)
-            .frame(maxWidth: .infinity)
-        }
-        .padding(.horizontal, 28)
-        .padding(.vertical, 32)
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
-        .background {
-            RoundedRectangle(cornerRadius: 28, style: .continuous)
-                .fill(Color.themeSecondaryGroupedBackground)
-        }
-        .splitDetailCardChrome()
-    }
-
     func detailSheet(for recording: Recording) -> some View {
         NavigationStack {
             RecordingDetailView(
@@ -383,6 +349,100 @@ extension RecordingListView {
             selectedPiece: $selectedPiece,
             availablePieces: loadAvailablePieces()
         )
+    }
+}
+
+private struct PlaybackObservingRecordingRow: View {
+    let recording: Recording
+    @ObservedObject var player: AudioPlayer
+    @Binding var isExpanded: Bool
+    let onPlayPause: () -> Void
+    let onSeek: (TimeInterval) -> Void
+    let onSpeedChange: (Float) -> Void
+    let onSkipBackward: () -> Void
+    let onSkipForward: () -> Void
+    let onEdit: () -> Void
+    let onDelete: () -> Void
+    let onTrim: () -> Void
+    let onExport: () -> Void
+    var onToggleKeepDownloaded: (() -> Void)? = nil
+    var isSelectionMode: Bool = false
+    var isSelected: Bool = false
+    var onToggleSelection: (() -> Void)? = nil
+
+    var body: some View {
+        RecordingRowView(
+            recording: recording,
+            isExpanded: $isExpanded,
+            isPlaying: player.isPlaying && player.currentRecording?.id == recording.id,
+            currentTime: player.currentRecording?.id == recording.id ? player.currentTime : nil,
+            duration: recording.duration,
+            playbackRate: player.playbackRate,
+            onPlayPause: onPlayPause,
+            onSeek: onSeek,
+            onSpeedChange: onSpeedChange,
+            onSkipBackward: onSkipBackward,
+            onSkipForward: onSkipForward,
+            onEdit: onEdit,
+            onDelete: onDelete,
+            onTrim: onTrim,
+            onExport: onExport,
+            onToggleKeepDownloaded: onToggleKeepDownloaded,
+            isSelectionMode: isSelectionMode,
+            isSelected: isSelected,
+            onToggleSelection: onToggleSelection,
+            allowsInlineExpansion: true,
+            isSplitFocused: false
+        )
+    }
+}
+
+private struct LiveRecordingSplitCard: View {
+    @ObservedObject var meter: RecordingMeter
+    let isRecording: Bool
+
+    var body: some View {
+        VStack(spacing: 20) {
+            HStack(spacing: 10) {
+                Circle()
+                    .fill(Color.red)
+                    .frame(width: 10, height: 10)
+                    .opacity(isRecording ? 1 : 0.45)
+                    .symbolEffect(.pulse, options: .repeating, isActive: isRecording)
+
+                Text(Self.formatTime(meter.recordingTime))
+                    .font(.system(.title, design: .monospaced))
+                    .fontWeight(.semibold)
+                    .foregroundStyle(.primary)
+            }
+
+            GeometryReader { geometry in
+                let barPitch: CGFloat = 5.5
+                let maxBars = max(80, Int(geometry.size.width / barPitch))
+                LiveWaveformView(
+                    audioLevels: meter.waveformLevels,
+                    maxBars: maxBars,
+                    barColor: .primary
+                )
+                .frame(width: geometry.size.width, height: geometry.size.height)
+            }
+            .frame(height: 88)
+            .frame(maxWidth: .infinity)
+        }
+        .padding(.horizontal, 28)
+        .padding(.vertical, 32)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+        .background {
+            RoundedRectangle(cornerRadius: 28, style: .continuous)
+                .fill(Color.themeSecondaryGroupedBackground)
+        }
+        .splitDetailCardChrome()
+    }
+
+    private static func formatTime(_ time: TimeInterval) -> String {
+        let minutes = Int(time) / 60
+        let seconds = Int(time) % 60
+        return String(format: "%d:%02d", minutes, seconds)
     }
 }
 

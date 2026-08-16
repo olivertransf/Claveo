@@ -11,7 +11,7 @@ import UIKit
 
 struct ContentView: View {
     @EnvironmentObject var themeManager: ThemeManager
-    @StateObject private var settingsManager = SettingsManager.shared
+    @EnvironmentObject private var settingsManager: SettingsManager
     @StateObject private var toneGenerator = ToneGeneratorEngine()
     @State private var selectedTabIndex: Int = {
         let tab = SettingsManager.shared.settings.lastSelectedTab
@@ -55,27 +55,29 @@ struct ContentView: View {
     @ViewBuilder
     private func tabContent(semanticId: Int) -> some View {
         let isSelected = selectedTabIndex == semanticId
-        switch semanticId {
-        case 0:
-            RecordingListView()
-        case 1:
-            MetronomeView()
-                .environmentObject(toneGenerator)
-                .environmentObject(themeManager)
-        case 2:
-            TunerView(isTabSelected: isSelected)
-        case 3:
-            PracticeView()
-        case 4:
-            ExercisesRootView()
-        case 5:
-            MusicDictionaryView(isTabSelected: isSelected)
-        case 6:
-            SettingsView()
-        case 7:
-            ChordScaleReferenceView()
-        default:
-            EmptyView()
+        DeferredTab(isActive: isSelected) {
+            switch semanticId {
+            case 0:
+                RecordingListView()
+            case 1:
+                MetronomeView()
+                    .environmentObject(toneGenerator)
+                    .environmentObject(themeManager)
+            case 2:
+                TunerView(isTabSelected: isSelected)
+            case 3:
+                PracticeView()
+            case 4:
+                ExercisesRootView()
+            case 5:
+                MusicDictionaryView(isTabSelected: isSelected)
+            case 6:
+                SettingsView()
+            case 7:
+                ChordScaleReferenceView()
+            default:
+                EmptyView()
+            }
         }
     }
 
@@ -214,12 +216,12 @@ struct ContentView: View {
     @ViewBuilder
     private var overflowContent: some View {
         let overflowSemanticIds = Array(tabOrder.dropFirst(4))
-        ZStack {
-            ForEach(overflowSemanticIds, id: \.self) { semanticId in
-                tabContent(semanticId: semanticId)
-                    .id(semanticId)
-                    .opacity(selectedTabIndex == semanticId ? 1 : 0)
-                    .allowsHitTesting(selectedTabIndex == semanticId)
+        Group {
+            if overflowSemanticIds.contains(selectedTabIndex) {
+                tabContent(semanticId: selectedTabIndex)
+                    .id(selectedTabIndex)
+            } else {
+                Color.clear
             }
         }
     }
@@ -264,6 +266,27 @@ struct ContentView: View {
     }
 }
 
+private struct DeferredTab<Content: View>: View {
+    let isActive: Bool
+    @ViewBuilder var content: () -> Content
+    @State private var hasLoaded = false
+
+    var body: some View {
+        Group {
+            if hasLoaded {
+                content()
+            } else {
+                Color.clear
+            }
+        }
+        .onChange(of: isActive, initial: true) { _, active in
+            if active {
+                hasLoaded = true
+            }
+        }
+    }
+}
+
 // MARK: - UIKit More-tab interception
 
 /// Handles all taps on the More tab item (UIKit index 4), including re-taps on
@@ -279,6 +302,7 @@ private final class MoreTabHandler: NSObject, UITabBarControllerDelegate {
 
     private weak var installedTabBarController: UITabBarController?
     private var tapRecognizer: UITapGestureRecognizer?
+    var isInstalled: Bool { installedTabBarController != nil }
 
     func install(on tbc: UITabBarController) {
         guard tbc !== installedTabBarController else { return }
@@ -327,6 +351,7 @@ private struct MoreTabHandlerInstaller: UIViewRepresentable {
 
     func updateUIView(_ uiView: UIView, context: Context) {
         handler.onMoreTapped = onMoreTapped
+        if handler.isInstalled { return }
         DispatchQueue.main.async {
             var responder: UIResponder? = uiView
             while let r = responder {
@@ -392,4 +417,5 @@ private struct MoreMenuView: View {
 #Preview {
     ContentView()
         .environmentObject(ThemeManager.shared)
+        .environmentObject(SettingsManager.shared)
 }

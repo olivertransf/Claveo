@@ -61,7 +61,7 @@ struct RecordingPlayerSurface: View {
 
     private var waveformScrubber: some View {
         Group {
-            if FileManager.default.fileExists(atPath: recording.fileURL.path) {
+            if recording.isLocallyAvailable {
                 WaveformView(
                     recording: recording,
                     currentTime: currentDisplayTime,

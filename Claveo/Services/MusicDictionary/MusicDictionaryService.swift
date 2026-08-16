@@ -41,57 +41,27 @@ class MusicDictionaryService: ObservableObject {
     func loadDictionary() {
         isLoading = true
         errorMessage = nil
-        
+
         guard let url = Self.musicDictionaryURL() else {
             errorMessage = String(localized: "Dictionary file not found in bundle")
             isLoading = false
-            #if DEBUG
-            print("❌ Dictionary file not found at: musicDictionary.json")
-            #endif
             return
         }
-        
-        do {
-            let data = try Data(contentsOf: url)
-            #if DEBUG
-            print("✅ Dictionary file loaded, size: \(data.count) bytes")
-            #endif
-            
-            let decoder = JSONDecoder()
-            dictionary = try decoder.decode(MusicDictionary.self, from: data)
-            #if DEBUG
-            print("✅ Dictionary decoded successfully")
-            print("   - Terms: \(dictionary?.terms.count ?? 0)")
-            #endif
-            isLoading = false
-        } catch let decodingError as DecodingError {
-            let detail: String
-            switch decodingError {
-            case .dataCorrupted(let context):
-                detail = "Data corrupted at \(context.codingPath.map { $0.stringValue }.joined(separator: ".")): \(context.debugDescription)"
-            case .keyNotFound(let key, let context):
-                detail = "Key '\(key.stringValue)' not found at \(context.codingPath.map { $0.stringValue }.joined(separator: "."))"
-            case .typeMismatch(let type, let context):
-                detail = "Type mismatch for \(type) at \(context.codingPath.map { $0.stringValue }.joined(separator: ".")): \(context.debugDescription)"
-            case .valueNotFound(let type, let context):
-                detail = "Value not found for \(type) at \(context.codingPath.map { $0.stringValue }.joined(separator: "."))"
-            @unknown default:
-                detail = decodingError.localizedDescription
+
+        Task {
+            do {
+                let data = try await Task.detached(priority: .utility) {
+                    try Data(contentsOf: url)
+                }.value
+                dictionary = try JSONDecoder().decode(MusicDictionary.self, from: data)
+                isLoading = false
+            } catch {
+                errorMessage = String(localized: "Failed to load dictionary: \(error.localizedDescription)")
+                isLoading = false
             }
-            errorMessage = String(localized: "Failed to decode dictionary: \(detail)")
-            isLoading = false
-            #if DEBUG
-            print("❌ Decoding error: \(detail)")
-            #endif
-        } catch {
-            errorMessage = String(localized: "Failed to load dictionary: \(error.localizedDescription)")
-            isLoading = false
-            #if DEBUG
-            print("❌ General error: \(error.localizedDescription)")
-            #endif
         }
     }
-    
+
     /// Search terms matching the query. Returns nothing when the query is empty.
     func searchAllTerms(query: String) -> [MusicTerm] {
         guard let dictionary = dictionary, !query.isEmpty else { return [] }

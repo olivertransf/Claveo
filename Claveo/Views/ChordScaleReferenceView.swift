@@ -231,14 +231,18 @@ struct ChordScaleReferenceView: View {
 
     // MARK: - Scale
 
+    private var isRegularWidth: Bool {
+        horizontalSizeClass == .regular
+    }
+
     private var scaleNoteCircleSize: CGFloat {
-        horizontalSizeClass == .regular ? 46 : 60
+        isRegularWidth ? 46 : 38
     }
 
     private func scaleRow(notes: [Int]) -> some View {
-        HStack(spacing: horizontalSizeClass == .regular ? 10 : 4) {
+        HStack(spacing: isRegularWidth ? 10 : 4) {
             ForEach(Array(notes.enumerated()), id: \.offset) { index, pitch in
-                VStack(spacing: 6) {
+                VStack(spacing: 4) {
                     ZStack {
                         Circle()
                             .fill(index == 0
@@ -252,27 +256,26 @@ struct ChordScaleReferenceView: View {
                                 lineWidth: 1
                             )
                         Text(noteNameFor(pitch))
-                            .font(.body.weight(.semibold))
-                            .minimumScaleFactor(0.65)
+                            .font(.subheadline.weight(.semibold))
+                            .minimumScaleFactor(0.6)
                             .lineLimit(1)
                             .foregroundStyle(index == 0 ? .white : .primary)
                     }
                     .frame(width: scaleNoteCircleSize, height: scaleNoteCircleSize)
-                    .frame(maxWidth: horizontalSizeClass == .regular ? scaleNoteCircleSize : .infinity, maxHeight: scaleNoteCircleSize)
 
                     Text("\(index + 1)")
                         .font(.caption2.weight(.medium))
                         .foregroundStyle(index == 0 ? themeManager.accentColor : .secondary)
                         .frame(height: 14)
                 }
-                .frame(maxWidth: horizontalSizeClass == .regular ? scaleNoteCircleSize : .infinity)
+                .frame(width: scaleNoteCircleSize)
                 .accessibilityElement(children: .ignore)
                 .accessibilityLabel(
                     String(localized: "Scale degree \(index + 1), \(noteNameFor(pitch))")
                 )
             }
         }
-        .frame(maxWidth: .infinity, alignment: horizontalSizeClass == .regular ? .center : .leading)
+        .frame(maxWidth: .infinity, alignment: .center)
     }
 
     // MARK: - Chords
@@ -309,16 +312,19 @@ struct ChordScaleReferenceView: View {
         let chordName = noteNameFor(degreeRoot) + quality.suffix
 
         return VStack(alignment: .leading, spacing: 8) {
-            HStack(alignment: .firstTextBaseline) {
+            HStack(alignment: .firstTextBaseline, spacing: 4) {
                 Text(chordName)
-                    .font(.title3.weight(.bold))
+                    .font(.headline.weight(.bold))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.75)
                 Spacer(minLength: 4)
                 Text(numeral)
-                    .font(.caption.weight(.bold))
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
+                    .font(.caption2.weight(.bold))
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 3)
                     .background(themeManager.accentColor.opacity(0.15), in: Capsule())
                     .foregroundStyle(themeManager.accentColor)
+                    .fixedSize()
             }
 
             Text(String(localized: "Scale degree \(degreeIndex + 1)"))
@@ -326,19 +332,16 @@ struct ChordScaleReferenceView: View {
                 .foregroundStyle(.secondary)
 
             HStack(spacing: 4) {
-                Text("Notes")
-                    .font(.caption2.weight(.semibold))
-                    .foregroundStyle(.tertiary)
                 ForEach(triad, id: \.self) { pitch in
                     Text(noteNameFor(pitch))
-                        .font(.caption.weight(.medium))
-                        .padding(.horizontal, 6)
+                        .font(.caption2.weight(.medium))
+                        .padding(.horizontal, 5)
                         .padding(.vertical, 3)
                         .background(Color(.tertiarySystemFill), in: Capsule())
                 }
             }
         }
-        .padding(12)
+        .padding(isRegularWidth ? 12 : 10)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
             RoundedRectangle(cornerRadius: 12, style: .continuous)

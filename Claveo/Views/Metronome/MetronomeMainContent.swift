@@ -358,71 +358,21 @@ extension MetronomeView {
                     Button {
                         toggleBeat(index)
                     } label: {
-                        beatPatternCell(index: index, isAccented: isAccented)
+                        MetronomeBeatCell(
+                            pulse: metronome.beatPulse,
+                            index: index,
+                            isAccented: isAccented,
+                            accentColor: themeManager.accentColor
+                        )
                     }
                     .buttonStyle(.plain)
                     .contentShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                     .accessibilityLabel(String(localized: "Beat \(index + 1)"))
-                    .accessibilityValue(beatAccessibilityValue(index: index, isAccented: isAccented))
+                    .accessibilityValue(isAccented ? String(localized: "Accented") : String(localized: "Normal"))
                     .accessibilityAddTraits(isAccented ? .isSelected : [])
                 }
             }
         }
-    }
-
-    private func beatPatternCell(index: Int, isAccented: Bool) -> some View {
-        let isActive = metronome.isPlaying && index == metronome.currentBeat
-        let shape = RoundedRectangle(cornerRadius: 12, style: .continuous)
-
-        return ZStack {
-            shape
-                .fill(beatCellFill(isAccented: isAccented, isActive: isActive))
-
-            if !isActive {
-                shape
-                    .strokeBorder(
-                        isAccented ? themeManager.accentColor : Color(.systemGray4),
-                        lineWidth: isAccented ? 2.5 : 2
-                    )
-            }
-
-            Text("\(index + 1)")
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(beatCellNumberColor(isAccented: isAccented, isActive: isActive))
-        }
-        .frame(maxWidth: .infinity)
-        .frame(height: 44)
-        .scaleEffect(isActive ? 1.03 : 1.0)
-        .animation(.spring(response: 0.16, dampingFraction: 0.62), value: isActive)
-        .animation(.spring(response: 0.16, dampingFraction: 0.62), value: metronome.currentBeat)
-    }
-
-    private func beatCellFill(isAccented: Bool, isActive: Bool) -> Color {
-        if isActive {
-            return themeManager.accentColor
-        }
-        if isAccented {
-            return themeManager.accentColor.opacity(colorScheme == .dark ? 0.24 : 0.14)
-        }
-        return Color(.tertiarySystemFill)
-    }
-
-    private func beatCellNumberColor(isAccented: Bool, isActive: Bool) -> Color {
-        if isActive {
-            return .white
-        }
-        return isAccented ? themeManager.accentColor : .secondary
-    }
-
-    private func beatAccessibilityValue(index: Int, isAccented: Bool) -> String {
-        if metronome.isPlaying && index == metronome.currentBeat {
-            return isAccented
-                ? String(localized: "Accented, playing")
-                : String(localized: "Playing")
-        }
-        return isAccented
-            ? String(localized: "Accented")
-            : String(localized: "Normal")
     }
 
     private var favoriteTemposSection: some View {
@@ -647,6 +597,58 @@ extension MetronomeView {
         }
         manualToneFrequencyText = String(format: "%.1f", toneGenerator.frequency)
         syncNoteSelection()
+    }
+}
+
+private struct MetronomeBeatCell: View {
+    @ObservedObject var pulse: MetronomeBeatPulse
+    let index: Int
+    let isAccented: Bool
+    let accentColor: Color
+    @Environment(\.colorScheme) private var colorScheme
+
+    private var isActive: Bool {
+        pulse.isPlaying && index == pulse.currentBeat
+    }
+
+    var body: some View {
+        let shape = RoundedRectangle(cornerRadius: 12, style: .continuous)
+        ZStack {
+            shape.fill(fillColor)
+
+            if !isActive {
+                shape.strokeBorder(
+                    isAccented ? accentColor : Color(.systemGray4),
+                    lineWidth: isAccented ? 2.5 : 2
+                )
+            }
+
+            Text("\(index + 1)")
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(numberColor)
+        }
+        .frame(maxWidth: .infinity)
+        .frame(height: 44)
+        .scaleEffect(isActive ? 1.03 : 1.0)
+        .animation(.spring(response: 0.16, dampingFraction: 0.62), value: isActive)
+        .accessibilityValue(
+            isActive
+                ? (isAccented ? String(localized: "Accented, playing") : String(localized: "Playing"))
+                : (isAccented ? String(localized: "Accented") : String(localized: "Normal"))
+        )
+    }
+
+    private var fillColor: Color {
+        if isActive { return accentColor }
+        if isAccented {
+            return accentColor.opacity(colorScheme == .dark ? 0.24 : 0.14)
+        }
+        return Color(.tertiarySystemFill)
+    }
+
+    private var numberColor: Color {
+        if isActive { return .white }
+        return isAccented ? accentColor : .secondary
     }
 }
 

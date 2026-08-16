@@ -9,6 +9,7 @@
 import Foundation
 import Combine
 import AVFoundation
+import QuartzCore
 
 // Using Tuna library for pitch detection
 // Add package: https://github.com/alladinian/Tuna
@@ -99,6 +100,7 @@ class PitchDetector: NSObject, ObservableObject {
     private var lastStableNote: String = "--"
     private var lastStableFrequency: Double = 0.0
     private var lastStableCents: Double = 0.0
+    private var lastPitchPublishTime: TimeInterval = 0
     
     // A4 reference frequency (default 440 Hz, can be changed in settings)
     var a4ReferenceFrequency: Double {
@@ -216,7 +218,6 @@ class PitchDetector: NSObject, ObservableObject {
                         
                         // Update note from stabilized frequency
                         let (note, cents, targetFreq) = self.calculateNote(from: stabilizedFrequency)
-                        self.targetFrequency = targetFreq
                         
                         // Add note to buffer for consistency checking
                         self.noteBuffer.append(note)
@@ -232,28 +233,30 @@ class PitchDetector: NSObject, ObservableObject {
                             
                             // If we have enough consistent readings of the same note, update display
                             if noteCount >= self.minConsistentReadings && mostCommonNote != "--" {
-                                self.frequency = stabilizedFrequency
-                                self.note = mostCommonNote
-                                self.cents = cents
-                                self.targetFrequency = targetFreq
+                                self.publishPitch(
+                                    frequency: stabilizedFrequency,
+                                    note: mostCommonNote,
+                                    cents: cents,
+                                    targetFrequency: targetFreq
+                                )
                                 self.lastStableNote = mostCommonNote
                                 self.lastStableFrequency = stabilizedFrequency
                                 self.lastStableCents = cents
                             } else if self.lastStableFrequency > 0 {
-                                // Keep showing last stable reading if current is inconsistent
-                                self.frequency = self.lastStableFrequency
-                                self.note = self.lastStableNote
-                                self.cents = self.lastStableCents
-                                // Recalculate target frequency for last stable note
-                                let (_, _, lastTargetFreq) = self.calculateNote(from: self.lastStableFrequency)
-                                self.targetFrequency = lastTargetFreq
+                                self.publishPitch(
+                                    frequency: self.lastStableFrequency,
+                                    note: self.lastStableNote,
+                                    cents: self.lastStableCents,
+                                    targetFrequency: self.calculateNote(from: self.lastStableFrequency).2
+                                )
                             }
                         } else {
-                            // Not enough readings yet, but show what we have
-                            self.frequency = stabilizedFrequency
-                            self.note = note
-                            self.cents = cents
-                            self.targetFrequency = targetFreq
+                            self.publishPitch(
+                                frequency: stabilizedFrequency,
+                                note: note,
+                                cents: cents,
+                                targetFrequency: targetFreq
+                            )
                         }
                     case .failure(let error):
                         #if DEBUG
@@ -352,6 +355,26 @@ class PitchDetector: NSObject, ObservableObject {
         AudioSessionCoordinator.tunerDidReleaseSession()
     }
 
+    private func publishPitch(
+        frequency: Double,
+        note: String,
+        cents: Double,
+        targetFrequency: Double
+    ) {
+        let now = CACurrentMediaTime()
+        let noteChanged = note != self.note
+        guard noteChanged
+            || abs(frequency - self.frequency) > 0.4
+            || abs(cents - self.cents) > 1
+            || now - lastPitchPublishTime >= 0.07
+        else { return }
+        lastPitchPublishTime = now
+        if self.frequency != frequency { self.frequency = frequency }
+        if self.note != note { self.note = note }
+        if self.cents != cents { self.cents = cents }
+        if self.targetFrequency != targetFrequency { self.targetFrequency = targetFrequency }
+    }
+
     private func resetDetectionState() {
         isDetecting = false
         frequency = 0
@@ -363,6 +386,7 @@ class PitchDetector: NSObject, ObservableObject {
         lastStableNote = "--"
         lastStableFrequency = 0
         lastStableCents = 0
+        lastPitchPublishTime = 0
     }
     
     // Filter out overtones - if frequency is likely a harmonic, return the fundamental

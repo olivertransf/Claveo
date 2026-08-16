@@ -147,8 +147,6 @@ struct TunerView: View {
                 }
             }
             .onChange(of: pitchDetector.frequency) { _, _ in refreshDisplay() }
-            .onChange(of: pitchDetector.note) { _, _ in refreshDisplay() }
-            .onChange(of: pitchDetector.cents) { _, _ in refreshDisplay() }
             .onChange(of: settingsManager.settings.a4ReferenceFrequency) { _, _ in
                 if pitchDetector.frequency > 0 {
                     pitchDetector.recalculateNote()

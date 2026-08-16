@@ -8,7 +8,7 @@
 
 import Foundation
 
-struct MusicTerm: Identifiable, Codable, Hashable {
+struct MusicTerm: Identifiable, Codable, Hashable, Sendable {
     var id: String { term + category }
     let term: String
     let definition: String
@@ -69,7 +69,7 @@ struct MusicSymbol: Identifiable, Codable, Hashable {
     }
 }
 
-struct MusicDictionary: Codable {
+struct MusicDictionary: Codable, Sendable {
     let terms: [MusicTerm]
 }
 

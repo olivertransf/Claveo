@@ -1737,6 +1737,7 @@
       }
     },
     "Failed to decode dictionary: %@" : {
+      "extractionState" : "stale",
       "localizations" : {
         "es" : {
           "stringUnit" : {

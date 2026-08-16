@@ -65,7 +65,9 @@ struct MetronomeAudioConfiguration: Equatable {
 
 @MainActor
 class Metronome: ObservableObject {
-    @Published var isPlaying = false
+    @Published var isPlaying = false {
+        didSet { beatPulse.isPlaying = isPlaying }
+    }
     @Published var startupError: MetronomeStartupError?
     @Published var tempo: Int = 120 {
         didSet {
@@ -81,8 +83,13 @@ class Metronome: ObservableObject {
     @Published var customTimeSignature: (top: Int, bottom: Int)? = nil
     @Published var beatPattern: [Bool] = [true, false, false, false]
     @Published var subdivision: MetronomeSubdivision = .quarter
-    @Published var currentBeat: Int = 0
     @Published var hapticEnabled: Bool = true
+    let beatPulse = MetronomeBeatPulse()
+
+    var currentBeat: Int {
+        get { beatPulse.currentBeat }
+        set { beatPulse.currentBeat = newValue }
+    }
     
     var interval: TimeInterval = 0.5
     var nextBeatTime: TimeInterval = 0
@@ -289,6 +296,12 @@ final class MetronomeDisplayLinkTarget: NSObject {
             metronome.checkAndPlayBeat()
         }
     }
+}
+
+@MainActor
+final class MetronomeBeatPulse: ObservableObject {
+    @Published var currentBeat: Int = 0
+    @Published var isPlaying = false
 }
 
 enum TimeSignature: String, CaseIterable {
