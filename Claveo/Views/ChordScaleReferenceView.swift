@@ -8,6 +8,7 @@ import SwiftUI
 
 struct ChordScaleReferenceView: View {
     @EnvironmentObject var themeManager: ThemeManager
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @State private var selectedRoot = 0
     @State private var useFlats = false
     @State private var keyMode: KeyReferenceMode = .major
@@ -230,8 +231,12 @@ struct ChordScaleReferenceView: View {
 
     // MARK: - Scale
 
+    private var scaleNoteCircleSize: CGFloat {
+        horizontalSizeClass == .regular ? 46 : 60
+    }
+
     private func scaleRow(notes: [Int]) -> some View {
-        HStack(spacing: 4) {
+        HStack(spacing: horizontalSizeClass == .regular ? 10 : 4) {
             ForEach(Array(notes.enumerated()), id: \.offset) { index, pitch in
                 VStack(spacing: 6) {
                     ZStack {
@@ -252,22 +257,22 @@ struct ChordScaleReferenceView: View {
                             .lineLimit(1)
                             .foregroundStyle(index == 0 ? .white : .primary)
                     }
-                    .frame(maxWidth: .infinity)
-                    .aspectRatio(1, contentMode: .fit)
-                    .frame(minHeight: 60)
+                    .frame(width: scaleNoteCircleSize, height: scaleNoteCircleSize)
+                    .frame(maxWidth: horizontalSizeClass == .regular ? scaleNoteCircleSize : .infinity, maxHeight: scaleNoteCircleSize)
 
                     Text("\(index + 1)")
                         .font(.caption2.weight(.medium))
                         .foregroundStyle(index == 0 ? themeManager.accentColor : .secondary)
                         .frame(height: 14)
                 }
-                .frame(maxWidth: .infinity)
+                .frame(maxWidth: horizontalSizeClass == .regular ? scaleNoteCircleSize : .infinity)
                 .accessibilityElement(children: .ignore)
                 .accessibilityLabel(
                     String(localized: "Scale degree \(index + 1), \(noteNameFor(pitch))")
                 )
             }
         }
+        .frame(maxWidth: .infinity, alignment: horizontalSizeClass == .regular ? .center : .leading)
     }
 
     // MARK: - Chords
