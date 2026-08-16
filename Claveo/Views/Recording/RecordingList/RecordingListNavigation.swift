@@ -10,153 +10,280 @@ import SwiftUI
 
 extension RecordingListView {
     var unifiedView: some View {
-        NavigationStack {
-            ZStack {
-                Color(.systemBackground)
-                    .ignoresSafeArea()
+        Group {
+            if usesSplitPlayback {
+                HStack(spacing: 0) {
+                    recordingsColumn
+                        .frame(width: 360)
+                        .frame(maxHeight: .infinity)
 
-                mainContentView
-                    .refreshable {
-                        await recorder.refreshRecordings()
-                    }
-            }
-            .overlay {
-                if recorder.isRecording {
-                    LinearGradient(
-                        colors: [
-                            Color.black.opacity(0.0),
-                            Color.black.opacity(0.5),
-                            Color.black.opacity(0.7)
-                        ],
-                        startPoint: .top,
-                        endPoint: .bottom
-                    )
-                    .ignoresSafeArea()
-                    .allowsHitTesting(false)
+                    splitDetailColumn
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else {
+                NavigationStack {
+                    recordingsColumn
                 }
             }
-            .safeAreaInset(edge: .bottom, spacing: 0) {
-                VStack(spacing: 10) {
-                    if recorder.isRecording {
-                        recordingIndicatorView
-                    }
-
-                    recordingButtonOverlay
-                        .padding(.top, recorder.isRecording ? 0 : 8)
-                        .padding(.bottom, 10)
-                }
-                .frame(maxWidth: .infinity)
-            }
-            .toolbar {
-                if isSelectingRecordings {
-                    ToolbarItem(placement: .cancellationAction) {
-                        Button("Cancel") {
-                            exitRecordingSelectionMode()
-                        }
-                    }
-                    ToolbarItem(placement: .navigationBarTrailing) {
-                        Button {
-                            exportSelectedRecordings()
-                        } label: {
-                            if selectedRecordingIds.isEmpty {
-                                Text("Export")
-                            } else {
-                                Text("Export (\(selectedRecordingIds.count))")
-                            }
-                        }
-                        .disabled(selectedRecordingIds.isEmpty)
-                    }
-                } else {
-                    ToolbarItemGroup(placement: .navigationBarLeading) {
-                        Button {
-                            availablePieces = loadAvailablePieces()
-                            showingPiecesManagement = true
-                        } label: {
-                            Label("Pieces", systemImage: "music.note.list")
-                                .symbolRenderingMode(.monochrome)
-                        }
-                    }
-                    
-                    ToolbarItemGroup(placement: .navigationBarTrailing) {
-                        Menu {
-                            Section {
-                                Button {
-                                    selectedTag = nil
-                                } label: {
-                                    filterMenuRow(title: String(localized: "Any tag"), selected: selectedTag == nil)
-                                }
-
-                                ForEach(RecordingTag.allCases, id: \.self) { tag in
-                                    Button {
-                                        selectedTag = tag.rawValue
-                                    } label: {
-                                        filterMenuRow(title: tag.localizedName, selected: selectedTag == tag.rawValue)
-                                    }
-                                }
-                            } header: {
-                                Label("Tags", systemImage: "tag.fill")
-                            }
-
-                            Section {
-                                Button {
-                                    selectedPiece = nil
-                                } label: {
-                                    filterMenuRow(title: String(localized: "Any piece"), selected: selectedPiece == nil)
-                                }
-
-                                if availablePieces.isEmpty {
-                                    Text("No pieces in library")
-                                        .foregroundStyle(.secondary)
-                                } else {
-                                    ForEach(availablePieces, id: \.id) { piece in
-                                        Button {
-                                            selectedPiece = piece.name
-                                        } label: {
-                                            filterMenuRow(
-                                                title: piece.displayName,
-                                                selected: selectedPiece == piece.name
-                                            )
-                                        }
-                                    }
-                                }
-                            } header: {
-                                Label("Pieces", systemImage: "music.note.list")
-                            }
-
-                            if selectedTag != nil || selectedPiece != nil {
-                                Section {
-                                    Button(role: .destructive) {
-                                        selectedTag = nil
-                                        selectedPiece = nil
-                                    } label: {
-                                        Label("Clear all filters", systemImage: "xmark.circle.fill")
-                                    }
-                                }
-                            }
-                        } label: {
-                            Label("Filter", systemImage: filterToolbarIcon)
-                                .symbolRenderingMode(.monochrome)
-                        }
-
-                        Button {
-                            beginRecordingSelectionMode()
-                        } label: {
-                            Label("Select", systemImage: "checkmark.circle")
-                                .symbolRenderingMode(.monochrome)
-                        }
-
-                    }
-                }
-            }
-            .navigationTitle("Recordings")
-            .navigationBarTitleDisplayMode(.inline)
-            .tint(themeManager.accentColor)
-            .searchable(text: $searchText, isPresented: $isSearchFocused, prompt: "Search recordings")
         }
-
+        .tint(themeManager.accentColor)
+        .onAppear {
+            syncSplitSelection()
+        }
+        .onChange(of: filteredRecordings.map(\.id)) { _, _ in
+            syncSplitSelection()
+        }
+        .onChange(of: horizontalSizeClass) { _, _ in
+            syncSplitSelection()
+        }
         .sheet(isPresented: $showingStorageInfo) {
             StorageInfoView()
                 .environmentObject(themeManager)
+        }
+    }
+
+    @ViewBuilder
+    var recordingsColumn: some View {
+        if usesSplitPlayback {
+            VStack(spacing: 0) {
+                splitSidebarChrome
+                recordingsColumnBody
+            }
+            .frame(maxHeight: .infinity)
+        } else {
+            recordingsColumnBody
+                .toolbar {
+                    recordingsToolbar
+                }
+                .navigationTitle("Recordings")
+                .navigationBarTitleDisplayMode(.inline)
+                .searchable(
+                    text: $searchText,
+                    isPresented: $isSearchFocused,
+                    placement: .automatic,
+                    prompt: "Search recordings"
+                )
+        }
+    }
+
+    var recordingsColumnBody: some View {
+        ZStack {
+            Color(.systemBackground)
+                .ignoresSafeArea(edges: usesSplitPlayback ? [] : .all)
+
+            mainContentView
+                .refreshable {
+                    await recorder.refreshRecordings()
+                }
+        }
+        .overlay {
+            if recorder.isRecording && !usesSplitPlayback {
+                LinearGradient(
+                    colors: [
+                        Color.black.opacity(0.0),
+                        Color.black.opacity(0.5),
+                        Color.black.opacity(0.7)
+                    ],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+                .ignoresSafeArea()
+                .allowsHitTesting(false)
+            }
+        }
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            VStack(spacing: 10) {
+                if recorder.isRecording && !usesSplitPlayback {
+                    recordingIndicatorView
+                }
+
+                recordingButtonOverlay
+                    .padding(.top, recorder.isRecording && !usesSplitPlayback ? 0 : 8)
+                    .padding(.bottom, 10)
+            }
+            .frame(maxWidth: .infinity)
+        }
+    }
+
+    var splitSidebarChrome: some View {
+        VStack(spacing: 8) {
+            HStack(spacing: 12) {
+                if isSelectingRecordings {
+                    Button("Cancel") {
+                        exitRecordingSelectionMode()
+                    }
+                    .font(.title3)
+                    .frame(minHeight: 44)
+                    Spacer()
+                    Button {
+                        exportSelectedRecordings()
+                    } label: {
+                        if selectedRecordingIds.isEmpty {
+                            Text("Export")
+                        } else {
+                            Text("Export (\(selectedRecordingIds.count))")
+                        }
+                    }
+                    .font(.title3)
+                    .frame(minHeight: 44)
+                    .disabled(selectedRecordingIds.isEmpty)
+                } else {
+                    Button {
+                        availablePieces = loadAvailablePieces()
+                        showingPiecesManagement = true
+                    } label: {
+                        splitSidebarIcon("music.note.list")
+                    }
+                    .accessibilityLabel(String(localized: "Pieces"))
+
+                    Spacer()
+
+                    filterMenu
+                    Button {
+                        beginRecordingSelectionMode()
+                    } label: {
+                        splitSidebarIcon("checkmark.circle")
+                    }
+                    .accessibilityLabel(String(localized: "Select"))
+                }
+            }
+
+            HStack(spacing: 8) {
+                Image(systemName: "magnifyingglass")
+                    .font(.body)
+                    .foregroundStyle(.secondary)
+                TextField("Search recordings", text: $searchText)
+                    .font(.body)
+                    .textFieldStyle(.plain)
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 10)
+            .background(Color.themeSecondaryBackground, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+        }
+        .padding(.horizontal, 16)
+        .padding(.top, 0)
+        .padding(.bottom, 8)
+        .background(Color(.systemBackground))
+    }
+
+    func splitSidebarIcon(_ systemImage: String) -> some View {
+        Image(systemName: systemImage)
+            .font(.title2)
+            .symbolRenderingMode(.monochrome)
+            .frame(width: 44, height: 44)
+            .contentShape(Rectangle())
+    }
+
+    @ViewBuilder
+    var filterMenu: some View {
+        Menu {
+            Section {
+                Button {
+                    selectedTag = nil
+                } label: {
+                    filterMenuRow(title: String(localized: "Any tag"), selected: selectedTag == nil)
+                }
+
+                ForEach(RecordingTag.allCases, id: \.self) { tag in
+                    Button {
+                        selectedTag = tag.rawValue
+                    } label: {
+                        filterMenuRow(title: tag.localizedName, selected: selectedTag == tag.rawValue)
+                    }
+                }
+            } header: {
+                Label("Tags", systemImage: "tag.fill")
+            }
+
+            Section {
+                Button {
+                    selectedPiece = nil
+                } label: {
+                    filterMenuRow(title: String(localized: "Any piece"), selected: selectedPiece == nil)
+                }
+
+                if availablePieces.isEmpty {
+                    Text("No pieces in library")
+                        .foregroundStyle(.secondary)
+                } else {
+                    ForEach(availablePieces, id: \.id) { piece in
+                        Button {
+                            selectedPiece = piece.name
+                        } label: {
+                            filterMenuRow(
+                                title: piece.displayName,
+                                selected: selectedPiece == piece.name
+                            )
+                        }
+                    }
+                }
+            } header: {
+                Label("Pieces", systemImage: "music.note.list")
+            }
+
+            if selectedTag != nil || selectedPiece != nil {
+                Section {
+                    Button(role: .destructive) {
+                        selectedTag = nil
+                        selectedPiece = nil
+                    } label: {
+                        Label("Clear all filters", systemImage: "xmark.circle.fill")
+                    }
+                }
+            }
+        } label: {
+            if usesSplitPlayback {
+                splitSidebarIcon(filterToolbarIcon)
+            } else {
+                Label("Filter", systemImage: filterToolbarIcon)
+                    .symbolRenderingMode(.monochrome)
+            }
+        }
+        .accessibilityLabel(String(localized: "Filter"))
+    }
+
+    @ToolbarContentBuilder
+    var recordingsToolbar: some ToolbarContent {
+        if isSelectingRecordings {
+            ToolbarItem(placement: .cancellationAction) {
+                Button("Cancel") {
+                    exitRecordingSelectionMode()
+                }
+            }
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button {
+                    exportSelectedRecordings()
+                } label: {
+                    if selectedRecordingIds.isEmpty {
+                        Text("Export")
+                    } else {
+                        Text("Export (\(selectedRecordingIds.count))")
+                    }
+                }
+                .disabled(selectedRecordingIds.isEmpty)
+            }
+        } else {
+            ToolbarItemGroup(placement: .navigationBarLeading) {
+                Button {
+                    availablePieces = loadAvailablePieces()
+                    showingPiecesManagement = true
+                } label: {
+                    Label("Pieces", systemImage: "music.note.list")
+                        .symbolRenderingMode(.monochrome)
+                }
+            }
+
+            ToolbarItemGroup(placement: .navigationBarTrailing) {
+                filterMenu
+
+                Button {
+                    beginRecordingSelectionMode()
+                } label: {
+                    Label("Select", systemImage: "checkmark.circle")
+                        .symbolRenderingMode(.monochrome)
+                }
+            }
         }
     }
 
@@ -280,11 +407,11 @@ extension RecordingListView {
         }) {
             ZStack {
                 Circle()
-                    .fill(Color.red.opacity(0.18))
+                    .fill(Color.red.opacity(0.14))
                     .frame(width: 76, height: 76)
 
                 Circle()
-                    .fill(Color.red)
+                    .fill(Color.red.opacity(0.92))
                     .frame(width: 64, height: 64)
 
                 if recorder.isRecording {
@@ -299,7 +426,7 @@ extension RecordingListView {
             }
             .frame(width: 76, height: 76)
         }
-        .shadow(color: .black.opacity(0.15), radius: 6, y: 3)
+        .shadow(color: .black.opacity(0.08), radius: 4, y: 2)
     }
 
     func filterMenuRow(title: String, selected: Bool) -> some View {

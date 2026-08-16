@@ -13,6 +13,7 @@ struct WaveformView: View {
     let recording: Recording
     let currentTime: TimeInterval
     let duration: TimeInterval
+    var height: CGFloat = 50
     let onSeek: (TimeInterval) -> Void
 
     @EnvironmentObject var themeManager: ThemeManager
@@ -41,7 +42,7 @@ struct WaveformView: View {
         }
         .animation(.easeInOut(duration: 0.2), value: hasWaveform)
         .frame(maxWidth: .infinity)
-        .frame(height: 50)
+        .frame(height: height)
         .background {
             GeometryReader { proxy in
                 Color.clear

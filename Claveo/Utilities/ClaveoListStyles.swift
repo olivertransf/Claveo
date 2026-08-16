@@ -21,6 +21,14 @@ extension View {
     func claveoListRowChrome(hideSeparator: Bool = false, showsBackground: Bool = true) -> some View {
         modifier(ClaveoListRowChromeModifier(hideSeparator: hideSeparator, showsBackground: showsBackground))
     }
+
+    func splitDetailCardChrome() -> some View {
+        padding(.horizontal, 12)
+            .padding(.top, 12)
+            .padding(.bottom, 0)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color.themeGroupedBackground)
+    }
 }
 
 private struct ClaveoListRowChromeModifier: ViewModifier {

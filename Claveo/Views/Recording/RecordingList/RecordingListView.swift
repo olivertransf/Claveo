@@ -15,6 +15,7 @@ struct RecordingListView: View {
     }
     
     @EnvironmentObject var themeManager: ThemeManager
+    @Environment(\.horizontalSizeClass) var horizontalSizeClass
     @ObservedObject var recorder = AudioRecorder.shared
     @StateObject var player = AudioPlayer()
     @StateObject var settingsManager = SettingsManager.shared
@@ -44,6 +45,10 @@ struct RecordingListView: View {
     @State var bulkShareSession: BulkShareSession?
     
     @State var filteredRecordings: [Recording] = []
+
+    var usesSplitPlayback: Bool {
+        horizontalSizeClass == .regular
+    }
 
     func refreshFilteredRecordings() {
         var filtered = recorder.recordings

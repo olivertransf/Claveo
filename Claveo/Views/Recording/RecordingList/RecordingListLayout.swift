@@ -14,7 +14,9 @@ extension RecordingListView {
         if player.isPlaying {
             player.pause()
         }
-        expandedRecordingId = nil
+        if !usesSplitPlayback {
+            expandedRecordingId = nil
+        }
         isSelectingRecordings = true
         selectedRecordingIds.removeAll()
     }
@@ -93,13 +95,24 @@ extension RecordingListView {
         return false
     }
 
+    @ViewBuilder
     var recordingsList: some View {
-        List {
+        let list = List {
             ForEach(filteredRecordings) { recording in
                 recordingRow(for: recording)
             }
         }
         .claveoPlainListStyle()
+
+        if usesSplitPlayback {
+            list
+                .scrollContentBackground(.hidden)
+                .contentMargins(.top, 6, for: .scrollContent)
+                .contentMargins(.horizontal, 4, for: .scrollContent)
+        } else {
+            list
+                .contentMargins(.vertical, 6, for: .scrollContent)
+        }
     }
     
     @ViewBuilder
@@ -129,16 +142,7 @@ extension RecordingListView {
             duration: recording.duration,
             playbackRate: player.playbackRate,
             onPlayPause: {
-                if player.currentRecording?.id == recording.id {
-                    if player.isPlaying {
-                        player.pause()
-                    } else {
-                        player.play(recording)
-                    }
-                } else {
-                    expandedRecordingId = recording.id
-                    player.play(recording)
-                }
+                playPause(recording)
             },
             onSeek: { time in
                 player.seek(recording, to: time)
@@ -175,7 +179,9 @@ extension RecordingListView {
             isSelected: selectedRecordingIds.contains(recording.id),
             onToggleSelection: {
                 toggleRecordingSelection(recording.id)
-            }
+            },
+            allowsInlineExpansion: !usesSplitPlayback,
+            isSplitFocused: usesSplitPlayback && expandedRecordingId == recording.id
         )
         
         if isSelectingRecordings {
@@ -263,6 +269,101 @@ extension RecordingListView {
         }
     }
     
+    func playPause(_ recording: Recording) {
+        if player.currentRecording?.id == recording.id {
+            if player.isPlaying {
+                player.pause()
+            } else {
+                player.play(recording)
+            }
+        } else {
+            if !usesSplitPlayback {
+                expandedRecordingId = recording.id
+            }
+            player.play(recording)
+        }
+    }
+
+    @ViewBuilder
+    var splitDetailColumn: some View {
+        if recorder.isRecording {
+            splitLiveRecordingCard
+        } else if let recording = focusedRecording {
+            RecordingSplitDetailView(
+                recording: recording,
+                isPlaying: player.isPlaying && player.currentRecording?.id == recording.id,
+                currentTime: player.currentRecording?.id == recording.id ? player.currentTime : nil,
+                duration: recording.duration,
+                playbackRate: player.playbackRate,
+                onPlayPause: { playPause(recording) },
+                onSeek: { player.seek(recording, to: $0) },
+                onSpeedChange: { player.playbackRate = $0 },
+                onSkipBackward: { player.skipBackward(seconds: 15) },
+                onSkipForward: { player.skipForward(seconds: 15) },
+                onEdit: { selectedRecording = recording },
+                onTrim: {
+                    if player.currentRecording?.id == recording.id {
+                        player.stop()
+                    }
+                    recordingToTrim = recording
+                },
+                onExport: { recordingToShare = recording },
+                onDelete: {
+                    recordingToDelete = recording
+                    showingDeleteAlert = true
+                },
+                onToggleKeepDownloaded: { toggleKeepDownloaded(recording) }
+            )
+            .id(recording.id)
+        } else {
+            ContentUnavailableView {
+                Label("Select a Recording", systemImage: "waveform")
+            } description: {
+                Text("Choose a recording from the list to play or edit it.")
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color.themeGroupedBackground)
+        }
+    }
+
+    var splitLiveRecordingCard: some View {
+        VStack(spacing: 20) {
+            HStack(spacing: 10) {
+                Circle()
+                    .fill(Color.red)
+                    .frame(width: 10, height: 10)
+                    .opacity(recorder.isRecording ? 1 : 0.45)
+                    .symbolEffect(.pulse, options: .repeating, isActive: recorder.isRecording)
+
+                Text(formatTime(recorder.recordingTime))
+                    .font(.system(.title, design: .monospaced))
+                    .fontWeight(.semibold)
+                    .foregroundStyle(.primary)
+            }
+
+            GeometryReader { geometry in
+                let barPitch: CGFloat = 5.5
+                let maxBars = max(80, Int(geometry.size.width / barPitch))
+                LiveWaveformView(
+                    audioLevels: recorder.waveformLevels,
+                    maxBars: maxBars,
+                    barColor: .primary
+                )
+                .frame(width: geometry.size.width, height: geometry.size.height)
+            }
+            .frame(height: 88)
+            .frame(maxWidth: .infinity)
+        }
+        .padding(.horizontal, 28)
+        .padding(.vertical, 32)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+        .background {
+            RoundedRectangle(cornerRadius: 28, style: .continuous)
+                .fill(Color.themeSecondaryGroupedBackground)
+        }
+        .splitDetailCardChrome()
+    }
+
     func detailSheet(for recording: Recording) -> some View {
         NavigationStack {
             RecordingDetailView(

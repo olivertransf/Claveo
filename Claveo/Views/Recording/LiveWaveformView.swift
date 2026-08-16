@@ -11,9 +11,11 @@ import SwiftUI
 struct LiveWaveformView: View {
     let audioLevels: [Float]
     let maxBars: Int
+    var barColor: Color = .white
 
-    init(audioLevels: [Float], maxBars: Int = 50) {
+    init(audioLevels: [Float], maxBars: Int = 50, barColor: Color = .white) {
         self.maxBars = maxBars
+        self.barColor = barColor
         if audioLevels.count > maxBars {
             self.audioLevels = Array(audioLevels.suffix(maxBars))
         } else {
@@ -38,7 +40,7 @@ struct LiveWaveformView: View {
                     let rect = CGRect(x: x, y: midY - 1.5, width: barWidth, height: 3)
                     context.fill(
                         Path(roundedRect: rect, cornerRadius: 2),
-                        with: .color(.white.opacity(0.2))
+                        with: .color(barColor.opacity(0.2))
                     )
                 }
                 return
@@ -50,7 +52,7 @@ struct LiveWaveformView: View {
                 let height = barHeight(for: level, in: size.height)
                 let x = startX + CGFloat(index) * step
                 let rect = CGRect(x: x, y: midY - height / 2, width: barWidth, height: height)
-                context.fill(Path(roundedRect: rect, cornerRadius: 2), with: .color(.white))
+                context.fill(Path(roundedRect: rect, cornerRadius: 2), with: .color(barColor))
             }
 
             if levels.count < barsToShow {
@@ -59,7 +61,7 @@ struct LiveWaveformView: View {
                     let rect = CGRect(x: x, y: midY - 1.5, width: barWidth, height: 3)
                     context.fill(
                         Path(roundedRect: rect, cornerRadius: 2),
-                        with: .color(.white.opacity(0.2))
+                        with: .color(barColor.opacity(0.2))
                     )
                 }
             }

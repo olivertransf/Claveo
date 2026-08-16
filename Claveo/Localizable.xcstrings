@@ -966,6 +966,16 @@
         }
       }
     },
+    "Choose a recording from the list to play or edit it." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elige una grabación de la lista para reproducirla o editarla."
+          }
+        }
+      }
+    },
     "Chords" : {
       "localizations" : {
         "es" : {
@@ -2241,6 +2251,16 @@
         }
       }
     },
+    "Keep Downloaded" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mantener descargado"
+          }
+        }
+      }
+    },
     "Key Signature ID" : {
       "localizations" : {
         "es" : {
@@ -2267,16 +2287,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tipo de tonalidad"
-          }
-        }
-      }
-    },
-    "Keep Downloaded" : {
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Mantener descargado"
           }
         }
       }
@@ -3653,6 +3663,16 @@
         }
       }
     },
+    "Recording actions" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Acciones de grabación"
+          }
+        }
+      }
+    },
     "Recording Details" : {
       "localizations" : {
         "es" : {
@@ -4067,6 +4087,16 @@
         }
       }
     },
+    "Select a Recording" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Selecciona una grabación"
+          }
+        }
+      }
+    },
     "Select Recordings" : {
       "localizations" : {
         "es" : {
@@ -4314,6 +4344,26 @@
         }
       }
     },
+    "Storage Information" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Información de almacenamiento"
+          }
+        }
+      }
+    },
+    "Storage Location" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ubicación de almacenamiento"
+          }
+        }
+      }
+    },
     "Stored in iCloud" : {
       "localizations" : {
         "es" : {
@@ -4340,26 +4390,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Guardado en este dispositivo"
-          }
-        }
-      }
-    },
-    "Storage Information" : {
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Información de almacenamiento"
-          }
-        }
-      }
-    },
-    "Storage Location" : {
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ubicación de almacenamiento"
           }
         }
       }

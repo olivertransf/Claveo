@@ -18,8 +18,26 @@ extension RecordingListView {
         selectedTag = nil
         selectedPiece = nil
         refreshFilteredRecordings()
-        selectedRecording = recording
+        expandedRecordingId = recording.id
+        if !usesSplitPlayback {
+            selectedRecording = recording
+        }
         recorder.newlyCreatedRecordingId = nil
+    }
+
+    var focusedRecording: Recording? {
+        guard let expandedRecordingId else { return nil }
+        return filteredRecordings.first(where: { $0.id == expandedRecordingId })
+            ?? recorder.recordings.first(where: { $0.id == expandedRecordingId })
+    }
+
+    func syncSplitSelection() {
+        guard usesSplitPlayback else { return }
+        if let expandedRecordingId,
+           filteredRecordings.contains(where: { $0.id == expandedRecordingId }) {
+            return
+        }
+        expandedRecordingId = filteredRecordings.first?.id
     }
     
     func loadAvailablePieces() -> [Piece] {
