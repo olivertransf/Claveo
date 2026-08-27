@@ -1,6 +1,6 @@
 <!-- Copyright (c) 2025 Oliver Tran -->
 <script>
-  import { onMount, onDestroy } from 'svelte';
+  import { onMount } from 'svelte';
   import Home from './pages/Home.svelte';
   import PrivacyPolicy from './pages/PrivacyPolicy.svelte';
   import Roadmap from './pages/Roadmap.svelte';
@@ -84,10 +84,10 @@
       }
     };
     window.addEventListener('popstate', onPopState);
-    onDestroy(() => {
+    return () => {
       window.removeEventListener('popstate', onPopState);
       unlockBodyScroll();
-    });
+    };
   });
 
   function toggleDarkMode() {
