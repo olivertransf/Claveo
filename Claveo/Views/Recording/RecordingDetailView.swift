@@ -152,9 +152,9 @@ struct RecordingDetailView: View {
                     } label: {
                         Label("Trim Recording", systemImage: "scissors")
                     }
-                    .disabled(!FileManager.default.fileExists(atPath: recording.fileURL.path))
+                    .disabled(!recording.isLocallyAvailable)
                     
-                    if recording.hasTrimHistory, let originalURL = recording.originalFileURL, FileManager.default.fileExists(atPath: originalURL.path) {
+                    if recording.hasTrimHistory {
                         Button {
                             showingRestoreAlert = true
                         } label: {
@@ -165,8 +165,10 @@ struct RecordingDetailView: View {
                 } header: {
                     Text("Audio")
                 } footer: {
-                    if !FileManager.default.fileExists(atPath: recording.fileURL.path) {
-                        Text("Recording file not found.")
+                    if !recording.isLocallyAvailable {
+                        Text(recording.isStoredIniCloud
+                             ? String(localized: "This recording is in iCloud and is not downloaded.")
+                             : String(localized: "Recording file not found."))
                     } else if recording.hasTrimHistory {
                         Text("Original audio is preserved. You can restore it anytime.")
                     } else {
@@ -182,7 +184,7 @@ struct RecordingDetailView: View {
                 }
                 
                 Section {
-                    if FileManager.default.fileExists(atPath: recording.fileURL.path) {
+                    if recording.isLocallyAvailable {
                         ShareLink(
                             item: RecordingFileTransferable(recording: recording),
                             preview: SharePreview(recording.displayName, icon: Image(systemName: "waveform"))
@@ -193,7 +195,7 @@ struct RecordingDetailView: View {
                         HStack {
                             Label("Export Recording", systemImage: "square.and.arrow.up")
                             Spacer()
-                            Text("File not found")
+                            Text(recording.isStoredIniCloud ? String(localized: "Not downloaded") : String(localized: "File not found"))
                                 .foregroundColor(.secondary)
                                 .font(.caption)
                         }

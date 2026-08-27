@@ -148,13 +148,25 @@ struct RecordingListView: View {
             showingPlaybackErrorAlert = newValue != nil
         }
         .sheet(item: $recordingToShare) { recording in
-            if FileManager.default.fileExists(atPath: recording.fileURL.path) {
-                if let shareableURL = try? recording.shareableFileURL() {
-                    ShareSheet(activityItems: [shareableURL])
-                        .onDisappear {
-                            try? FileManager.default.removeItem(at: shareableURL)
-                        }
+            if recording.isLocallyAvailable, let shareableURL = try? recording.shareableFileURL() {
+                ShareSheet(activityItems: [shareableURL])
+                    .onDisappear {
+                        try? FileManager.default.removeItem(at: shareableURL)
+                    }
+            } else {
+                ContentUnavailableView {
+                    Label(
+                        recording.isStoredIniCloud
+                            ? String(localized: "Not downloaded")
+                            : String(localized: "File not found"),
+                        systemImage: recording.isStoredIniCloud ? "icloud.and.arrow.down" : "exclamationmark.triangle"
+                    )
+                } description: {
+                    Text(recording.isStoredIniCloud
+                         ? String(localized: "This recording is stored in iCloud and needs to be downloaded before exporting.")
+                         : String(localized: "This recording’s audio file could not be found on this device."))
                 }
+                .padding()
             }
         }
         .sheet(item: $bulkShareSession) { session in

@@ -1,6 +1,6 @@
 <!-- Copyright (c) 2025 Oliver Tran -->
 <script>
-  import { onMount } from 'svelte';
+  import { onMount, onDestroy } from 'svelte';
   import Home from './pages/Home.svelte';
   import PrivacyPolicy from './pages/PrivacyPolicy.svelte';
   import Roadmap from './pages/Roadmap.svelte';
@@ -10,16 +10,39 @@
   let currentPage = 'home';
   let darkMode = false;
   let mobileMenuOpen = false;
+  let previousBodyOverflow = null;
+
+  function lockBodyScroll() {
+    if (typeof document === 'undefined') return;
+    if (previousBodyOverflow === null) {
+      previousBodyOverflow = document.body.style.overflow;
+    }
+    document.body.style.overflow = 'hidden';
+  }
+
+  function unlockBodyScroll() {
+    if (typeof document === 'undefined') return;
+    if (previousBodyOverflow !== null) {
+      document.body.style.overflow = previousBodyOverflow;
+      previousBodyOverflow = null;
+    } else {
+      document.body.style.overflow = '';
+    }
+  }
 
   function toggleMobileMenu() {
     mobileMenuOpen = !mobileMenuOpen;
     // Prevent body scroll when menu is open
-    document.body.style.overflow = mobileMenuOpen ? 'hidden' : '';
+    if (mobileMenuOpen) {
+      lockBodyScroll();
+    } else {
+      unlockBodyScroll();
+    }
   }
 
   function closeMobileMenu() {
     mobileMenuOpen = false;
-    document.body.style.overflow = '';
+    unlockBodyScroll();
   }
 
   // Load theme preference from localStorage
@@ -47,7 +70,8 @@
     updateTheme();
 
     // Handle browser back/forward buttons
-    window.addEventListener('popstate', () => {
+    const onPopState = () => {
+      closeMobileMenu();
       const path = window.location.pathname;
       if (path === '/privacy-policy.html' || path === '/privacy-policy') {
         currentPage = 'privacy';
@@ -58,6 +82,11 @@
       } else {
         currentPage = 'home';
       }
+    };
+    window.addEventListener('popstate', onPopState);
+    onDestroy(() => {
+      window.removeEventListener('popstate', onPopState);
+      unlockBodyScroll();
     });
   });
 
@@ -108,12 +137,19 @@
     <a href="/about" on:click|preventDefault={() => navigate('/about')} class="navbar-link" class:active={currentPage === 'about'}>About</a>
     <a href="/roadmap" on:click|preventDefault={() => navigate('/roadmap')} class="navbar-link" class:active={currentPage === 'roadmap'}>Roadmap</a>
   </div>
-  <button class="mobile-menu-toggle" class:active={mobileMenuOpen} on:click={toggleMobileMenu} aria-label="Toggle menu">
+  <button
+    class="mobile-menu-toggle"
+    class:active={mobileMenuOpen}
+    on:click={toggleMobileMenu}
+    aria-label="Toggle menu"
+    aria-expanded={mobileMenuOpen}
+    aria-controls="mobile-menu"
+  >
     <span class="hamburger-line"></span>
     <span class="hamburger-line"></span>
     <span class="hamburger-line"></span>
   </button>
-  <div class="mobile-menu" class:open={mobileMenuOpen}>
+  <div id="mobile-menu" class="mobile-menu" class:open={mobileMenuOpen} aria-hidden={!mobileMenuOpen}>
     <a href="/" on:click|preventDefault={() => navigate('/')} class="mobile-menu-link" class:active={currentPage === 'home'}>Home</a>
     <a href="/about" on:click|preventDefault={() => navigate('/about')} class="mobile-menu-link" class:active={currentPage === 'about'}>About</a>
     <a href="/roadmap" on:click|preventDefault={() => navigate('/roadmap')} class="mobile-menu-link" class:active={currentPage === 'roadmap'}>Roadmap</a>

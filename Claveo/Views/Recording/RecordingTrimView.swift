@@ -125,7 +125,7 @@ struct RecordingTrimView: View {
                 playbackControls
             }
             .background(Color(.systemGroupedBackground))
-            .navigationTitle("Trim")
+            .navigationTitle(String(localized: "Trim"))
             .navigationBarTitleDisplayMode(.inline)
             .tint(themeManager.accentColor)
             .toolbar {
@@ -173,7 +173,7 @@ struct RecordingTrimView: View {
                 .font(.title3.weight(.semibold))
                 .lineLimit(2)
 
-            Text("Drag the handles to choose what to keep.")
+            Text(String(localized: "Drag the handles to choose what to keep."))
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
         }
@@ -183,14 +183,19 @@ struct RecordingTrimView: View {
     @ViewBuilder
     private var waveformSection: some View {
         VStack(spacing: 0) {
-            if !FileManager.default.fileExists(atPath: recording.fileURL.path) {
-                Label("File not found", systemImage: "exclamationmark.triangle")
+            if !recording.isLocallyAvailable {
+                Label(
+                    recording.isStoredIniCloud
+                        ? String(localized: "Not downloaded from iCloud")
+                        : String(localized: "File not found"),
+                    systemImage: recording.isStoredIniCloud ? "icloud.and.arrow.down" : "exclamationmark.triangle"
+                )
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity, minHeight: 180, alignment: .center)
             } else if isLoadingWaveform {
                 VStack(spacing: 12) {
                     ProgressView()
-                    Text("Loading waveform…")
+                    Text(String(localized: "Loading waveform…"))
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                 }
@@ -253,7 +258,7 @@ struct RecordingTrimView: View {
                 endTime = effectiveDuration
                 previewPlayer.seek(to: 0)
             } label: {
-                Label("Reset", systemImage: "arrow.counterclockwise")
+                Label(String(localized: "Reset"), systemImage: "arrow.counterclockwise")
                     .font(.subheadline.weight(.medium))
                     .frame(maxWidth: .infinity)
             }
@@ -281,7 +286,7 @@ struct RecordingTrimView: View {
                 }
             }
             .buttonStyle(.plain)
-            .disabled(isTrimming || !FileManager.default.fileExists(atPath: recording.fileURL.path) || !canApply)
+            .disabled(isTrimming || !recording.isLocallyAvailable || !canApply)
             .accessibilityLabel(previewPlayer.isPlaying ? String(localized: "Pause preview") : String(localized: "Play selection"))
         }
         .padding(.horizontal, 20)
@@ -297,7 +302,7 @@ struct RecordingTrimView: View {
     }
 
     private var canApply: Bool {
-        FileManager.default.fileExists(atPath: recording.fileURL.path) && (endTime - startTime) >= 0.1
+        recording.isLocallyAvailable && (endTime - startTime) >= 0.1
     }
 
     private var effectiveDuration: TimeInterval {
@@ -306,7 +311,7 @@ struct RecordingTrimView: View {
     }
 
     private func loadWaveform() async {
-        guard FileManager.default.fileExists(atPath: recording.fileURL.path) else {
+        guard recording.isLocallyAvailable else {
             isLoadingWaveform = false
             waveformBars = []
             return

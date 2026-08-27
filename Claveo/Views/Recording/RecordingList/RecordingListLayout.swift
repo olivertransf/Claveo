@@ -60,7 +60,7 @@ extension RecordingListView {
         let recordings = filteredRecordings.filter { selectedRecordingIds.contains($0.id) }
         var urls: [URL] = []
         for recording in recordings {
-            guard FileManager.default.fileExists(atPath: recording.fileURL.path) else { continue }
+            guard recording.isLocallyAvailable else { continue }
             guard let url = try? recording.shareableFileURL() else { continue }
             urls.append(url)
         }

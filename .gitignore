@@ -8,3 +8,7 @@ dist/
 .cursorrules
 .cursor/
 .claude/
+
+# Xcode user-specific state
+*.xcuserstate
+**/xcuserdata/

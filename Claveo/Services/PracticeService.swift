@@ -35,13 +35,18 @@ class PracticeService: ObservableObject {
     private var cachedThisWeekPracticeTime = 0
     private var cachedAverageRating: Double?
 
+    /// Bumped on every local mutation so in-flight iCloud syncs can abort.
+    private var entriesGeneration = 0
+
     private let entriesKey = "practiceEntries"
     private let entriesFileName = "practiceEntries.json"
     private var entriesURL: URL {
         iCloudManager.shared.getDocumentsURL().appendingPathComponent(entriesFileName)
     }
     private var saveTask: Task<Void, Never>?
+    private var iCloudWriteTask: Task<Void, Never>?
     private var isSyncing = false
+    private var syncGeneration = 0
 
     private var hasPerformedInitialCloudSync = false
 
@@ -80,6 +85,7 @@ class PracticeService: ObservableObject {
         var newEntry = entry
         newEntry.lastModified = Date()
         allEntries.append(newEntry)
+        entriesGeneration &+= 1
         scheduleSave()
     }
 
@@ -88,6 +94,7 @@ class PracticeService: ObservableObject {
             var updatedEntry = entry
             updatedEntry.lastModified = Date()
             allEntries[index] = updatedEntry
+            entriesGeneration &+= 1
             scheduleSave()
         }
     }
@@ -99,6 +106,7 @@ class PracticeService: ObservableObject {
             deletedEntry.isDeleted = true
             deletedEntry.lastModified = Date()
             allEntries[index] = deletedEntry
+            entriesGeneration &+= 1
             scheduleSave()
         }
     }
@@ -107,6 +115,7 @@ class PracticeService: ObservableObject {
         let updated = Self.removingRecordingID(recordingID, from: allEntries)
         guard updated != allEntries else { return }
         allEntries = updated
+        entriesGeneration &+= 1
         scheduleSave()
     }
 
@@ -281,34 +290,17 @@ class PracticeService: ObservableObject {
     }
 
     private func saveToiCloud() {
-        // Encode allEntries (including deleted ones)
-        guard let encoded = try? JSONEncoder().encode(allEntries) else {
-            #if DEBUG
-            print("❌ Failed to encode practice entries")
-            #endif
-            return
-        }
-        
-        do {
-            try iCloudManager.shared.writeFile(data: encoded, to: entriesURL)
-            #if DEBUG
-            print("✅ Saved practice entries to iCloud: \(entriesURL.path)")
-            #endif
-        } catch {
-            #if DEBUG
-            print("❌ Failed to save practice entries to iCloud: \(error.localizedDescription)")
-            print("   Attempting fallback write...")
-            #endif
-            // Fallback to direct write if coordination fails
+        let entriesSnapshot = allEntries
+        guard let encoded = try? JSONEncoder().encode(entriesSnapshot) else { return }
+        let url = entriesURL
+        let previousWrite = iCloudWriteTask
+
+        iCloudWriteTask = Task.detached(priority: .utility) {
+            await previousWrite?.value
             do {
-                try encoded.write(to: entriesURL, options: [.atomic])
-                #if DEBUG
-                print("✅ Fallback write succeeded")
-                #endif
+                try iCloudManager.shared.writeFile(data: encoded, to: url)
             } catch {
-                #if DEBUG
-                print("❌ Fallback write also failed: \(error.localizedDescription)")
-                #endif
+                try? encoded.write(to: url, options: [.atomic])
             }
         }
     }
@@ -323,7 +315,7 @@ class PracticeService: ObservableObject {
     }
 
     /// Last-modified-wins merge (same rules as sync).
-    private func mergeEntries(local: [PracticeEntry], cloud: [PracticeEntry]) -> [PracticeEntry] {
+    nonisolated private static func mergeEntries(local: [PracticeEntry], cloud: [PracticeEntry]) -> [PracticeEntry] {
         var map: [UUID: PracticeEntry] = [:]
         for e in local { map[e.id] = e }
         for cloudEntry in cloud {
@@ -351,61 +343,41 @@ class PracticeService: ObservableObject {
         }
     }
 
-    private func loadFromiCloud() -> [PracticeEntry]? {
-        do {
-            let data = try iCloudManager.shared.readFile(from: entriesURL)
-            if let decoded = try? JSONDecoder().decode([PracticeEntry].self, from: data) {
-                #if DEBUG
-                print("✅ Loaded \(decoded.count) practice entries from iCloud")
-                #endif
-                return decoded
-            } else {
-                #if DEBUG
-                print("❌ Failed to decode practice entries from iCloud")
-                #endif
-            }
-        } catch {
-            #if DEBUG
-            print("⚠️ Could not load from iCloud (file may not exist yet): \(error.localizedDescription)")
-            #endif
-            // File doesn't exist or can't be read - that's okay, use UserDefaults
-        }
-        return nil
-    }
-
     // MARK: - iCloud Sync
 
     func syncFromiCloud() {
         guard !isSyncing else { return }
         isSyncing = true
-        defer { isSyncing = false }
-        
-        #if DEBUG
-        print("🔄 Syncing practice entries from iCloud...")
-        #endif
-        
-        // When coming back online, sync from iCloud
-        if let iCloudEntries = loadFromiCloud() {
-            let merged = mergeEntries(local: allEntries, cloud: iCloudEntries)
-            if merged != allEntries {
-                allEntries = merged
-                #if DEBUG
-                print("✅ Sync complete: merged cloud. Total: \(allEntries.count) (including deleted)")
-                #endif
-                saveToUserDefaults()
-            } else {
-                #if DEBUG
-                print("✅ Sync complete: No changes from cloud needed.")
-                #endif
+        syncGeneration &+= 1
+        let generationAtStart = syncGeneration
+        let url = entriesURL
+        let localSnapshot = allEntries
+        let entriesGenerationAtStart = entriesGeneration
+
+        Task.detached(priority: .utility) {
+            let cloudData = try? iCloudManager.shared.readFile(from: url)
+            let cloudEntries = cloudData.flatMap { try? JSONDecoder().decode([PracticeEntry].self, from: $0) }
+            let merged = cloudEntries.map { Self.mergeEntries(local: localSnapshot, cloud: $0) } ?? localSnapshot
+
+            await MainActor.run { [weak self] in
+                guard let self else { return }
+                guard self.isSyncing, self.syncGeneration == generationAtStart else { return }
+                // Abort if the user changed entries while the cloud read was in flight.
+                guard self.entriesGeneration == entriesGenerationAtStart else {
+                    self.isSyncing = false
+                    self.saveToiCloud()
+                    return
+                }
+
+                if merged != self.allEntries {
+                    self.allEntries = merged
+                    self.saveToUserDefaults()
+                }
+
+                // Always write back our merged view so devices converge, but never block UI.
+                self.saveToiCloud()
+                self.isSyncing = false
             }
-            saveToiCloud()
-        } else {
-            // If iCloud file doesn't exist, ensure local changes are synced to iCloud
-            // This handles the case where user made changes offline
-            #if DEBUG
-            print("⚠️ No iCloud file found, uploading local entries...")
-            #endif
-            saveToiCloud()
         }
     }
 

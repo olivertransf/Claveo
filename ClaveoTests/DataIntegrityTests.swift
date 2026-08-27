@@ -156,7 +156,7 @@ final class DataIntegrityTests: XCTestCase {
 
         var depth = 0
         var closingBrace: String.Index?
-        for index in source.indices[openingBrace...] {
+        braceScan: for index in source.indices[openingBrace...] {
             switch source[index] {
             case "{":
                 depth += 1
@@ -164,7 +164,7 @@ final class DataIntegrityTests: XCTestCase {
                 depth -= 1
                 if depth == 0 {
                     closingBrace = index
-                    break
+                    break braceScan
                 }
             default:
                 break
