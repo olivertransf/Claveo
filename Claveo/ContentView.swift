@@ -86,29 +86,50 @@ struct ContentView: View {
         }
     }
 
+    /// iPad always shows names. iPhone follows the Settings toggle.
+    private var showTabBarText: Bool {
+        if UIDevice.current.userInterfaceIdiom == .pad {
+            return true
+        }
+        return settingsManager.settings.showTabBarText
+    }
+
+    @ViewBuilder
+    private func tabLabel(title: String, systemImage: String) -> some View {
+        if showTabBarText {
+            Label(title, systemImage: systemImage)
+        } else {
+            Image(systemName: systemImage)
+                .accessibilityLabel(title)
+        }
+    }
+
     private var compactTabView: some View {
         TabView(selection: $compactTabSelection) {
             ForEach(barSemanticIds, id: \.self) { semanticId in
-                Tab(
-                    AppTabRegistry.title(semanticId),
-                    systemImage: AppTabRegistry.systemImage(semanticId),
-                    value: semanticId
-                ) {
+                Tab(value: semanticId) {
                     DeferredTab(isActive: visibleSemanticId == semanticId) {
                         FeatureRootView(
                             semanticId: semanticId,
                             isTabSelected: visibleSemanticId == semanticId
                         )
                     }
+                } label: {
+                    tabLabel(
+                        title: AppTabRegistry.title(semanticId),
+                        systemImage: AppTabRegistry.systemImage(semanticId)
+                    )
                 }
             }
 
-            Tab("More", systemImage: "ellipsis", value: Self.moreTabValue) {
+            Tab(value: Self.moreTabValue) {
                 MoreHubView(
                     tabs: moreSemanticIds,
                     selectedTabIndex: $selectedTabIndex,
                     isMoreSelected: compactTabSelection == Self.moreTabValue
                 )
+            } label: {
+                tabLabel(title: String(localized: "More"), systemImage: "ellipsis")
             }
         }
     }
@@ -116,17 +137,18 @@ struct ContentView: View {
     private var regularTabView: some View {
         TabView(selection: $selectedTabIndex) {
             ForEach(tabOrder, id: \.self) { semanticId in
-                Tab(
-                    AppTabRegistry.title(semanticId),
-                    systemImage: AppTabRegistry.systemImage(semanticId),
-                    value: semanticId
-                ) {
+                Tab(value: semanticId) {
                     DeferredTab(isActive: visibleSemanticId == semanticId) {
                         FeatureRootView(
                             semanticId: semanticId,
                             isTabSelected: visibleSemanticId == semanticId
                         )
                     }
+                } label: {
+                    tabLabel(
+                        title: AppTabRegistry.title(semanticId),
+                        systemImage: AppTabRegistry.systemImage(semanticId)
+                    )
                 }
             }
         }
