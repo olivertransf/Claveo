@@ -104,12 +104,6 @@ struct SettingsView: View {
                 }
             }
 
-            if UIDevice.current.userInterfaceIdiom == .phone {
-                Toggle("Show Tab Bar Labels", isOn: Binding(
-                    get: { settingsManager.settings.showTabBarText },
-                    set: { settingsManager.update(\.showTabBarText, value: $0) }
-                ))
-            }
         }
     }
 
