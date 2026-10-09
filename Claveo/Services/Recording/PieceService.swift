@@ -5,23 +5,22 @@ enum PieceService {
     private static let cacheKey = "pieces_cache"
 
     static func load() -> [Piece] {
-        var loaded: [Piece] = []
+        sorted(loadAll().filter { !$0.isDeleted })
+    }
 
-        for root in iCloudManager.shared.knownStorageRoots().values {
-            let fileURL = root.appendingPathComponent(fileName)
-            if let persisted = decode(readCoordinated(from: fileURL)) {
-                loaded = merge(loaded, with: persisted)
-            } else if let persisted = decode(try? Data(contentsOf: fileURL)) {
-                loaded = merge(loaded, with: persisted)
-            }
+    static func loadAll() -> [Piece] {
+        let roots = Array(iCloudManager.shared.knownStorageRoots().values)
+        var loaded = LibraryFiles.read(Piece.self, collection: .pieces, roots: roots)
+        loaded = merge(loaded, with: LibraryFiles.readLegacy(Piece.self, fileName: fileName, roots: roots))
+
+        if loaded.isEmpty {
+            loaded = decode(UserDefaults.standard.data(forKey: cacheKey)) ?? []
         }
-
-        if !loaded.isEmpty {
-            cache(loaded)
-            return sorted(loaded)
+        let kept = LibraryFiles.keepingLive(loaded)
+        if !kept.isEmpty {
+            cache(kept)
         }
-
-        return sorted(decode(UserDefaults.standard.data(forKey: cacheKey)) ?? [])
+        return sorted(kept)
     }
 
     @discardableResult
@@ -33,18 +32,23 @@ enum PieceService {
 
     @discardableResult
     static func delete(id: UUID) throws -> [Piece] {
-        var pieces = load()
-        pieces.removeAll { $0.id == id }
+        var pieces = loadAll()
+        guard let index = pieces.firstIndex(where: { $0.id == id }) else {
+            return load()
+        }
+        pieces[index].isDeleted = true
+        pieces[index].lastModified = Date()
         try persist(pieces)
-        return sorted(pieces)
+        return load()
     }
 
     /// Full-snapshot persist. Prefer `upsert` / `delete` for incremental UI edits.
     @discardableResult
     static func replace(with pieces: [Piece]) throws -> [Piece] {
-        let resolved = sorted(pieces)
+        let tombstones = loadAll().filter(\.isDeleted)
+        let resolved = merge(tombstones, with: pieces)
         try persist(resolved)
-        return resolved
+        return resolved.filter { !$0.isDeleted }
     }
 
     static func merge(_ lhs: [Piece], with rhs: [Piece]) -> [Piece] {
@@ -62,16 +66,13 @@ enum PieceService {
     }
 
     private static func persist(_ pieces: [Piece]) throws {
-        let normalized = sorted(pieces)
-        let encoded = try JSONEncoder().encode(normalized)
-        let fileURL = iCloudManager.shared.getDocumentsURL().appendingPathComponent(fileName)
-
-        do {
-            try iCloudManager.shared.writeFile(data: encoded, to: fileURL)
-        } catch {
-            try encoded.write(to: fileURL, options: .atomic)
+        let root = iCloudManager.shared.getDocumentsURL()
+        for piece in LibraryFiles.expired(pieces) {
+            LibraryFiles.remove(id: piece.id, collection: .pieces, root: root)
         }
-        UserDefaults.standard.set(encoded, forKey: cacheKey)
+        let normalized = LibraryFiles.keepingLive(sorted(pieces))
+        try LibraryFiles.write(normalized, collection: .pieces, root: root)
+        cache(normalized)
     }
 
     private static func readCoordinated(from url: URL) -> Data? {

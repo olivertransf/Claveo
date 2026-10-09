@@ -6,12 +6,14 @@
 //
 //  Copyright (c) 2025 Oliver Tran
 
+import AVFoundation
 import SwiftUI
 
 struct SettingsView: View {
     @EnvironmentObject var themeManager: ThemeManager
     @Environment(\.openURL) private var openURL
     @StateObject private var settingsManager = SettingsManager.shared
+    @ObservedObject private var syncEngine = SyncEngine.shared
     @State private var manualFrequencyText = ""
     /// Grows with Dynamic Type so the Hz value is never clipped.
     @ScaledMetric(relativeTo: .body) private var frequencyFieldWidth: CGFloat = 76
@@ -45,6 +47,7 @@ struct SettingsView: View {
                 metronomeSection
                 tunerSection
                 practiceSection
+                recordingSection
                 storageSection
                 resetSection
                 aboutSection
@@ -280,6 +283,58 @@ struct SettingsView: View {
         }
     }
 
+    private var stereoCaptureAvailable: Bool {
+        let session = AVAudioSession.sharedInstance()
+        return (session.availableInputs ?? []).contains { port in
+            port.dataSources?.contains { $0.supportedPolarPatterns?.contains(.stereo) == true } == true
+        }
+    }
+
+    // MARK: - Recording
+
+    var recordingSection: some View {
+        let quality = settingsManager.settings.recordingQuality
+        let micMode = settingsManager.settings.recordingMicMode
+        let size = quality.approxMegabytesPerMinute(channelCount: micMode.channelCount)
+        return Section {
+            Picker("Quality", selection: Binding(
+                get: { settingsManager.settings.recordingQuality },
+                set: { settingsManager.update(\.recordingQuality, value: $0) }
+            )) {
+                ForEach(RecordingQuality.allCases) { option in
+                    Text(option.localizedName).tag(option)
+                }
+            }
+
+            if stereoCaptureAvailable {
+                Picker("Microphone", selection: Binding(
+                    get: { settingsManager.settings.recordingMicMode },
+                    set: { settingsManager.update(\.recordingMicMode, value: $0) }
+                )) {
+                    ForEach(RecordingMicMode.allCases) { option in
+                        Text(option.localizedName).tag(option)
+                    }
+                }
+            }
+
+            Toggle("Bluetooth Headset Microphone", isOn: Binding(
+                get: { settingsManager.settings.allowBluetoothHeadsetMic },
+                set: { settingsManager.update(\.allowBluetoothHeadsetMic, value: $0) }
+            ))
+
+            LabeledContent("Current Input") {
+                Text(AudioRecorder.shared.currentInputName.isEmpty
+                     ? String(localized: "iPhone Microphone")
+                     : AudioRecorder.shared.currentInputName)
+                    .foregroundStyle(.secondary)
+            }
+        } header: {
+            Text("Recording")
+        } footer: {
+            Text("\(quality.detail) About \(size.formatted(.number.precision(.fractionLength(1)))) MB per minute. \(micMode.detail) Lossless and Uncompressed keep the full range; use them for auditions and excerpts. A Bluetooth headset microphone uses the call path and lowers quality.")
+        }
+    }
+
     // MARK: - Storage
 
     var storageSection: some View {
@@ -305,6 +360,24 @@ struct SettingsView: View {
                 Text(storageLocationText)
                     .foregroundColor(.secondary)
                     .font(.caption)
+            }
+
+            LabeledContent("Sync") {
+                Text(syncEngine.status.title)
+                    .foregroundStyle(.secondary)
+            }
+
+            if let lastSyncedAt = syncEngine.lastSyncedAt {
+                LabeledContent("Last Synced") {
+                    Text(lastSyncedAt, style: .relative)
+                        .foregroundStyle(.secondary)
+                }
+            }
+
+            if case .error = syncEngine.status {
+                Button("Retry Sync") {
+                    syncEngine.retry()
+                }
             }
 
             if settingsManager.settings.storeFilesOnDeviceOnly {

@@ -17,6 +17,7 @@ struct RecordingListView: View {
     @EnvironmentObject var themeManager: ThemeManager
     @Environment(\.horizontalSizeClass) var horizontalSizeClass
     @ObservedObject var recorder = AudioRecorder.shared
+    @ObservedObject var syncEngine = SyncEngine.shared
     @State var player = AudioPlayer()
     @State var showingDeleteAlert = false
     @State var showingRecordingErrorAlert = false

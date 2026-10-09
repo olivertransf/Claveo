@@ -31,6 +31,7 @@ struct RecordingRowView: View {
     var onToggleSelection: (() -> Void)? = nil
     var allowsInlineExpansion: Bool = true
     var isSplitFocused: Bool = false
+    var downloadProgress: Double? = nil
 
     private let transportHitSize: CGFloat = 44
 
@@ -82,10 +83,17 @@ struct RecordingRowView: View {
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
 
-                Image(systemName: recording.storageSystemImage)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .accessibilityLabel(recording.storageAccessibilityLabel)
+                if let downloadProgress, downloadProgress < 1 {
+                    ProgressView(value: downloadProgress)
+                        .progressViewStyle(.circular)
+                        .controlSize(.mini)
+                        .accessibilityLabel(String(localized: "Downloading"))
+                } else {
+                    Image(systemName: recording.storageSystemImage)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .accessibilityLabel(recording.storageAccessibilityLabel)
+                }
 
                 if hasNotes {
                     Image(systemName: "text.bubble")

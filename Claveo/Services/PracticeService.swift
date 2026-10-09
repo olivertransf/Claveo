@@ -290,18 +290,23 @@ class PracticeService: ObservableObject {
     }
 
     private func saveToiCloud() {
-        let entriesSnapshot = allEntries
-        guard let encoded = try? JSONEncoder().encode(entriesSnapshot) else { return }
-        let url = entriesURL
+        let expiredIDs = LibraryFiles.expired(allEntries).map(\.id)
+        let payloads = LibraryFiles.keepingLive(allEntries).compactMap { entry -> (id: UUID, data: Data)? in
+            guard let data = try? JSONEncoder().encode(entry) else { return nil }
+            return (entry.id, data)
+        }
+        let root = iCloudManager.shared.getDocumentsURL()
         let previousWrite = iCloudWriteTask
 
         iCloudWriteTask = Task.detached(priority: .utility) {
             await previousWrite?.value
-            do {
-                try iCloudManager.shared.writeFile(data: encoded, to: url)
-            } catch {
-                try? encoded.write(to: url, options: [.atomic])
-            }
+            try? await LibraryStore.shared.replace(
+                payloads: payloads,
+                removingIDs: expiredIDs,
+                audioFileNames: [],
+                collection: .practice,
+                root: root
+            )
         }
     }
 
@@ -355,9 +360,17 @@ class PracticeService: ObservableObject {
         let entriesGenerationAtStart = entriesGeneration
 
         Task.detached(priority: .utility) {
-            let cloudData = try? iCloudManager.shared.readFile(from: url)
-            let cloudEntries = cloudData.flatMap { try? JSONDecoder().decode([PracticeEntry].self, from: $0) }
-            let merged = cloudEntries.map { Self.mergeEntries(local: localSnapshot, cloud: $0) } ?? localSnapshot
+            let roots = iCloudManager.shared.knownStorageRoots().values.map { $0 }
+            let legacyData = try? iCloudManager.shared.readFile(from: url)
+            let legacyEntries = legacyData.flatMap { try? JSONDecoder().decode([PracticeEntry].self, from: $0) } ?? []
+            let sidecarEntries = LibraryFiles.readPayloads(collection: .practice, roots: roots).compactMap {
+                try? JSONDecoder().decode(PracticeEntry.self, from: $0)
+            }
+            let cutoff = Date().addingTimeInterval(-LibraryFiles.tombstoneRetention)
+            let cloudEntries = (legacyEntries + sidecarEntries).filter {
+                !($0.isDeleted && $0.lastModified < cutoff)
+            }
+            let merged = Self.mergeEntries(local: localSnapshot, cloud: cloudEntries)
 
             await MainActor.run { [weak self] in
                 guard let self else { return }

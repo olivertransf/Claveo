@@ -100,7 +100,11 @@ extension RecordingListView {
         .safeAreaInset(edge: .bottom, spacing: 0) {
             VStack(spacing: 10) {
                 if recorder.isRecording && !usesSplitPlayback {
-                    LiveRecordingIndicatorView(meter: recorder.meter, isRecording: true)
+                    LiveRecordingIndicatorView(
+                        meter: recorder.meter,
+                        isRecording: true,
+                        inputName: recorder.currentInputName
+                    )
                 }
 
                 recordingButtonOverlay
@@ -277,6 +281,16 @@ extension RecordingListView {
                     Label("Pieces", systemImage: "music.note.list")
                         .symbolRenderingMode(.monochrome)
                 }
+
+                Button {
+                    if case .error = syncEngine.status {
+                        syncEngine.retry()
+                    }
+                } label: {
+                    Image(systemName: syncEngine.status.systemImage)
+                        .symbolEffect(.pulse, isActive: syncEngine.pendingCount > 0)
+                }
+                .accessibilityLabel(syncEngine.status.title)
             }
 
             ToolbarItemGroup(placement: .navigationBarTrailing) {
@@ -436,6 +450,7 @@ struct ConditionalSearchableModifier: ViewModifier {
 struct LiveRecordingIndicatorView: View {
     @ObservedObject var meter: RecordingMeter
     let isRecording: Bool
+    var inputName: String = ""
 
     var body: some View {
         GeometryReader { geometry in
@@ -461,6 +476,12 @@ struct LiveRecordingIndicatorView: View {
                         .fontWeight(.semibold)
                         .foregroundColor(.white)
                         .contentTransition(.numericText())
+                }
+
+                if !inputName.isEmpty {
+                    Text(inputName)
+                        .font(.caption)
+                        .foregroundStyle(.white.opacity(0.85))
                 }
 
                 LiveWaveformView(audioLevels: meter.waveformLevels, maxBars: maxBars)

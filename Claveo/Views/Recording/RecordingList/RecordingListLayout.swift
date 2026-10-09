@@ -154,7 +154,8 @@ extension RecordingListView {
                     onToggleKeepDownloaded: { toggleKeepDownloaded(recording) },
                     isSelectionMode: isSelectingRecordings,
                     isSelected: selectedRecordingIds.contains(recording.id),
-                    onToggleSelection: { toggleRecordingSelection(recording.id) }
+                    onToggleSelection: { toggleRecordingSelection(recording.id) },
+                    downloadProgress: recorder.downloadProgress[recording.id]
                 )
             } else {
                 RecordingRowView(
@@ -186,7 +187,8 @@ extension RecordingListView {
                     isSelected: selectedRecordingIds.contains(recording.id),
                     onToggleSelection: { toggleRecordingSelection(recording.id) },
                     allowsInlineExpansion: !usesSplitPlayback,
-                    isSplitFocused: usesSplitPlayback && expandedRecordingId == recording.id
+                    isSplitFocused: usesSplitPlayback && expandedRecordingId == recording.id,
+                    downloadProgress: recorder.downloadProgress[recording.id]
                 )
             }
         }
@@ -294,7 +296,11 @@ extension RecordingListView {
     @ViewBuilder
     var splitDetailColumn: some View {
         if recorder.isRecording {
-            LiveRecordingSplitCard(meter: recorder.meter, isRecording: true)
+            LiveRecordingSplitCard(
+                meter: recorder.meter,
+                isRecording: true,
+                inputName: recorder.currentInputName
+            )
         } else if let recording = focusedRecording {
             RecordingSplitDetailView(
                 recording: recording,
@@ -369,6 +375,7 @@ private struct PlaybackObservingRecordingRow: View {
     var isSelectionMode: Bool = false
     var isSelected: Bool = false
     var onToggleSelection: (() -> Void)? = nil
+    var downloadProgress: Double? = nil
 
     var body: some View {
         RecordingRowView(
@@ -392,7 +399,8 @@ private struct PlaybackObservingRecordingRow: View {
             isSelected: isSelected,
             onToggleSelection: onToggleSelection,
             allowsInlineExpansion: true,
-            isSplitFocused: false
+            isSplitFocused: false,
+            downloadProgress: downloadProgress
         )
     }
 }
@@ -400,6 +408,7 @@ private struct PlaybackObservingRecordingRow: View {
 private struct LiveRecordingSplitCard: View {
     @ObservedObject var meter: RecordingMeter
     let isRecording: Bool
+    var inputName: String = ""
 
     var body: some View {
         VStack(spacing: 20) {
@@ -415,6 +424,12 @@ private struct LiveRecordingSplitCard: View {
                     .fontWeight(.semibold)
                     .foregroundStyle(.primary)
                     .contentTransition(.numericText())
+            }
+
+            if !inputName.isEmpty {
+                Text(inputName)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
             }
 
             GeometryReader { geometry in

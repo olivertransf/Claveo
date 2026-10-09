@@ -213,6 +213,15 @@ class SettingsManager: ObservableObject {
         }
 
         settings.storeFilesOnDeviceOnly = defaults.object(forKey: "storeFilesOnDeviceOnly") as? Bool ?? false
+        if let raw = defaults.string(forKey: "recordingQuality"),
+           let quality = RecordingQuality(rawValue: raw) {
+            settings.recordingQuality = quality
+        }
+        if let raw = defaults.string(forKey: "recordingMicMode"),
+           let mode = RecordingMicMode(rawValue: raw) {
+            settings.recordingMicMode = mode
+        }
+        settings.allowBluetoothHeadsetMic = defaults.object(forKey: "allowBluetoothHeadsetMic") as? Bool ?? false
 
         // Navigation
         settings.lastSelectedTab = defaults.integer(forKey: "lastSelectedTab")
@@ -313,6 +322,9 @@ class SettingsManager: ObservableObject {
         defaults.set(settings.colorScheme, forKey: "colorScheme")
         defaults.set(settings.showTabBarText, forKey: "showTabBarText")
         defaults.set(settings.storeFilesOnDeviceOnly, forKey: "storeFilesOnDeviceOnly")
+        defaults.set(settings.recordingQuality.rawValue, forKey: "recordingQuality")
+        defaults.set(settings.recordingMicMode.rawValue, forKey: "recordingMicMode")
+        defaults.set(settings.allowBluetoothHeadsetMic, forKey: "allowBluetoothHeadsetMic")
 
         // Note: lastSelectedTab is written directly by ContentView to avoid @Published re-renders.
 
@@ -452,6 +464,9 @@ class SettingsManager: ObservableObject {
             "colorScheme",
             "showTabBarText",
             "storeFilesOnDeviceOnly",
+            "recordingQuality",
+            "recordingMicMode",
+            "allowBluetoothHeadsetMic",
             "lastSelectedTab",
             "tabBarCustomizationOrder",
             "metronomeTimeSignature",
