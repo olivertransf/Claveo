@@ -7,7 +7,7 @@
     <!-- Primary Meta Tags -->
     <title>Claveo — Practice Companion | Record, Metronome, Tuner, Journal &amp; Ear Training</title>
     <meta name="title" content="Claveo — Practice Companion | Record, Metronome, Tuner, Journal &amp; Ear Training">
-    <meta name="description" content="Claveo is a free music practice app for iPhone and iPad: recordings with pieces and trim, metronome with reference tone, tuner, practice journal, ear-training exercises, chord & scale reference, music dictionary, and a tab bar you can reorder. Optional iCloud sync.">
+    <meta name="description" content="Claveo is a free music practice app for iPhone and iPad: lossless recording with pieces and trim, metronome with reference tone, tuner, practice journal, ear-training exercises, chord & scale reference, music dictionary, and live iCloud sync.">
     <meta name="keywords" content="music practice app, metronome, tuner, practice journal, ear training, music theory, chord reference, scale reference, music recording, iCloud, iPad, iPhone">
     <meta name="author" content="Oliver Tran">
     <meta name="robots" content="index, follow">
@@ -21,7 +21,7 @@
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://claveo-app.vercel.app/">
     <meta property="og:title" content="Claveo - Your Complete Music Practice Companion">
-    <meta property="og:description" content="Record, use metronome & tuner, log practice, train ears & theory, and reorder tabs—all in one free app for iPhone & iPad.">
+    <meta property="og:description" content="Lossless recording, metronome, tuner, practice journal, ear training, and live iCloud sync. Free on iPhone and iPad.">
     <meta property="og:image" content="https://claveo-app.vercel.app/og-image.png">
     <meta property="og:image:secure_url" content="https://claveo-app.vercel.app/og-image.png">
     <meta property="og:image:type" content="image/png">
@@ -34,7 +34,7 @@
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:url" content="https://claveo-app.vercel.app/">
     <meta name="twitter:title" content="Claveo - Your Complete Music Practice Companion">
-    <meta name="twitter:description" content="Record, use metronome & tuner, log practice, train ears & theory, and reorder tabs—all in one free app for iPhone & iPad.">
+    <meta name="twitter:description" content="Lossless recording, metronome, tuner, practice journal, ear training, and live iCloud sync. Free on iPhone and iPad.">
     <meta name="twitter:image" content="https://claveo-app.vercel.app/og-image.png">
     <meta name="twitter:image:alt" content="Claveo app icon">
     
@@ -48,7 +48,18 @@
     <!-- Preconnect for performance -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff">
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0a0b10">
+    <script>
+      (function () {
+        try {
+          var saved = localStorage.getItem('claveo-theme');
+          var dark = saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches);
+          if (dark) document.documentElement.classList.add('dark');
+        } catch (e) {}
+      })();
+    </script>
     
     <!-- Structured Data (JSON-LD) -->
     <script type="application/ld+json">
@@ -68,17 +79,17 @@
         "ratingValue": "4.5",
         "ratingCount": "1"
       },
-      "description": "Music practice app with recordings and piece library, metronome with reference tone, tuner, practice journal, exercises (notes, keys, intervals), chord and scale reference, music dictionary, and customizable tab bar. Optional iCloud sync.",
+      "description": "Music practice app with lossless recording and a piece library, metronome with reference tone, tuner, practice journal, exercises (notes, keys, intervals), chord and scale reference, music dictionary, and live iCloud sync.",
       "screenshot": "https://claveo-app.vercel.app/screenshots/metronome-iphone-light.png",
       "featureList": [
-        "Practice recording with pieces and trim",
+        "Recording in AAC, Apple Lossless, or WAV with pieces and trim",
         "Metronome and reference tone",
         "Precision tuner",
         "Practice journal and streaks",
         "Ear training exercises",
         "Chord and scale reference",
         "Music dictionary",
-        "Custom tab order and More menu"
+        "Live iCloud sync across iPhone and iPad"
       ],
       "author": {
         "@type": "Person",

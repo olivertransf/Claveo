@@ -3,22 +3,29 @@
   export let navigate;
 </script>
 
-<div class="container privacy-container">
-  <a href="/" on:click|preventDefault={() => navigate('/')} class="back-link">← Back to Home</a>
-  
-  <header>
+<div class="page privacy">
+  <div class="back-wrap">
+    <a href="/" on:click|preventDefault={() => navigate('/')} class="back-link">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
+      Back to Home
+    </a>
+  </div>
+
+  <header class="privacy-head">
+    <span class="eyebrow">Legal</span>
     <h1>Privacy Policy</h1>
+    <p class="last-updated">Last updated: April 2026</p>
   </header>
 
-  <p class="last-updated">Last updated: April 2026</p>
+  <div class="prose">
 
-  <div class="section privacy-section">
+  <div class="privacy-section">
     <h2>Introduction</h2>
     <p>I, Oliver Tran, develop Claveo and am committed to protecting your privacy. In this policy, "I," "me," and "my" refer to me as the developer. This Privacy Policy explains how your data is handled when you use the Claveo mobile application.</p>
     <p><strong>Important:</strong> I do not collect, transmit, or have access to any of your personal data. All data remains on your device and in your personal iCloud account.</p>
   </div>
 
-  <div class="section privacy-section">
+  <div class="privacy-section">
     <h2>Data Storage</h2>
     <p>Claveo stores the following types of data locally on your device:</p>
     <ul>
@@ -30,7 +37,7 @@
     <p><strong>I do not collect this data.</strong> It is stored entirely on your device and in your personal iCloud account (if iCloud sync is enabled). I have no access to any of this information.</p>
   </div>
 
-  <div class="section privacy-section">
+  <div class="privacy-section">
     <h2>How Your Data is Used</h2>
     <p>Your data is used solely by the app to:</p>
     <ul>
@@ -41,7 +48,7 @@
     <p>I do not use your data for analytics, advertising, or any other purpose. I cannot access your data.</p>
   </div>
 
-  <div class="section privacy-section">
+  <div class="privacy-section">
     <h2>Data Storage and Security</h2>
     <p>All audio recordings and metadata are stored:</p>
     <ul>
@@ -51,7 +58,7 @@
     <p><strong>I do not have access to any of your data.</strong> All data remains under your control and is subject to Apple's iCloud privacy and security policies. I do not transmit data to any external servers or third parties.</p>
   </div>
 
-  <div class="section privacy-section">
+  <div class="privacy-section">
     <h2>Microphone Access</h2>
     <p>Claveo requires microphone access to:</p>
     <ul>
@@ -61,12 +68,12 @@
     <p>The app uses the microphone only when you use recording or the tuner. I do not receive your audio; recording and pitch detection run on your device.</p>
   </div>
 
-  <div class="section privacy-section">
+  <div class="privacy-section">
     <h2>Analytics and Tracking</h2>
     <p>Claveo does not use any analytics services, tracking tools, or third-party data collection. I do not track your usage, collect crash reports, or gather any telemetry data.</p>
   </div>
 
-  <div class="section privacy-section">
+  <div class="privacy-section">
     <h2>Third-Party Libraries</h2>
     <p>Claveo includes the following open-source libraries (via Swift Package Manager). They run on your device only—I do not use them to collect or send your data to servers.</p>
     <ul>
@@ -80,17 +87,17 @@
     <p>If I add or replace libraries in a future version, I will update this list so it stays accurate.</p>
   </div>
 
-  <div class="section privacy-section">
+  <div class="privacy-section">
     <h2>Data Sharing</h2>
     <p>I do not collect, share, sell, or distribute your personal information or recordings to anyone. Your data remains private and is only accessible to you through your device and iCloud account. I have no access to your data.</p>
   </div>
 
-  <div class="section privacy-section">
+  <div class="privacy-section">
     <h2>Changes to This Privacy Policy</h2>
     <p>I may update this Privacy Policy from time to time. I will notify you of any changes by posting the new Privacy Policy on this page and updating the "Last updated" date.</p>
   </div>
 
-  <div class="section privacy-section">
+  <div class="privacy-section">
     <h2>Contact</h2>
     <p>If you have any questions about this Privacy Policy, please contact me at:</p>
     <p><a href="mailto:claveo.app@gmail.com" class="link-primary">claveo.app@gmail.com</a></p>
@@ -99,4 +106,81 @@
   <footer class="privacy-footer">
     <p>&copy; 2025 Oliver Tran. All rights reserved.</p>
   </footer>
+  </div>
 </div>
+
+<style>
+  .privacy {
+    padding-top: 24px;
+    padding-bottom: clamp(64px, 8vw, 112px);
+  }
+
+  .back-wrap {
+    position: sticky;
+    top: calc(var(--nav-height) + 12px);
+    z-index: 5;
+    max-width: var(--prose-max);
+    margin: 0 auto;
+    display: flex;
+  }
+
+  .back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px 8px 10px;
+    border-radius: var(--radius-pill);
+    border: 1px solid var(--border);
+    background: color-mix(in srgb, var(--bg) 85%, transparent);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    font-size: var(--text-small);
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-decoration: none;
+    transition: color 0.2s ease, border-color 0.2s ease;
+  }
+
+  .back-link:hover {
+    color: var(--accent-strong);
+    border-color: var(--accent);
+  }
+
+  .privacy-head {
+    max-width: var(--prose-max);
+    margin: 40px auto 40px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+    padding-bottom: 32px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .privacy-head h1 {
+    font-size: var(--text-h1);
+    font-weight: 800;
+  }
+
+  .last-updated {
+    font-size: var(--text-small);
+    color: var(--text-tertiary);
+  }
+
+  .privacy-section + .privacy-section {
+    margin-top: 2.5rem;
+  }
+
+  .privacy-footer {
+    margin-top: 3.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+    font-size: var(--text-small);
+    color: var(--text-tertiary);
+  }
+
+  .privacy-footer p {
+    font-size: var(--text-small);
+    color: var(--text-tertiary);
+  }
+</style>
