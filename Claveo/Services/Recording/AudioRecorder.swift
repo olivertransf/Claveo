@@ -55,6 +55,7 @@ class AudioRecorder: NSObject, ObservableObject {
     private let maxWaveformLevels = 140
     private var waveformPublishTick = 0
     private var sessionObservers: [NSObjectProtocol] = []
+    private var metadataSaveTask: Task<Void, Never>?
     
     override init() {
         super.init()
@@ -112,7 +113,17 @@ class AudioRecorder: NSObject, ObservableObject {
             uniqueKeysWithValues: merged.filter(\.isDeleted).map { ($0.id, $0) }
         )
         let active = merged.filter { !$0.isDeleted }
-        recordings = await recordingsWithLocalAvailability(pinStorageLocations(in: active))
+        let knownAvailability = Dictionary(
+            uniqueKeysWithValues: previousActive.map { ($0.id, $0.isLocallyAvailable) }
+        )
+        recordings = active.map { recording in
+            guard let known = knownAvailability[recording.id], known != recording.isLocallyAvailable else {
+                return recording
+            }
+            var kept = recording
+            kept.isLocallyAvailable = known
+            return kept
+        }
         refreshKeepDownloadedFiles()
         let metadataChanged =
             mutationRevision != revisionAtStart
@@ -555,14 +566,13 @@ class AudioRecorder: NSObject, ObservableObject {
         }
     }
 
-    /// Prefer encoded file length so metadata matches playback after stop (AAC finalize).
+    /// Header-only duration. Avoids decoding the whole file on the main actor.
     private static func durationFromAudioFile(at url: URL) -> TimeInterval? {
         guard FileManager.default.fileExists(atPath: url.path) else { return nil }
-        if let player = try? AVAudioPlayer(contentsOf: url) {
-            let d = player.duration
-            if d.isFinite, d > 0 { return d }
-        }
-        return nil
+        guard let file = try? AVAudioFile(forReading: url) else { return nil }
+        let sampleRate = file.fileFormat.sampleRate
+        guard sampleRate > 0, file.length > 0 else { return nil }
+        return Double(file.length) / sampleRate
     }
 
     private static func isNonemptyFile(at url: URL) -> Bool {
@@ -786,71 +796,66 @@ class AudioRecorder: NSObject, ObservableObject {
         }
     }
 
-    private func refreshKeepDownloadedFiles() {
-        let urls = recordings.compactMap { recording -> URL? in
-            guard recording.keepDownloaded, recording.isStoredIniCloud else { return nil }
-            return recording.fileURL
-        }
-        Task.detached(priority: .utility) {
-            for url in urls {
-                try? iCloudManager.shared.startKeepingDownloaded(at: url)
-            }
-        }
-    }
-
-    private func pinStorageLocations(in values: [Recording]) -> [Recording] {
-        values.map { recording in
-            guard recording.storageLocation == nil else { return recording }
-            guard let location = iCloudManager.shared.storageLocation(
-                containing: recording.fileName,
-                preferred: nil
-            ) else {
-                return recording
-            }
-            var pinned = recording
-            pinned.storageLocation = location
-            return pinned
-        }
-    }
-
-    private func recordingsWithLocalAvailability(_ values: [Recording]) async -> [Recording] {
-        let snapshots = values.map { (fileName: $0.fileName, location: $0.storageLocation) }
+    /// Checks one recording's audio file when its row is on screen. Work is serialized off the main actor.
+    func refreshVisibleRecording(_ id: UUID) async {
+        guard let recording = recordings.first(where: { $0.id == id }) else { return }
+        let fileName = recording.fileName
+        let pinned = recording.storageLocation
         let roots = iCloudManager.shared.knownStorageRoots()
         let defaultRoot = iCloudManager.shared.getDocumentsURL()
-        let availability = await Task.detached(priority: .utility) {
-            snapshots.map { item in
+        guard let status = await RecordingVisibilityLoader.shared.inspect(
+            fileName: fileName,
+            pinnedLocation: pinned,
+            roots: roots,
+            defaultRoot: defaultRoot,
+            startDownloadIfMissing: true
+        ) else { return }
+        guard !Task.isCancelled else { return }
+        guard let index = recordings.firstIndex(where: { $0.id == id }) else { return }
+
+        var updated = recordings[index]
+        let locationChanged = updated.storageLocation == nil && status.storageLocation != nil
+        let availabilityChanged = updated.isLocallyAvailable != status.isLocallyAvailable
+        guard locationChanged || availabilityChanged else { return }
+        if availabilityChanged {
+            updated.isLocallyAvailable = status.isLocallyAvailable
+        }
+        if locationChanged {
+            updated.storageLocation = status.storageLocation
+        }
+        recordings[index] = updated
+        if locationChanged {
+            scheduleMetadataSave()
+        }
+    }
+
+    private func scheduleMetadataSave() {
+        metadataSaveTask?.cancel()
+        metadataSaveTask = Task { @MainActor in
+            try? await Task.sleep(nanoseconds: 300_000_000)
+            guard !Task.isCancelled else { return }
+            _ = saveRecordings()
+        }
+    }
+
+    private func refreshKeepDownloadedFiles() {
+        let files = recordings.compactMap { recording -> (fileName: String, location: RecordingStorageLocation?)? in
+            guard recording.keepDownloaded, recording.isStoredIniCloud else { return nil }
+            return (recording.fileName, recording.storageLocation)
+        }
+        let roots = iCloudManager.shared.knownStorageRoots()
+        let defaultRoot = iCloudManager.shared.getDocumentsURL()
+        Task.detached(priority: .utility) {
+            for file in files {
                 let url = iCloudManager.resolvedFileURL(
-                    fileName: item.fileName,
-                    pinnedLocation: item.location,
+                    fileName: file.fileName,
+                    pinnedLocation: file.location,
                     roots: roots,
                     defaultRoot: defaultRoot
                 )
-                return Self.isFileLocallyAvailable(at: url, storageLocation: item.location)
-            }
-        }.value
-
-        return zip(values, availability).map { recording, available in
-            guard recording.isLocallyAvailable != available else { return recording }
-            var updated = recording
-            updated.isLocallyAvailable = available
-            return updated
-        }
-    }
-
-    nonisolated private static func isFileLocallyAvailable(
-        at url: URL,
-        storageLocation: RecordingStorageLocation?
-    ) -> Bool {
-        if storageLocation == .iCloud {
-            let values = try? url.resourceValues(forKeys: [
-                .isUbiquitousItemKey,
-                .ubiquitousItemDownloadingStatusKey
-            ])
-            if values?.isUbiquitousItem == true {
-                return values?.ubiquitousItemDownloadingStatus != .some(.notDownloaded)
+                try? iCloudManager.shared.startKeepingDownloaded(at: url)
             }
         }
-        return FileManager.default.fileExists(atPath: url.path)
     }
 
     private nonisolated static func normalizedMeterLevel(averageDB: Float, peakDB: Float) -> Float {

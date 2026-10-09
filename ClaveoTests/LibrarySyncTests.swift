@@ -44,6 +44,35 @@ final class LibrarySyncTests: XCTestCase {
         XCTAssertTrue(merged[0].isDeleted)
     }
 
+    func testInspectorStatsOneFileAndLeavesMissingFilesAlone() throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+
+        try Data("audio".utf8).write(to: root.appendingPathComponent("present.m4a"))
+        let roots: [RecordingStorageLocation: URL] = [.device: root]
+
+        let present = RecordingFileInspector.inspect(
+            fileName: "present.m4a",
+            pinnedLocation: .device,
+            roots: roots,
+            defaultRoot: root,
+            startDownloadIfMissing: false
+        )
+        XCTAssertTrue(present.isLocallyAvailable)
+        XCTAssertEqual(present.storageLocation, .device)
+
+        let missing = RecordingFileInspector.inspect(
+            fileName: "missing.m4a",
+            pinnedLocation: nil,
+            roots: roots,
+            defaultRoot: root,
+            startDownloadIfMissing: false
+        )
+        XCTAssertFalse(missing.isLocallyAvailable)
+        XCTAssertNil(missing.storageLocation)
+    }
+
     func testTombstoneGCCutoff() {
         let stale = Recording(
             fileName: "old.m4a",

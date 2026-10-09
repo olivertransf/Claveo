@@ -177,6 +177,9 @@ struct RecordingRowView: View {
         .claveoListRowChrome()
         .listRowBackground(rowBackground)
         .listRowInsets(rowInsets)
+        .task(id: recording.id) {
+            await AudioRecorder.shared.refreshVisibleRecording(recording.id)
+        }
     }
 
     private var rowInsets: EdgeInsets {
