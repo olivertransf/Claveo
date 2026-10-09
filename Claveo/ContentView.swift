@@ -252,7 +252,9 @@ private struct MoreHubView: View {
     }
 
     private func moreLink(_ semanticId: Int) -> some View {
-        NavigationLink(value: MoreRoute(semanticId: semanticId)) {
+        Button {
+            path.append(MoreRoute(semanticId: semanticId))
+        } label: {
             MoreHubCard(
                 title: AppTabRegistry.title(semanticId),
                 systemImage: AppTabRegistry.systemImage(semanticId),
