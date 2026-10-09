@@ -346,11 +346,10 @@ class PitchDetector: NSObject, ObservableObject {
     ) {
         let now = CACurrentMediaTime()
         let noteChanged = note != self.note
-        guard noteChanged
-            || abs(frequency - self.frequency) > 0.4
-            || abs(cents - self.cents) > 1
-            || now - lastPitchPublishTime >= 0.07
-        else { return }
+        let frequencyChanged = abs(frequency - self.frequency) > 0.4
+        let centsChanged = abs(cents - self.cents) > 1
+        guard noteChanged || frequencyChanged || centsChanged else { return }
+        guard now - lastPitchPublishTime >= (1.0 / 30.0) else { return }
         lastPitchPublishTime = now
         if self.frequency != frequency { self.frequency = frequency }
         if self.note != note { self.note = note }

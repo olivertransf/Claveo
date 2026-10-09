@@ -2,12 +2,34 @@ import AVFoundation
 import Foundation
 
 enum WaveformExtractor {
+    private static let cachedBarCount = 512
+
     /// Returns normalized amplitudes in the range [0, 1] with exactly `bars` samples,
     /// each aligned to an equal slice of the file timeline.
+    /// Full-resolution bars are cached under Caches/waveforms and downsampled for smaller requests.
     static func extractBars(from url: URL, bars: Int = 200) async throws -> [Float] {
         guard FileManager.default.fileExists(atPath: url.path) else { return [] }
 
-        return try await Task.detached(priority: .utility) {
+        let values = try? url.resourceValues(forKeys: [.contentModificationDateKey, .fileSizeKey])
+        let stamp = Int(values?.contentModificationDate?.timeIntervalSince1970 ?? 0)
+        let size = values?.fileSize ?? 0
+        let cacheURL = cacheFileURL(fileName: url.lastPathComponent, stamp: stamp, size: size)
+
+        let full: [Float]
+        if let cached = readCache(at: cacheURL), cached.count == cachedBarCount {
+            full = cached
+        } else {
+            full = try await computeBars(from: url, bars: cachedBarCount)
+            writeCache(full, to: cacheURL)
+        }
+
+        let target = max(10, bars)
+        if target == full.count { return full }
+        return WaveformDrawing.resample(full, to: target)
+    }
+
+    private static func computeBars(from url: URL, bars: Int) async throws -> [Float] {
+        try await Task.detached(priority: .utility) {
             let file = try AVAudioFile(forReading: url)
             let format = file.processingFormat
             let totalFrames = Int(file.length)
@@ -45,6 +67,30 @@ enum WaveformExtractor {
 
             return normalize(results)
         }.value
+    }
+
+    private static func cacheFileURL(fileName: String, stamp: Int, size: Int) -> URL {
+        let directory = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("waveforms", isDirectory: true)
+        try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        let safeName = fileName.replacingOccurrences(of: "/", with: "-")
+        return directory.appendingPathComponent("\(safeName)-\(stamp)-\(size).bin")
+    }
+
+    private static func readCache(at url: URL) -> [Float]? {
+        guard let data = try? Data(contentsOf: url),
+              !data.isEmpty,
+              data.count.isMultiple(of: MemoryLayout<Float>.size) else { return nil }
+        return data.withUnsafeBytes { buffer in
+            Array(buffer.bindMemory(to: Float.self))
+        }
+    }
+
+    private static func writeCache(_ samples: [Float], to url: URL) {
+        let data = samples.withUnsafeBufferPointer { buffer in
+            Data(buffer: buffer)
+        }
+        try? data.write(to: url, options: .atomic)
     }
 
     private static func amplitude(for buffer: AVAudioPCMBuffer, format: AVAudioFormat) -> Float {
