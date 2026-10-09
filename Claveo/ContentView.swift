@@ -203,42 +203,37 @@ private struct MoreHubView: View {
     @Binding var selectedTabIndex: Int
     let isMoreSelected: Bool
     @EnvironmentObject private var themeManager: ThemeManager
-    @State private var path = NavigationPath()
+    @State private var path: [MoreRoute] = []
     @State private var didRestore = false
 
     var body: some View {
         NavigationStack(path: $path) {
             ScrollView {
-                LazyVGrid(
-                    columns: [
-                        GridItem(.flexible(), spacing: 12),
-                        GridItem(.flexible(), spacing: 12)
-                    ],
-                    spacing: 12
-                ) {
-                    ForEach(tabs, id: \.self) { semanticId in
-                        NavigationLink(value: semanticId) {
-                            MoreHubCard(
-                                title: AppTabRegistry.title(semanticId),
-                                systemImage: AppTabRegistry.systemImage(semanticId),
-                                tint: themeManager.accentColor
-                            )
+                VStack(spacing: 12) {
+                    ForEach(Array(stride(from: 0, to: tabs.count, by: 2)), id: \.self) { start in
+                        HStack(spacing: 12) {
+                            moreLink(tabs[start])
+                            if start + 1 < tabs.count {
+                                moreLink(tabs[start + 1])
+                            } else {
+                                Color.clear
+                                    .frame(maxWidth: .infinity)
+                            }
                         }
-                        .buttonStyle(ClaveoPressButtonStyle())
                     }
                 }
                 .padding(16)
             }
             .background(Color(.systemGroupedBackground))
             .navigationTitle("More")
-            .navigationDestination(for: Int.self) { semanticId in
+            .navigationDestination(for: MoreRoute.self) { route in
                 FeatureRootView(
-                    semanticId: semanticId,
-                    isTabSelected: isMoreSelected && selectedTabIndex == semanticId
+                    semanticId: route.semanticId,
+                    isTabSelected: isMoreSelected && selectedTabIndex == route.semanticId
                 )
                 .onAppear {
-                    if selectedTabIndex != semanticId {
-                        selectedTabIndex = semanticId
+                    if selectedTabIndex != route.semanticId {
+                        selectedTabIndex = route.semanticId
                     }
                 }
             }
@@ -246,23 +241,38 @@ private struct MoreHubView: View {
         .onAppear(perform: restoreIfNeeded)
         .onChange(of: selectedTabIndex) { _, newValue in
             if !tabs.contains(newValue), !path.isEmpty {
-                path = NavigationPath()
+                path = []
             }
         }
         .onChange(of: tabs) { _, newTabs in
             if !path.isEmpty, !newTabs.contains(selectedTabIndex) {
-                path = NavigationPath()
+                path = []
             }
         }
+    }
+
+    private func moreLink(_ semanticId: Int) -> some View {
+        NavigationLink(value: MoreRoute(semanticId: semanticId)) {
+            MoreHubCard(
+                title: AppTabRegistry.title(semanticId),
+                systemImage: AppTabRegistry.systemImage(semanticId),
+                tint: themeManager.accentColor
+            )
+        }
+        .buttonStyle(ClaveoPressButtonStyle())
     }
 
     private func restoreIfNeeded() {
         guard !didRestore else { return }
         didRestore = true
         if tabs.contains(selectedTabIndex), path.isEmpty {
-            path.append(selectedTabIndex)
+            path = [MoreRoute(semanticId: selectedTabIndex)]
         }
     }
+}
+
+private struct MoreRoute: Hashable {
+    let semanticId: Int
 }
 
 private struct MoreHubCard: View {
