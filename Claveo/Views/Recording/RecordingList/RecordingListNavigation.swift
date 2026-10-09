@@ -14,13 +14,21 @@ extension RecordingListView {
             if usesSplitPlayback {
                 HStack(spacing: 0) {
                     recordingsColumn
-                        .frame(width: 360)
+                        .frame(width: splitSidebarWidth)
                         .frame(maxHeight: .infinity)
 
                     splitDetailColumn
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .onGeometryChange(for: CGFloat.self) { proxy in
+                    proxy.size.width
+                } action: { width in
+                    let next = min(380, max(300, width * 0.38))
+                    if abs(next - splitSidebarWidth) > 0.5 {
+                        splitSidebarWidth = next
+                    }
+                }
             } else {
                 NavigationStack {
                     recordingsColumn

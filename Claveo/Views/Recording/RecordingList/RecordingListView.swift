@@ -45,6 +45,7 @@ struct RecordingListView: View {
     @State var playbackErrorMessage: String?
     
     @State var filteredRecordings: [Recording] = []
+    @State var splitSidebarWidth: CGFloat = 340
 
     var usesSplitPlayback: Bool {
         horizontalSizeClass == .regular
