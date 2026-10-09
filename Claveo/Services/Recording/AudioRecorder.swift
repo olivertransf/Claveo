@@ -20,8 +20,10 @@ class AudioRecorder: NSObject, ObservableObject {
     @Published var recordings: [Recording] = []
     @Published var permissionError: String?
     @Published var recordingError: String?
+    @Published var downloadProgress: [UUID: Double] = [:]
     @Published var newlyCreatedRecordingId: UUID?
     @Published private(set) var isLoadingRecordings = false
+    @Published private(set) var currentInputName = ""
     let meter = RecordingMeter()
 
     var recordingTime: TimeInterval {
@@ -138,9 +140,10 @@ class AudioRecorder: NSObject, ObservableObject {
                 object: AVAudioSession.sharedInstance(),
                 queue: .main
             ) { [weak self] notification in
-                let userInfo = notification.userInfo
+                let typeValue = notification.userInfo?[AVAudioSessionInterruptionTypeKey] as? UInt
+                let optionsValue = notification.userInfo?[AVAudioSessionInterruptionOptionKey] as? UInt
                 Task { @MainActor [weak self] in
-                    self?.handleAudioSessionInterruption(userInfo: userInfo)
+                    self?.handleAudioSessionInterruption(typeValue: typeValue, optionsValue: optionsValue)
                 }
             }
         )
@@ -153,6 +156,19 @@ class AudioRecorder: NSObject, ObservableObject {
             ) { [weak self] _ in
                 Task { @MainActor [weak self] in
                     self?.handleMediaServicesReset()
+                }
+            }
+        )
+
+        sessionObservers.append(
+            center.addObserver(
+                forName: AVAudioSession.routeChangeNotification,
+                object: AVAudioSession.sharedInstance(),
+                queue: .main
+            ) { [weak self] notification in
+                let reasonValue = notification.userInfo?[AVAudioSessionRouteChangeReasonKey] as? UInt
+                Task { @MainActor [weak self] in
+                    self?.handleRouteChange(reasonValue: reasonValue)
                 }
             }
         )
@@ -183,9 +199,8 @@ class AudioRecorder: NSObject, ObservableObject {
         refreshRecordingProgressFromFile()
     }
 
-    private func handleAudioSessionInterruption(userInfo: [AnyHashable: Any]?) {
-        guard let userInfo,
-              let typeValue = userInfo[AVAudioSessionInterruptionTypeKey] as? UInt,
+    private func handleAudioSessionInterruption(typeValue: UInt?, optionsValue: UInt?) {
+        guard let typeValue,
               let type = AVAudioSession.InterruptionType(rawValue: typeValue) else {
             return
         }
@@ -198,7 +213,7 @@ class AudioRecorder: NSObject, ObservableObject {
             }
         case .ended:
             guard isRecording else { return }
-            let optionsValue = userInfo[AVAudioSessionInterruptionOptionKey] as? UInt ?? 0
+            let optionsValue = optionsValue ?? 0
             let options = AVAudioSession.InterruptionOptions(rawValue: optionsValue)
             if options.contains(.shouldResume) {
                 do {
@@ -219,6 +234,15 @@ class AudioRecorder: NSObject, ObservableObject {
             }
         @unknown default:
             break
+        }
+    }
+
+    private func handleRouteChange(reasonValue: UInt?) {
+        refreshCurrentInputName()
+        guard isRecording else { return }
+        applyStereoCaptureIfNeeded()
+        if reasonValue == AVAudioSession.RouteChangeReason.oldDeviceUnavailable.rawValue {
+            refreshRecordingProgressFromFile()
         }
     }
 
@@ -246,13 +270,73 @@ class AudioRecorder: NSObject, ObservableObject {
     }
 
     private func activateRecordingAudioSession() throws {
+        let preferences = SettingsManager.shared.settings
         let session = AVAudioSession.sharedInstance()
+        var options: AVAudioSession.CategoryOptions = [.defaultToSpeaker, .allowBluetoothA2DP]
+        if preferences.allowBluetoothHeadsetMic {
+            options.insert(.allowBluetoothHFP)
+        }
+
+        let wantsStereo = preferences.recordingMicMode == .stereo
         try session.setCategory(
             .playAndRecord,
-            mode: .default,
-            options: [.defaultToSpeaker, .allowBluetoothHFP]
+            mode: wantsStereo ? .default : .measurement,
+            options: options
         )
+        try session.setPreferredSampleRate(48_000)
         try session.setActive(true, options: [])
+
+        let captureMode = resolvedMicMode(requested: preferences.recordingMicMode, session: session)
+        if wantsStereo && captureMode == .natural {
+            try session.setCategory(.playAndRecord, mode: .measurement, options: options)
+            try session.setActive(true, options: [])
+        }
+
+        try? session.setPreferredInputNumberOfChannels(captureMode.channelCount)
+        if captureMode == .stereo {
+            applyStereoCaptureIfNeeded()
+        }
+        refreshCurrentInputName()
+    }
+
+    private func resolvedMicMode(
+        requested: RecordingMicMode,
+        session: AVAudioSession
+    ) -> RecordingMicMode {
+        guard requested == .stereo, sessionSupportsStereo(session) else { return .natural }
+        return .stereo
+    }
+
+    private func sessionSupportsStereo(_ session: AVAudioSession) -> Bool {
+        let inputs = session.availableInputs ?? []
+        return inputs.contains { port in
+            port.dataSources?.contains { source in
+                source.supportedPolarPatterns?.contains(.stereo) == true
+            } == true
+        }
+    }
+
+    private func applyStereoCaptureIfNeeded() {
+        let session = AVAudioSession.sharedInstance()
+        guard resolvedMicMode(requested: SettingsManager.shared.settings.recordingMicMode, session: session) == .stereo else {
+            return
+        }
+        if let input = session.preferredInput ?? session.availableInputs?.first,
+           let dataSource = input.selectedDataSource ?? input.dataSources?.first,
+           dataSource.supportedPolarPatterns?.contains(.stereo) == true {
+            try? dataSource.setPreferredPolarPattern(.stereo)
+            try? input.setPreferredDataSource(dataSource)
+        }
+        try? session.setPreferredInputOrientation(.portrait)
+    }
+
+    private func refreshCurrentInputName() {
+        let session = AVAudioSession.sharedInstance()
+        if let name = session.currentRoute.inputs.first?.portName, !name.isEmpty {
+            currentInputName = name
+        } else if currentInputName.isEmpty {
+            currentInputName = String(localized: "iPhone Microphone")
+        }
     }
 
     private func refreshRecordingProgressFromFile() {
@@ -267,25 +351,11 @@ class AudioRecorder: NSObject, ObservableObject {
     }
     
     func checkPermissionStatus() -> Bool {
-        if #available(iOS 17.0, *) {
-            return AVAudioApplication.shared.recordPermission == .granted
-        } else {
-            // Use AVAudioSession API for older iOS versions
-            let status = AVAudioSession.sharedInstance().recordPermission
-            return status == .granted
-        }
+        AVAudioApplication.shared.recordPermission == .granted
     }
     
     func requestPermission() async -> Bool {
-        if #available(iOS 17.0, *) {
-            return await AVAudioApplication.requestRecordPermission()
-        } else {
-            return await withCheckedContinuation { continuation in
-                AVAudioSession.sharedInstance().requestRecordPermission { granted in
-                    continuation.resume(returning: granted)
-                }
-            }
-        }
+        await AVAudioApplication.requestRecordPermission()
     }
     
     func startRecording() async {
@@ -314,17 +384,15 @@ class AudioRecorder: NSObject, ObservableObject {
             return
         }
         
-        let fileName = "recording_\(UUID().uuidString).m4a"
+        let capture = SettingsManager.shared.settings
+        let session = AVAudioSession.sharedInstance()
+        let micMode = resolvedMicMode(requested: capture.recordingMicMode, session: session)
+        let fileName = "recording_\(UUID().uuidString).\(capture.recordingQuality.fileExtension)"
         let documentsPath = iCloudManager.shared.getDocumentsURL()
         let fileURL = documentsPath.appendingPathComponent(fileName)
         let storageLocation = iCloudManager.shared.activeStorageLocation
         
-        let settings: [String: Any] = [
-            AVFormatIDKey: Int(kAudioFormatMPEG4AAC),
-            AVSampleRateKey: 44100.0,
-            AVNumberOfChannelsKey: 2,
-            AVEncoderAudioQualityKey: AVAudioQuality.high.rawValue
-        ]
+        let settings = capture.recordingQuality.audioSettings(channelCount: micMode.channelCount)
         
         do {
             audioRecorder = try AVAudioRecorder(url: fileURL, settings: settings)
@@ -362,9 +430,7 @@ class AudioRecorder: NSObject, ObservableObject {
             print("Recording started successfully at: \(fileURL)")
             #endif
             
-            // Haptic feedback for recording start
-            let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
-            impactFeedback.impactOccurred()
+            HapticFeedback.mediumImpact()
             
             isRecording = true
             currentRecordingURL = fileURL
@@ -407,9 +473,7 @@ class AudioRecorder: NSObject, ObservableObject {
     func stopRecording() {
         guard isRecording else { return }
         
-        // Haptic feedback for recording stop
-        let impactFeedback = UIImpactFeedbackGenerator(style: .light)
-        impactFeedback.impactOccurred()
+        HapticFeedback.lightImpact()
         
         let url = currentRecordingURL
         let elapsedBeforeStop = audioRecorder?.currentTime ?? recordingTime
@@ -534,7 +598,19 @@ class AudioRecorder: NSObject, ObservableObject {
     }
     
     func deleteRecording(_ recording: Recording) {
+        recordings.removeAll { $0.id == recording.id }
+        var tombstone = recording
+        tombstone.isDeleted = true
+        tombstone.lastModified = Date()
+        deletionTombstones[recording.id] = tombstone
+        mutationRevision += 1
+        let root = iCloudManager.shared.getDocumentsURL()
         var deletionErrors: [Error] = []
+        do {
+            try LibraryFiles.write([tombstone], collection: .recordings, root: root)
+        } catch {
+            deletionErrors.append(error)
+        }
         for url in [recording.fileURL, recording.originalFileURL].compactMap({ $0 }) {
             guard FileManager.default.fileExists(atPath: url.path) else { continue }
             do {
@@ -543,12 +619,6 @@ class AudioRecorder: NSObject, ObservableObject {
                 deletionErrors.append(error)
             }
         }
-        recordings.removeAll { $0.id == recording.id }
-        var tombstone = recording
-        tombstone.isDeleted = true
-        tombstone.lastModified = Date()
-        deletionTombstones[recording.id] = tombstone
-        mutationRevision += 1
         PracticeService.shared.removeRecordingReferences(to: recording.id)
         if !saveRecordings() || !deletionErrors.isEmpty {
             recordingError = String(localized: "The recording was removed from the list, but some associated files could not be deleted.")
@@ -566,28 +636,34 @@ class AudioRecorder: NSObject, ObservableObject {
             recordingError = String(localized: "Recording details could not be encoded for saving.")
             return false
         }
-        let documentsPath = iCloudManager.shared.getDocumentsURL()
-        let fileURL = documentsPath.appendingPathComponent("recordings.json")
-        
-        // Save to local cache first (UserDefaults) for offline access
         UserDefaults.standard.set(encoded, forKey: "recordings_cache")
-        
-        // Then save to iCloud (will queue if offline)
-        do {
-            try iCloudManager.shared.writeFile(data: encoded, to: fileURL)
-            return true
-        } catch {
-            #if DEBUG
-            print("Failed to save recordings to iCloud: \(error.localizedDescription)")
-            #endif
+
+        let snapshot = recordings + Array(deletionTombstones.values)
+        let root = iCloudManager.shared.getDocumentsURL()
+        let kept = LibraryFiles.keepingLive(snapshot)
+        let expired = LibraryFiles.expired(snapshot)
+        let payloads = kept.compactMap { recording -> (id: UUID, data: Data)? in
+            guard let data = try? JSONEncoder().encode(recording) else { return nil }
+            return (recording.id, data)
+        }
+        let removingIDs = expired.map(\.id)
+        let audioNames = expired.flatMap { [$0.fileName, $0.originalFileName].compactMap { $0 } }
+        Task.detached(priority: .utility) {
             do {
-                try encoded.write(to: fileURL, options: [.atomic])
-                return true
+                try await LibraryStore.shared.replace(
+                    payloads: payloads,
+                    removingIDs: removingIDs,
+                    audioFileNames: audioNames,
+                    collection: .recordings,
+                    root: root
+                )
             } catch {
-                recordingError = String(localized: "Recording details could not be saved: \(error.localizedDescription)")
-                return false
+                await MainActor.run {
+                    AudioRecorder.shared.recordingError = String(localized: "Recording details could not be saved: \(error.localizedDescription)")
+                }
             }
         }
+        return true
     }
     
     private func loadRecordingsFromCache() {
@@ -640,6 +716,14 @@ class AudioRecorder: NSObject, ObservableObject {
             }
         }
 
+        let roots = fileURLs.map { $0.deletingLastPathComponent() }
+        let sidecars = LibraryFiles.readPayloads(collection: .recordings, roots: roots).compactMap {
+            try? JSONDecoder().decode(Recording.self, from: $0)
+        }
+        loaded = mergeRecordings(loaded, with: sidecars)
+        let cutoff = Date().addingTimeInterval(-LibraryFiles.tombstoneRetention)
+        loaded = loaded.filter { !($0.isDeleted && $0.lastModified < cutoff) }
+
         if let cachedData = UserDefaults.standard.data(forKey: "recordings_cache"),
            let decoded = try? JSONDecoder().decode([Recording].self, from: cachedData) {
             loaded = mergeRecordings(loaded, with: decoded)
@@ -688,6 +772,18 @@ class AudioRecorder: NSObject, ObservableObject {
             recording.isDeleted ? "1" : "0",
             recording.keepDownloaded ? "1" : "0"
         ].joined(separator: "\u{1E}")
+    }
+
+    func applyDownloadProgress(_ byFileName: [String: Double]) {
+        var mapped: [UUID: Double] = [:]
+        for recording in recordings {
+            if let progress = byFileName[recording.fileName] ?? byFileName["\(recording.id.uuidString).json"] {
+                mapped[recording.id] = progress
+            }
+        }
+        if mapped != downloadProgress {
+            downloadProgress = mapped
+        }
     }
 
     private func refreshKeepDownloadedFiles() {

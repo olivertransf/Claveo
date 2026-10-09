@@ -121,6 +121,7 @@ struct IntervalEarTrainingExerciseView: View {
         }
         .background(Color(.systemGroupedBackground))
         .navigationTitle("Interval Ear Training")
+        .sensoryFeedback(.success, trigger: feedback?.correct == true)
         .navigationBarTitleDisplayMode(.inline)
         .tint(themeManager.accentColor)
         .onAppear {
@@ -288,20 +289,11 @@ struct IntervalEarTrainingExerciseView: View {
 
     private func select(_ interval: EarTrainingInterval) {
         let correct = interval == question.interval
-        let generator = UIImpactFeedbackGenerator(style: correct ? .light : .rigid)
-        generator.prepare()
-        generator.impactOccurred()
-
-        withAnimation(correct ? .easeOut(duration: 0.2) : .easeOut(duration: 0.22)) {
+        ExerciseAnswerFeedback.reveal(correct: correct) {
             feedback = (interval, correct)
-            if correct {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.55) {
-                    withAnimation(.easeInOut(duration: 0.2)) {
-                        feedback = nil
-                        question = IntervalQuestion.random(excluding: question)
-                    }
-                }
-            }
+        } advance: {
+            feedback = nil
+            question = IntervalQuestion.random(excluding: question)
         }
     }
 }
@@ -311,7 +303,7 @@ private struct IntervalExerciseButtonStyle: ButtonStyle {
         configuration.label
             .scaleEffect(configuration.isPressed ? 0.96 : 1)
             .opacity(configuration.isPressed ? 0.92 : 1)
-            .animation(.easeOut(duration: 0.12), value: configuration.isPressed)
+            .animation(Motion.press, value: configuration.isPressed)
             .hapticButtonPress(trigger: configuration.isPressed)
     }
 }

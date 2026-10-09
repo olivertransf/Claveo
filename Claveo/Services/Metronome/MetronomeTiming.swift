@@ -274,18 +274,15 @@ extension Metronome {
         guard hapticEnabled else { return }
         let isAccent = currentBeat < beatPattern.count && beatPattern[currentBeat]
         if isAccent {
-            hapticGenerator.impactOccurred(intensity: 1.0)
-            hapticGenerator.prepare()
+            HapticFeedback.mediumImpact(intensity: 1.0)
         } else {
-            hapticGeneratorLight.impactOccurred(intensity: 0.5)
-            hapticGeneratorLight.prepare()
+            HapticFeedback.lightImpact(intensity: 0.5)
         }
     }
 
     func prepareHapticsIfNeeded(timeUntilNextBeat: TimeInterval) {
         guard hapticEnabled, timeUntilNextBeat > 0, timeUntilNextBeat < 0.05 else { return }
-        hapticGenerator.prepare()
-        hapticGeneratorLight.prepare()
+        HapticFeedback.prepareImpacts()
     }
     
     func restartTimer() {

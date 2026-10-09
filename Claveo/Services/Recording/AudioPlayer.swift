@@ -134,8 +134,7 @@ class AudioPlayer: NSObject, ObservableObject {
         isPlaying = true
         startTimer()
 
-        let impactFeedback = UIImpactFeedbackGenerator(style: .light)
-        impactFeedback.impactOccurred()
+        HapticFeedback.lightImpact()
     }
 
     func pause() {
@@ -143,8 +142,7 @@ class AudioPlayer: NSObject, ObservableObject {
         isPlaying = false
         stopTimer()
 
-        let impactFeedback = UIImpactFeedbackGenerator(style: .soft)
-        impactFeedback.impactOccurred()
+        HapticFeedback.softImpact()
     }
 
     func stop() {

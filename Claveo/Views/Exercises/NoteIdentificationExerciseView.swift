@@ -161,10 +161,11 @@ struct NoteIdentificationExerciseView: View {
                 .accessibilityLabel("New note")
             }
         }
+        .sensoryFeedback(.success, trigger: buttonFeedback?.correct == true)
         .onChange(of: enabledClefs) { _, newSet in
             persistEnabledClefsToSettings(newSet)
             if !newSet.contains(question.clef) {
-                withAnimation(.easeInOut(duration: 0.2)) {
+                Motion.animate {
                     question = Self.randomQuestion(enabledClefs: newSet)
                     buttonFeedback = nil
                 }
@@ -259,6 +260,7 @@ struct NoteIdentificationExerciseView: View {
                 .frame(height: blockH)
                 .frame(maxWidth: .infinity)
                 .id(question)
+                .transition(.blurReplace)
                 .accessibilityElement(children: .ignore)
                 .accessibilityLabel(
                     String(
@@ -276,7 +278,7 @@ struct NoteIdentificationExerciseView: View {
     }
 
     private func newQuestion() {
-        withAnimation(.easeInOut(duration: 0.2)) {
+        Motion.animate {
             question = Self.randomQuestion(enabledClefs: enabledClefs)
             buttonFeedback = nil
         }
@@ -368,20 +370,11 @@ struct NoteIdentificationExerciseView: View {
 
     private func select(letter: NoteLetter, accidental: WrittenAccidental) {
         let correct = question.matchesSelection(letter: letter, accidental: accidental)
-        let generator = UIImpactFeedbackGenerator(style: correct ? .light : .rigid)
-        generator.prepare()
-        generator.impactOccurred()
-
-        withAnimation(correct ? .easeOut(duration: 0.2) : .easeOut(duration: 0.22)) {
+        ExerciseAnswerFeedback.reveal(correct: correct) {
             buttonFeedback = AnswerTileFeedback(letter: letter, accidental: accidental, correct: correct)
-            if correct {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.55) {
-                    withAnimation(.easeInOut(duration: 0.2)) {
-                        question = Self.randomQuestion(enabledClefs: enabledClefs)
-                        buttonFeedback = nil
-                    }
-                }
-            }
+        } advance: {
+            question = Self.randomQuestion(enabledClefs: enabledClefs)
+            buttonFeedback = nil
         }
     }
 
@@ -435,7 +428,7 @@ private struct ExerciseAnswerButtonStyle: ButtonStyle {
         configuration.label
             .scaleEffect(configuration.isPressed ? 0.96 : 1)
             .opacity(configuration.isPressed ? 0.92 : 1)
-            .animation(.easeOut(duration: 0.12), value: configuration.isPressed)
+            .animation(Motion.press, value: configuration.isPressed)
             .hapticButtonPress(trigger: configuration.isPressed)
     }
 }

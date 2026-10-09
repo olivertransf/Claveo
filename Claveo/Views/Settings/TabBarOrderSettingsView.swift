@@ -59,7 +59,7 @@ struct TabBarOrderSettingsView: View {
 
     private var footerExplanation: String {
         if UIDevice.current.userInterfaceIdiom == .pad {
-            return String(localized: "Drag a row using the handle on the right to reorder. This order is used for every tab in the tab bar.")
+            return String(localized: "Drag a row using the handle on the right to reorder. This order is used for the sidebar and the tab bar.")
         } else {
             return String(localized: "Drag a row using the handle on the right to reorder. The first four tabs sit on the bottom bar; the rest are in More.")
         }
@@ -70,7 +70,7 @@ struct TabBarOrderSettingsView: View {
         if index < 4 {
             return String(localized: "Bottom bar")
         }
-        return String(localized: "More menu")
+        return String(localized: "More")
     }
 
     @ViewBuilder

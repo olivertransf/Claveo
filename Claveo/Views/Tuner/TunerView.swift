@@ -23,6 +23,16 @@ struct TunerView: View {
         horizontalSizeClass == .regular
     }
 
+    @ScaledMetric(relativeTo: .largeTitle) private var compactNoteSize: CGFloat = 84
+    @ScaledMetric(relativeTo: .largeTitle) private var regularNoteSize: CGFloat = 112
+    @ScaledMetric(relativeTo: .body) private var compactCardMin: CGFloat = 260
+    @ScaledMetric(relativeTo: .body) private var regularHeroMin: CGFloat = 320
+    @ScaledMetric(relativeTo: .body) private var regularMetersMin: CGFloat = 340
+
+    private var noteFontSize: CGFloat {
+        isIPad ? regularNoteSize : compactNoteSize
+    }
+
     private var showFrequencyDisplay: Bool {
         settingsManager.settings.showFrequencyDisplay
     }
@@ -57,6 +67,10 @@ struct TunerView: View {
     private var centsLabel: String {
         guard hasLiveSignal else { return String(localized: "—") }
         return String(format: "%+.1f¢", displayCents)
+    }
+
+    private var isInTune: Bool {
+        hasLiveSignal && abs(displayCents) < 2
     }
 
     private var tuningStatusText: String {
@@ -208,27 +222,27 @@ struct TunerView: View {
     }
 
     private var phoneLayout: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: Spacing.lg) {
             heroCard
-                .frame(height: 280)
+                .frame(minHeight: compactCardMin)
             metersCard
-                .frame(height: 280)
+                .frame(minHeight: compactCardMin)
         }
-        .padding(.horizontal, 16)
-        .padding(.top, 8)
+        .padding(.horizontal, Spacing.lg)
+        .padding(.top, Spacing.sm)
     }
 
     private var iPadLayout: some View {
-        VStack(spacing: 20) {
+        VStack(spacing: Spacing.xl) {
             heroCard
-                .frame(height: 360)
+                .frame(minHeight: regularHeroMin)
             metersCard
-                .frame(height: 380)
+                .frame(minHeight: regularMetersMin)
         }
         .frame(maxWidth: 1180)
         .frame(maxWidth: .infinity)
-        .padding(.horizontal, 32)
-        .padding(.top, 24)
+        .padding(.horizontal, Spacing.xl + Spacing.sm)
+        .padding(.top, Spacing.xl)
     }
 
     // MARK: - Cards
@@ -252,53 +266,69 @@ struct TunerView: View {
                 listeningBadge
             }
 
-            HStack(alignment: .center, spacing: isIPad ? 24 : 16) {
-                VStack(alignment: isIPad ? .center : .leading, spacing: isIPad ? 6 : 2) {
-                    Text(displayNote)
-                        .font(.system(size: isIPad ? 136 : 84, weight: .light, design: .rounded))
-                        .foregroundStyle(hasLiveSignal ? Color.primary : Color.secondary.opacity(0.45))
-                        .monospacedDigit()
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.6)
-                        .frame(height: isIPad ? 148 : 92, alignment: .center)
-                        .frame(maxWidth: .infinity, alignment: isIPad ? .center : .leading)
-                        .transaction { $0.animation = nil }
-
-                    Text(frequencySubtitle)
-                        .font((isIPad ? Font.body : Font.subheadline).weight(.medium))
-                        .foregroundStyle(.secondary)
-                        .monospacedDigit()
-                        .frame(height: isIPad ? 24 : 20, alignment: .center)
-                        .frame(maxWidth: .infinity, alignment: isIPad ? .center : .leading)
-                        .opacity(showFrequencyDisplay ? 1 : 0)
-                        .accessibilityHidden(!showFrequencyDisplay)
+            ViewThatFits(in: .horizontal) {
+                HStack(alignment: .center, spacing: isIPad ? Spacing.xl : Spacing.lg) {
+                    pitchReadout
+                    centsColumn
                 }
-                .frame(maxWidth: .infinity, alignment: isIPad ? .center : .leading)
-                .accessibilityElement(children: .ignore)
-                .accessibilityLabel("Detected pitch")
-                .accessibilityValue(liveResultAccessibilityValue)
-
-                VStack(alignment: .trailing, spacing: isIPad ? 12 : 8) {
-                    statusChip(
-                        title: String(localized: "Cents"),
-                        value: centsLabel,
-                        accent: needleAccentColor
-                    )
-                    statusChip(
-                        title: String(localized: "Status"),
-                        value: tuningStatusText,
-                        accent: needleAccentColor
-                    )
+                VStack(alignment: .leading, spacing: Spacing.md) {
+                    pitchReadout
+                    centsColumn
+                        .frame(maxWidth: .infinity, alignment: .leading)
                 }
-                .frame(width: isIPad ? 176 : 128)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
 
             listeningControlButton
         }
         .padding(isIPad ? 24 : 20)
+        .sensoryFeedback(.success, trigger: isInTune) { _, inTune in
+            inTune
+        }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .background(panelBackground)
+    }
+
+    private var pitchReadout: some View {
+        VStack(alignment: isIPad ? .center : .leading, spacing: isIPad ? 6 : 2) {
+            Text(displayNote)
+                .font(.system(size: noteFontSize, weight: .light, design: .rounded))
+                .foregroundStyle(hasLiveSignal ? Color.primary : Color.secondary.opacity(0.45))
+                .monospacedDigit()
+                .lineLimit(1)
+                .minimumScaleFactor(0.5)
+                .frame(maxWidth: .infinity, alignment: isIPad ? .center : .leading)
+                .transaction { $0.animation = nil }
+
+            Text(frequencySubtitle)
+                .font((isIPad ? Font.body : Font.subheadline).weight(.medium))
+                .foregroundStyle(.secondary)
+                .monospacedDigit()
+                .frame(maxWidth: .infinity, alignment: isIPad ? .center : .leading)
+                .opacity(showFrequencyDisplay ? 1 : 0)
+                .accessibilityHidden(!showFrequencyDisplay)
+        }
+        .frame(maxWidth: .infinity, alignment: isIPad ? .center : .leading)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Detected pitch")
+        .accessibilityValue(liveResultAccessibilityValue)
+    }
+
+    private var centsColumn: some View {
+        VStack(alignment: .trailing, spacing: isIPad ? Spacing.md : Spacing.sm) {
+            statusChip(
+                title: String(localized: "Cents"),
+                value: centsLabel,
+                accent: needleAccentColor,
+                numeric: true
+            )
+            statusChip(
+                title: String(localized: "Status"),
+                value: tuningStatusText,
+                accent: needleAccentColor
+            )
+        }
+        .frame(minWidth: isIPad ? 140 : 108, alignment: .trailing)
     }
 
     private var frequencySubtitle: String {
@@ -363,7 +393,7 @@ struct TunerView: View {
         )
     }
 
-    private func statusChip(title: String, value: String, accent: Color) -> some View {
+    private func statusChip(title: String, value: String, accent: Color, numeric: Bool = false) -> some View {
         VStack(alignment: .trailing, spacing: isIPad ? 4 : 2) {
             Text(title)
                 .font((isIPad ? Font.caption : Font.caption2).weight(.semibold))
@@ -372,6 +402,7 @@ struct TunerView: View {
                 .font((isIPad ? Font.body : Font.subheadline).weight(.semibold))
                 .foregroundStyle(hasLiveSignal ? accent : .secondary)
                 .monospacedDigit()
+                .contentTransition(numeric ? .numericText() : .identity)
                 .lineLimit(1)
                 .minimumScaleFactor(0.75)
         }
@@ -396,10 +427,12 @@ struct TunerView: View {
                 }
             }
         } label: {
-            Label(
-                isListening ? String(localized: "Stop Listening") : String(localized: "Start Listening"),
-                systemImage: isListening ? "stop.fill" : "mic.fill"
-            )
+            Label {
+                Text(isListening ? String(localized: "Stop Listening") : String(localized: "Start Listening"))
+            } icon: {
+                Image(systemName: isListening ? "stop.fill" : "mic.fill")
+                    .contentTransition(.symbolEffect(.replace))
+            }
             .font(.headline)
             .foregroundStyle(.white)
             .frame(maxWidth: .infinity)
@@ -415,6 +448,10 @@ struct TunerView: View {
                 ? String(localized: "Stop tuner")
                 : String(localized: "Start tuner")
         )
+        .sensoryFeedback(trigger: isListening) { wasListening, listening in
+            guard wasListening != listening else { return nil }
+            return listening ? .start : .stop
+        }
     }
 
     private var needleAccentColor: Color {
@@ -565,7 +602,7 @@ struct TuningMeterView: View {
 
                 TunerNeedle(color: needleColor, lineHeight: 52, lineWidth: 3, headSize: 12)
                     .offset(x: needlePosition(centerX: centerX, leftEdge: leftEdge, rightEdge: rightEdge, scaleWidth: scaleWidth) - centerX)
-                    .animation(.interactiveSpring(response: 0.42, dampingFraction: 0.9), value: cents)
+                    .animation(Motion.meter, value: cents)
             }
         }
         .accessibilityElement(children: .ignore)
@@ -652,7 +689,7 @@ struct PreciseTuningMeterView: View {
 
                 TunerNeedle(color: preciseNeedleColor, lineHeight: 40, lineWidth: 2.5, headSize: 10)
                     .offset(x: preciseNeedlePosition(centerX: centerX, leftEdge: leftEdge, rightEdge: rightEdge, scaleWidth: scaleWidth) - centerX)
-                    .animation(.interactiveSpring(response: 0.42, dampingFraction: 0.9), value: cents)
+                    .animation(Motion.meter, value: cents)
             }
         }
         .accessibilityElement(children: .ignore)

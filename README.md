@@ -40,7 +40,7 @@ Claveo/
 
 ## Requirements
 
-- **iOS app**: Xcode 16+ recommended, deployment target **iOS 17.6**  
+- **iOS app**: Xcode 16+ recommended, deployment target **iOS 18.0**  
 - **Website**: Node.js 18+ (for local dev and Netlify builds)
 
 ## Development

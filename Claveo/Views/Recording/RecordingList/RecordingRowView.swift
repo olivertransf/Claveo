@@ -31,6 +31,7 @@ struct RecordingRowView: View {
     var onToggleSelection: (() -> Void)? = nil
     var allowsInlineExpansion: Bool = true
     var isSplitFocused: Bool = false
+    var downloadProgress: Double? = nil
 
     private let transportHitSize: CGFloat = 44
 
@@ -82,10 +83,17 @@ struct RecordingRowView: View {
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
 
-                Image(systemName: recording.storageSystemImage)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .accessibilityLabel(recording.storageAccessibilityLabel)
+                if let downloadProgress, downloadProgress < 1 {
+                    ProgressView(value: downloadProgress)
+                        .progressViewStyle(.circular)
+                        .controlSize(.mini)
+                        .accessibilityLabel(String(localized: "Downloading"))
+                } else {
+                    Image(systemName: recording.storageSystemImage)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .accessibilityLabel(recording.storageAccessibilityLabel)
+                }
 
                 if hasNotes {
                     Image(systemName: "text.bubble")
@@ -118,7 +126,7 @@ struct RecordingRowView: View {
     private func handleRowTap() {
         HapticFeedback.lightImpact()
         if allowsInlineExpansion {
-            withAnimation(.easeInOut(duration: 0.22)) {
+            Motion.animate(Motion.layout) {
                 isExpanded.toggle()
             }
         } else if !isExpanded {
@@ -160,7 +168,7 @@ struct RecordingRowView: View {
                         .padding(.horizontal, 4)
                         .padding(.top, 10)
                         .padding(.bottom, 4)
-                        .transition(.opacity.combined(with: .move(edge: .top)))
+                        .transition(.blurReplace)
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)

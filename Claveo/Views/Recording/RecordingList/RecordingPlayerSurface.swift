@@ -26,15 +26,22 @@ struct RecordingPlayerSurface: View {
 
     @State private var isDragging = false
     @State private var dragValue: TimeInterval = 0
-    @State private var displayTime: TimeInterval = 0
+    @State private var anchorTime: TimeInterval = 0
+    @State private var anchorDate = Date()
     @State private var seekTask: Task<Void, Never>?
-    @State private var lastUpdateTime: Date?
-    @State private var lastKnownTime: TimeInterval = 0
-    @State private var smoothUpdateTimer: Timer?
     @State private var seekDelayTask: Task<Void, Never>?
 
-    private var currentDisplayTime: TimeInterval {
-        isDragging ? dragValue : displayTime
+    private func playbackTime(at date: Date) -> TimeInterval {
+        if isDragging { return dragValue }
+        guard isPlaying else { return anchorTime }
+        let elapsed = date.timeIntervalSince(anchorDate)
+        return min(max(duration, 0), max(0, anchorTime + elapsed * Double(playbackRate)))
+    }
+
+    private func resetAnchor(to time: TimeInterval) {
+        anchorTime = time
+        anchorDate = Date()
+        dragValue = time
     }
 
     private let transportHitSize: CGFloat = 44
@@ -49,29 +56,43 @@ struct RecordingPlayerSurface: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            waveformScrubber
-                .frame(maxWidth: .infinity)
-
-            timelineLabels
+            TimelineView(.animation(minimumInterval: 1.0 / 30.0, paused: !isPlaying || isDragging)) { context in
+                let time = playbackTime(at: context.date)
+                VStack(alignment: .leading, spacing: 10) {
+                    waveformScrubber(at: time)
+                        .frame(maxWidth: .infinity)
+                    timelineLabels(time: time)
+                }
+            }
 
             playerControls
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+        .onChange(of: currentTime) { _, newValue in
+            handleCurrentTimeChange(newValue)
+        }
+        .onChange(of: isPlaying) { _, playing in
+            if playing {
+                resetAnchor(to: currentTime ?? anchorTime)
+            } else if let currentTime {
+                resetAnchor(to: currentTime)
+            }
+        }
+        .onAppear {
+            resetAnchor(to: currentTime ?? 0)
+        }
     }
 
-    private var waveformScrubber: some View {
+    private func waveformScrubber(at time: TimeInterval) -> some View {
         Group {
             if recording.isLocallyAvailable {
                 WaveformView(
                     recording: recording,
-                    currentTime: currentDisplayTime,
+                    currentTime: time,
                     duration: duration,
                     height: waveformHeight,
                     onSeek: { time in
                         dragValue = time
-                        displayTime = time
-                        lastKnownTime = time
-                        lastUpdateTime = Date()
                         isDragging = true
 
                         seekTask?.cancel()
@@ -87,9 +108,7 @@ struct RecordingPlayerSurface: View {
                             try? await Task.sleep(nanoseconds: 300_000_000)
                             if !Task.isCancelled {
                                 isDragging = false
-                                if isPlaying {
-                                    startSmoothTimer()
-                                }
+                                resetAnchor(to: dragValue)
                             }
                         }
                     }
@@ -105,47 +124,16 @@ struct RecordingPlayerSurface: View {
             }
         }
         .accessibilityLabel(String(localized: "Playback position"))
-        .accessibilityValue(String(localized: "\(formatTime(currentDisplayTime)) of \(formatTime(duration))"))
-        .onChange(of: currentTime) { _, newValue in
-            handleCurrentTimeChange(newValue)
-        }
-        .onChange(of: isPlaying) { _, playing in
-            if playing, let current = currentTime {
-                lastKnownTime = current
-                lastUpdateTime = Date()
-                startSmoothTimer()
-            } else {
-                stopSmoothTimer()
-            }
-        }
-        .onAppear {
-            let initial = currentTime ?? 0
-            displayTime = initial
-            dragValue = initial
-            lastKnownTime = initial
-            lastUpdateTime = Date()
-            if isPlaying {
-                startSmoothTimer()
-            }
-        }
-        .onDisappear {
-            stopSmoothTimer()
-        }
+        .accessibilityValue(String(localized: "\(formatTime(time)) of \(formatTime(duration))"))
     }
 
     private var playbackPositionBinding: Binding<TimeInterval> {
         Binding(
             get: {
-                if isDragging {
-                    return dragValue
-                }
-                return displayTime
+                isDragging ? dragValue : anchorTime
             },
             set: { newValue in
                 dragValue = newValue
-                displayTime = newValue
-                lastKnownTime = newValue
-                lastUpdateTime = Date()
                 if !isDragging {
                     isDragging = true
                 }
@@ -167,40 +155,29 @@ struct RecordingPlayerSurface: View {
         if isDragging {
             if abs(newValue - dragValue) < 0.3 {
                 isDragging = false
-                displayTime = newValue
-                lastKnownTime = newValue
-                lastUpdateTime = Date()
-
-                seekDelayTask?.cancel()
-                seekDelayTask = Task {
-                    try? await Task.sleep(nanoseconds: 300_000_000)
-                    if !Task.isCancelled && isPlaying {
-                        startSmoothTimer()
-                    }
-                }
+                resetAnchor(to: newValue)
             }
         } else {
-            displayTime = newValue
-            dragValue = newValue
-            lastKnownTime = newValue
-            lastUpdateTime = Date()
+            resetAnchor(to: newValue)
         }
     }
 
-    private var timelineLabels: some View {
+    private func timelineLabels(time: TimeInterval) -> some View {
         HStack {
-            Text(formatTime(currentDisplayTime))
+            Text(formatTime(time))
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .monospacedDigit()
+                .contentTransition(.numericText())
 
             Spacer()
 
-            let remaining = max(0, duration - currentDisplayTime)
+            let remaining = max(0, duration - time)
             Text("-\(formatTime(remaining))")
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .monospacedDigit()
+                .contentTransition(.numericText())
         }
     }
 
@@ -227,6 +204,7 @@ struct RecordingPlayerSurface: View {
                         .font(.system(size: 32, weight: .regular))
                         .foregroundStyle(.primary)
                         .offset(x: isPlaying ? 0 : 2)
+                        .contentTransition(.symbolEffect(.replace))
                         .frame(width: playButtonSize, height: playButtonSize)
                         .contentShape(Rectangle())
                 }
@@ -309,28 +287,6 @@ struct RecordingPlayerSurface: View {
                 Text(label)
             }
         }
-    }
-
-    private func startSmoothTimer() {
-        stopSmoothTimer()
-        guard isPlaying, !isDragging else { return }
-        let newTimer = Timer(timeInterval: 0.1, repeats: true) { timer in
-            guard self.isPlaying, !self.isDragging, let lastUpdate = self.lastUpdateTime else {
-                timer.invalidate()
-                self.smoothUpdateTimer = nil
-                return
-            }
-            let elapsed = Date().timeIntervalSince(lastUpdate)
-            let interpolated = self.lastKnownTime + (elapsed * Double(self.playbackRate))
-            self.displayTime = min(interpolated, self.duration)
-        }
-        RunLoop.main.add(newTimer, forMode: .common)
-        smoothUpdateTimer = newTimer
-    }
-
-    private func stopSmoothTimer() {
-        smoothUpdateTimer?.invalidate()
-        smoothUpdateTimer = nil
     }
 
     private func formatTime(_ time: TimeInterval) -> String {

@@ -263,6 +263,7 @@ struct PracticeRecordingPlayer: View {
                         }) {
                             Image(systemName: isPlaying ? "pause.fill" : "play.fill")
                                 .font(.system(size: 24))
+                                .contentTransition(.symbolEffect(.replace))
                         }
                         .frame(maxWidth: .infinity, minHeight: 56)
                         .accessibilityLabel(isPlaying ? "Pause recording" : "Play recording")

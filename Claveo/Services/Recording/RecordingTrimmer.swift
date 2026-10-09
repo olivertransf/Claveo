@@ -53,7 +53,7 @@ enum RecordingTrimmer {
         }
         
         let documentsPath = iCloudManager.shared.getDocumentsURL()
-        let backupFileName = "original_\(UUID().uuidString).m4a"
+        let backupFileName = "original_\(UUID().uuidString).\(fileExtension(of: recordingURL))"
         let backupURL = documentsPath.appendingPathComponent(backupFileName)
         
         if FileManager.default.fileExists(atPath: backupURL.path) {
@@ -86,7 +86,7 @@ enum RecordingTrimmer {
         }
         
         let stagedURL = recordingURL.deletingLastPathComponent()
-            .appendingPathComponent("restore_\(UUID().uuidString).m4a")
+            .appendingPathComponent("restore_\(UUID().uuidString).\(fileExtension(of: backupURL))")
         do {
             try FileManager.default.copyItem(at: backupURL, to: stagedURL)
             if FileManager.default.fileExists(atPath: recordingURL.path) {
@@ -122,28 +122,69 @@ enum RecordingTrimmer {
             throw RecordingTrimmerError.invalidRange
         }
 
-        let asset = AVURLAsset(url: recordingURL)
-        guard let exporter = AVAssetExportSession(asset: asset, presetName: AVAssetExportPresetAppleM4A) else {
-            throw RecordingTrimmerError.exportSessionUnavailable
-        }
-
         let tempURL = FileManager.default.temporaryDirectory
-            .appendingPathComponent("trimmed_\(UUID().uuidString).m4a")
+            .appendingPathComponent("trimmed_\(UUID().uuidString).\(fileExtension(of: recordingURL))")
 
         if FileManager.default.fileExists(atPath: tempURL.path) {
             try? FileManager.default.removeItem(at: tempURL)
         }
 
-        exporter.outputURL = tempURL
-        exporter.outputFileType = AVFileType.m4a
+        if usesFrameCopy(recordingURL) {
+            try copyFrames(
+                from: recordingURL,
+                to: tempURL,
+                startTime: clampedStart,
+                endTime: clampedEnd
+            )
+        } else {
+            try await exportPassthrough(
+                recordingURL: recordingURL,
+                to: tempURL,
+                startTime: clampedStart,
+                endTime: clampedEnd
+            )
+        }
 
+        return tempURL
+    }
+
+    private static func fileExtension(of url: URL) -> String {
+        let ext = url.pathExtension.lowercased()
+        return ext.isEmpty ? "m4a" : ext
+    }
+
+    private static func usesFrameCopy(_ url: URL) -> Bool {
+        let ext = url.pathExtension.lowercased()
+        if ext == "wav" || ext == "aiff" || ext == "caf" { return true }
+        guard let file = try? AVAudioFile(forReading: url) else { return false }
+        return audioFormatID(file.fileFormat.settings) == kAudioFormatAppleLossless
+    }
+
+    private static func audioFormatID(_ settings: [String: Any]) -> AudioFormatID {
+        let value = settings[AVFormatIDKey]
+        if let identifier = value as? AudioFormatID { return identifier }
+        if let number = value as? NSNumber { return number.uint32Value }
+        return 0
+    }
+
+    private static func exportPassthrough(
+        recordingURL: URL,
+        to tempURL: URL,
+        startTime: TimeInterval,
+        endTime: TimeInterval
+    ) async throws {
+        let asset = AVURLAsset(url: recordingURL)
+        guard let exporter = AVAssetExportSession(asset: asset, presetName: AVAssetExportPresetPassthrough) else {
+            throw RecordingTrimmerError.exportSessionUnavailable
+        }
+        exporter.outputURL = tempURL
+        exporter.outputFileType = fileExtension(of: recordingURL) == "wav" ? .wav : .m4a
         let timescale: CMTimeScale = 600
-        let start = CMTime(seconds: clampedStart, preferredTimescale: timescale)
-        let end = CMTime(seconds: clampedEnd, preferredTimescale: timescale)
+        let start = CMTime(seconds: startTime, preferredTimescale: timescale)
+        let end = CMTime(seconds: endTime, preferredTimescale: timescale)
         exporter.timeRange = CMTimeRangeFromTimeToTime(start: start, end: end)
 
         let exportHolder = ExportSessionHolder(exporter)
-
         try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
             exportHolder.session.exportAsynchronously {
                 let status = exportHolder.session.status
@@ -151,15 +192,43 @@ enum RecordingTrimmer {
                 switch status {
                 case .completed:
                     continuation.resume()
-                case .failed, .cancelled:
-                    continuation.resume(throwing: RecordingTrimmerError.exportFailed(underlying: exportError))
                 default:
                     continuation.resume(throwing: RecordingTrimmerError.exportFailed(underlying: exportError))
                 }
             }
         }
+    }
 
-        return tempURL
+    private static func copyFrames(
+        from sourceURL: URL,
+        to destinationURL: URL,
+        startTime: TimeInterval,
+        endTime: TimeInterval
+    ) throws {
+        let source = try AVAudioFile(forReading: sourceURL)
+        let format = source.processingFormat
+        let sampleRate = format.sampleRate
+        guard sampleRate > 0 else { throw RecordingTrimmerError.exportSessionUnavailable }
+
+        let startFrame = AVAudioFramePosition(startTime * sampleRate)
+        let endFrame = AVAudioFramePosition(endTime * sampleRate)
+        guard endFrame > startFrame else { throw RecordingTrimmerError.invalidRange }
+
+        source.framePosition = startFrame
+        let destination = try AVAudioFile(forWriting: destinationURL, settings: source.fileFormat.settings)
+        var remaining = AVAudioFrameCount(endFrame - startFrame)
+        let chunkSize: AVAudioFrameCount = 8_192
+
+        while remaining > 0 {
+            let frames = min(chunkSize, remaining)
+            guard let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: frames) else {
+                throw RecordingTrimmerError.exportFailed(underlying: nil)
+            }
+            try source.read(into: buffer, frameCount: frames)
+            if buffer.frameLength == 0 { break }
+            try destination.write(from: buffer)
+            remaining -= buffer.frameLength
+        }
     }
     
     static func trimInPlace(recordingURL: URL, startTime: TimeInterval, endTime: TimeInterval) async throws {

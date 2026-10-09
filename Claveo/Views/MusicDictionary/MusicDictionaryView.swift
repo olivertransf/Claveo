@@ -17,31 +17,11 @@ struct MusicDictionaryView: View {
     @StateObject private var settingsManager = SettingsManager.shared
     @State private var searchText = ""
     @State private var isSearchPresented = false
-    @State private var selectedCategory: String?
-    
-    private var filteredTerms: [MusicTerm] {
-        if !searchText.isEmpty {
-            return dictionaryService.searchAllTerms(query: searchText)
-        }
-        if let selectedCategory {
-            if selectedCategory == MusicDictionaryService.allCategoryToken {
-                return dictionaryService.allTerms()
-            }
-            return dictionaryService.terms(inCategory: selectedCategory)
-        }
-        return []
-    }
-
-    private var categoryTitle: String? {
-        guard let selectedCategory else { return nil }
-        if selectedCategory == MusicDictionaryService.allCategoryToken {
-            return String(localized: "All")
-        }
-        return MusicDictionaryService.browseCategories.first { $0.category == selectedCategory }?.title
-    }
+    @State private var path = NavigationPath()
+    @State private var filteredTerms: [MusicTerm] = []
     
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $path) {
             Group {
                 if dictionaryService.isLoading {
                     VStack {
@@ -71,41 +51,69 @@ struct MusicDictionaryView: View {
                         }
                         Spacer()
                     }
-                } else if searchText.isEmpty, selectedCategory == nil {
-                    DictionaryHomeView(onSelectCategory: { selectedCategory = $0 })
+                } else if searchText.isEmpty {
+                    DictionaryHomeView(onSelectCategory: { path.append($0) })
                         .environmentObject(themeManager)
                 } else {
                     TermsListView(
                         terms: filteredTerms,
                         searchText: searchText,
-                        categoryTitle: categoryTitle
+                        categoryTitle: nil
                     )
                 }
             }
-            .navigationTitle(selectedCategory == nil ? String(localized: "Dictionary") : (categoryTitle ?? String(localized: "Dictionary")))
+            .navigationTitle("Dictionary")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                if selectedCategory != nil, searchText.isEmpty {
-                    ToolbarItem(placement: .navigationBarLeading) {
-                        Button("Back") {
-                            selectedCategory = nil
-                        }
-                    }
-                }
+            .navigationDestination(for: String.self) { category in
+                TermsListView(
+                    terms: terms(in: category),
+                    searchText: "",
+                    categoryTitle: categoryTitle(category)
+                )
+                .navigationTitle(categoryTitle(category))
+                .navigationBarTitleDisplayMode(.inline)
             }
             .searchable(text: $searchText, prompt: "Search dictionary")
             .autocorrectionDisabled()
             .textInputAutocapitalization(.never)
             .onChange(of: searchText) { _, newValue in
                 if !newValue.isEmpty {
-                    selectedCategory = nil
+                    path = NavigationPath()
                 }
+                refreshFilteredTerms()
+            }
+            .onChange(of: dictionaryService.isLoading) { _, _ in
+                refreshFilteredTerms()
             }
             .task(id: isTabSelected) {
                 guard isTabSelected else { return }
                 dictionaryService.loadDictionaryIfNeeded()
+                refreshFilteredTerms()
             }
         }
+    }
+
+    private func refreshFilteredTerms() {
+        if searchText.isEmpty {
+            filteredTerms = []
+        } else {
+            filteredTerms = dictionaryService.searchAllTerms(query: searchText)
+        }
+    }
+
+    private func terms(in category: String) -> [MusicTerm] {
+        if category == MusicDictionaryService.allCategoryToken {
+            return dictionaryService.allTerms()
+        }
+        return dictionaryService.terms(inCategory: category)
+    }
+
+    private func categoryTitle(_ category: String) -> String {
+        if category == MusicDictionaryService.allCategoryToken {
+            return String(localized: "All")
+        }
+        return MusicDictionaryService.browseCategories.first { $0.category == category }?.title
+            ?? String(localized: "Dictionary")
     }
 
     struct DictionaryHomeView: View {

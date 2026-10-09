@@ -19,7 +19,7 @@ extension MetronomeView {
     
     func toggleBeat(_ index: Int) {
         HapticFeedback.lightImpact()
-        withAnimation(.easeOut(duration: 0.15)) {
+        Motion.animate {
             metronome.toggleBeatAccent(at: index)
         }
     }

@@ -16,6 +16,7 @@ enum AppStartupCoordinator {
         hasRun = true
 
         iCloudManager.shared.warmUp()
+        SyncEngine.shared.start()
 
         async let recordings = AudioRecorder.shared.reloadRecordingsFromDisk()
         async let practice = PracticeService.shared.performInitialCloudSync()

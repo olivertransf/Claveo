@@ -126,32 +126,15 @@ class PitchDetector: NSObject, ObservableObject {
         }
         
         let permissionGranted: Bool
-        if #available(iOS 17.0, *) {
-            switch AVAudioApplication.shared.recordPermission {
-            case .granted:
-                permissionGranted = true
-            case .denied:
-                permissionGranted = false
-            case .undetermined:
-                permissionGranted = await AVAudioApplication.requestRecordPermission()
-            @unknown default:
-                permissionGranted = false
-            }
-        } else {
-            switch AVAudioSession.sharedInstance().recordPermission {
-            case .granted:
-                permissionGranted = true
-            case .denied:
-                permissionGranted = false
-            case .undetermined:
-                permissionGranted = await withCheckedContinuation { continuation in
-                    AVAudioSession.sharedInstance().requestRecordPermission { granted in
-                        continuation.resume(returning: granted)
-                    }
-                }
-            @unknown default:
-                permissionGranted = false
-            }
+        switch AVAudioApplication.shared.recordPermission {
+        case .granted:
+            permissionGranted = true
+        case .denied:
+            permissionGranted = false
+        case .undetermined:
+            permissionGranted = await AVAudioApplication.requestRecordPermission()
+        @unknown default:
+            permissionGranted = false
         }
 
         guard lifecycle.isCurrent(lifecycleToken, expectingActive: true) else { return }
@@ -363,11 +346,10 @@ class PitchDetector: NSObject, ObservableObject {
     ) {
         let now = CACurrentMediaTime()
         let noteChanged = note != self.note
-        guard noteChanged
-            || abs(frequency - self.frequency) > 0.4
-            || abs(cents - self.cents) > 1
-            || now - lastPitchPublishTime >= 0.07
-        else { return }
+        let frequencyChanged = abs(frequency - self.frequency) > 0.4
+        let centsChanged = abs(cents - self.cents) > 1
+        guard noteChanged || frequencyChanged || centsChanged else { return }
+        guard now - lastPitchPublishTime >= (1.0 / 30.0) else { return }
         lastPitchPublishTime = now
         if self.frequency != frequency { self.frequency = frequency }
         if self.note != note { self.note = note }

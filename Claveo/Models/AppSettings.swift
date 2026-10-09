@@ -42,6 +42,10 @@ struct AppSettings: Codable, Sendable {
     // Storage — default false uses iCloud Drive when available
     var storeFilesOnDeviceOnly: Bool = false
 
+    var recordingQuality: RecordingQuality = .high
+    var recordingMicMode: RecordingMicMode = .natural
+    var allowBluetoothHeadsetMic: Bool = false
+
     // Navigation — lastSelectedTab is device-local (UserDefaults); not authoritative in iCloud.
     var lastSelectedTab: Int = 0
 
@@ -82,6 +86,7 @@ struct AppSettings: Codable, Sendable {
         case practiceReminderEnabled, practiceReminderHour, practiceReminderMinute
         case accentColor, colorScheme, showTabBarText
         case storeFilesOnDeviceOnly
+        case recordingQuality, recordingMicMode, allowBluetoothHeadsetMic
         case lastSelectedTab, tabBarCustomizationOrder, tabSemanticsVersion
         case metronomeTimeSignature, metronomeBeatPattern, metronomeSubdivision
         case noteIdentificationEnabledClefRawValues
@@ -114,6 +119,9 @@ extension AppSettings {
         colorScheme = try c.decodeIfPresent(String.self, forKey: .colorScheme) ?? ColorSchemeOption.system.rawValue
         showTabBarText = try c.decodeIfPresent(Bool.self, forKey: .showTabBarText) ?? false
         storeFilesOnDeviceOnly = try c.decodeIfPresent(Bool.self, forKey: .storeFilesOnDeviceOnly) ?? false
+        recordingQuality = try c.decodeIfPresent(RecordingQuality.self, forKey: .recordingQuality) ?? .high
+        recordingMicMode = try c.decodeIfPresent(RecordingMicMode.self, forKey: .recordingMicMode) ?? .natural
+        allowBluetoothHeadsetMic = try c.decodeIfPresent(Bool.self, forKey: .allowBluetoothHeadsetMic) ?? false
         lastSelectedTab = try c.decodeIfPresent(Int.self, forKey: .lastSelectedTab) ?? 0
         let rawOrder = try c.decodeIfPresent([Int].self, forKey: .tabBarCustomizationOrder)
         tabBarCustomizationOrder = AppSettings.normalizedTabBarOrder(rawOrder ?? AppSettings.defaultTabBarCustomizationOrder)

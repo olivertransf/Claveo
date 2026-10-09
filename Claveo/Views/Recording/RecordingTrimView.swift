@@ -63,7 +63,7 @@ final class TrimPreviewPlayer: NSObject, ObservableObject, AVAudioPlayerDelegate
 
     private func startTimer(player: AVAudioPlayer, stopAt: TimeInterval) {
         timer?.invalidate()
-        timer = Timer.scheduledTimer(withTimeInterval: 0.033, repeats: true) { [weak self] _ in
+        timer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
             Task { @MainActor [weak self] in
                 guard let self else { return }
                 let t = player.currentTime
@@ -98,6 +98,8 @@ struct RecordingTrimView: View {
     @State private var isTrimming = false
     @State private var errorMessage: String?
     @State private var showingError = false
+    @State private var trimAnchorTime: TimeInterval = 0
+    @State private var trimAnchorDate = Date()
 
     init(recording: Recording, onApply: @escaping (Recording) -> Void) {
         self.recording = recording
@@ -180,6 +182,12 @@ struct RecordingTrimView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
+    private func trimPlayhead(at date: Date) -> TimeInterval {
+        guard previewPlayer.isPlaying else { return trimAnchorTime }
+        let elapsed = date.timeIntervalSince(trimAnchorDate)
+        return min(endTime, max(0, trimAnchorTime + elapsed))
+    }
+
     @ViewBuilder
     private var waveformSection: some View {
         VStack(spacing: 0) {
@@ -201,18 +209,26 @@ struct RecordingTrimView: View {
                 }
                 .frame(maxWidth: .infinity, minHeight: 180)
             } else {
-                TrimWaveformView(
-                    bars: waveformBars,
-                    duration: effectiveDuration,
-                    currentTime: previewPlayer.currentTime,
-                    selectionStart: $startTime,
-                    selectionEnd: $endTime,
-                    accentColor: themeManager.accentColor,
-                    onSeek: { t in
-                        previewPlayer.seek(to: t)
-                    }
-                )
+                TimelineView(.animation(minimumInterval: 1.0 / 30.0, paused: !previewPlayer.isPlaying)) { context in
+                    TrimWaveformView(
+                        bars: waveformBars,
+                        duration: effectiveDuration,
+                        currentTime: trimPlayhead(at: context.date),
+                        selectionStart: $startTime,
+                        selectionEnd: $endTime,
+                        accentColor: themeManager.accentColor,
+                        onSeek: { t in
+                            trimAnchorTime = t
+                            trimAnchorDate = Date()
+                            previewPlayer.seek(to: t)
+                        }
+                    )
+                }
                 .frame(height: 180)
+                .onChange(of: previewPlayer.currentTime) { _, newValue in
+                    trimAnchorTime = newValue
+                    trimAnchorDate = Date()
+                }
             }
         }
         .padding(14)
@@ -283,6 +299,7 @@ struct RecordingTrimView: View {
                         .font(.system(size: 20, weight: .semibold))
                         .foregroundStyle(.white)
                         .offset(x: previewPlayer.isPlaying ? 0 : 2)
+                        .contentTransition(.symbolEffect(.replace))
                 }
             }
             .buttonStyle(.plain)

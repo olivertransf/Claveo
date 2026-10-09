@@ -14,13 +14,21 @@ extension RecordingListView {
             if usesSplitPlayback {
                 HStack(spacing: 0) {
                     recordingsColumn
-                        .frame(width: 360)
+                        .frame(width: splitSidebarWidth)
                         .frame(maxHeight: .infinity)
 
                     splitDetailColumn
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .onGeometryChange(for: CGFloat.self) { proxy in
+                    proxy.size.width
+                } action: { width in
+                    let next = min(380, max(300, width * 0.38))
+                    if abs(next - splitSidebarWidth) > 0.5 {
+                        splitSidebarWidth = next
+                    }
+                }
             } else {
                 NavigationStack {
                     recordingsColumn
@@ -92,7 +100,11 @@ extension RecordingListView {
         .safeAreaInset(edge: .bottom, spacing: 0) {
             VStack(spacing: 10) {
                 if recorder.isRecording && !usesSplitPlayback {
-                    LiveRecordingIndicatorView(meter: recorder.meter, isRecording: true)
+                    LiveRecordingIndicatorView(
+                        meter: recorder.meter,
+                        isRecording: true,
+                        inputName: recorder.currentInputName
+                    )
                 }
 
                 recordingButtonOverlay
@@ -269,6 +281,16 @@ extension RecordingListView {
                     Label("Pieces", systemImage: "music.note.list")
                         .symbolRenderingMode(.monochrome)
                 }
+
+                Button {
+                    if case .error = syncEngine.status {
+                        syncEngine.retry()
+                    }
+                } label: {
+                    Image(systemName: syncEngine.status.systemImage)
+                        .symbolEffect(.pulse, isActive: syncEngine.pendingCount > 0)
+                }
+                .accessibilityLabel(syncEngine.status.title)
             }
 
             ToolbarItemGroup(placement: .navigationBarTrailing) {
@@ -375,19 +397,27 @@ extension RecordingListView {
                     .fill(Color.red.opacity(0.92))
                     .frame(width: 64, height: 64)
 
-                if recorder.isRecording {
-                    RoundedRectangle(cornerRadius: 6)
-                        .fill(Color.white)
-                        .frame(width: 24, height: 24)
-                } else {
-                    Image(systemName: "mic.fill")
-                        .font(.title2.weight(.semibold))
-                        .foregroundStyle(.white)
+                Group {
+                    if recorder.isRecording {
+                        RoundedRectangle(cornerRadius: 6)
+                            .fill(Color.white)
+                            .frame(width: 24, height: 24)
+                    } else {
+                        Image(systemName: "mic.fill")
+                            .font(.title2.weight(.semibold))
+                            .foregroundStyle(.white)
+                    }
                 }
+                .transition(.blurReplace)
             }
             .frame(width: 76, height: 76)
+            .animation(Motion.interactive, value: recorder.isRecording)
         }
         .shadow(color: .black.opacity(0.08), radius: 4, y: 2)
+        .sensoryFeedback(trigger: recorder.isRecording) { wasRecording, isRecording in
+            guard wasRecording != isRecording else { return nil }
+            return isRecording ? .start : .stop
+        }
     }
 
     func filterMenuRow(title: String, selected: Bool) -> some View {
@@ -420,6 +450,7 @@ struct ConditionalSearchableModifier: ViewModifier {
 struct LiveRecordingIndicatorView: View {
     @ObservedObject var meter: RecordingMeter
     let isRecording: Bool
+    var inputName: String = ""
 
     var body: some View {
         GeometryReader { geometry in
@@ -444,6 +475,13 @@ struct LiveRecordingIndicatorView: View {
                         .font(.system(.title3, design: .monospaced))
                         .fontWeight(.semibold)
                         .foregroundColor(.white)
+                        .contentTransition(.numericText())
+                }
+
+                if !inputName.isEmpty {
+                    Text(inputName)
+                        .font(.caption)
+                        .foregroundStyle(.white.opacity(0.85))
                 }
 
                 LiveWaveformView(audioLevels: meter.waveformLevels, maxBars: maxBars)

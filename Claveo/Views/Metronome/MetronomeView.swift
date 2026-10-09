@@ -52,6 +52,8 @@ struct MetronomeView: View {
     }
     
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    @ScaledMetric(relativeTo: .largeTitle) var compactTempoSize: CGFloat = 64
+    @ScaledMetric(relativeTo: .largeTitle) var regularTempoSize: CGFloat = 80
     
     var isIPad: Bool {
         horizontalSizeClass == .regular

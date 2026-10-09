@@ -190,6 +190,7 @@ struct KeySignatureIdentificationExerciseView: View {
         }
         .background(Color(.systemGroupedBackground))
         .navigationTitle("Key Signature ID")
+        .sensoryFeedback(.success, trigger: buttonFeedback?.correct == true)
         .navigationBarTitleDisplayMode(.inline)
         .tint(themeManager.accentColor)
         .toolbar {
@@ -205,7 +206,7 @@ struct KeySignatureIdentificationExerciseView: View {
         .onChange(of: enabledModes) { _, newSet in
             persistEnabledModesToSettings(newSet)
             if !newSet.contains(question.mode) {
-                withAnimation(.easeInOut(duration: 0.2)) {
+                Motion.animate {
                     question = KeySignatureExercise.randomQuestion(enabledModes: newSet)
                     buttonFeedback = nil
                 }
@@ -324,6 +325,7 @@ struct KeySignatureIdentificationExerciseView: View {
                 .frame(height: blockH)
                 .frame(maxWidth: .infinity)
                 .id("\(question.vexKeySpec)-\(question.mode.rawValue)")
+                .transition(.blurReplace)
                 .accessibilityElement(children: .ignore)
                 .accessibilityLabel(
                     question.mode == .major
@@ -341,7 +343,7 @@ struct KeySignatureIdentificationExerciseView: View {
     }
 
     private func newQuestion() {
-        withAnimation(.easeInOut(duration: 0.2)) {
+        Motion.animate {
             question = KeySignatureExercise.randomQuestion(enabledModes: enabledModes)
             buttonFeedback = nil
         }
@@ -453,20 +455,11 @@ struct KeySignatureIdentificationExerciseView: View {
 
     private func select(letter: KSNoteLetter, accidental: KSWrittenAccidental) {
         let correct = question.matchesSelection(letter: letter, accidental: accidental)
-        let generator = UIImpactFeedbackGenerator(style: correct ? .light : .rigid)
-        generator.prepare()
-        generator.impactOccurred()
-
-        withAnimation(correct ? .easeOut(duration: 0.2) : .easeOut(duration: 0.22)) {
+        ExerciseAnswerFeedback.reveal(correct: correct) {
             buttonFeedback = KSAnswerTileFeedback(letter: letter, accidental: accidental, correct: correct)
-            if correct {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.55) {
-                    withAnimation(.easeInOut(duration: 0.2)) {
-                        question = KeySignatureExercise.randomQuestion(enabledModes: enabledModes)
-                        buttonFeedback = nil
-                    }
-                }
-            }
+        } advance: {
+            question = KeySignatureExercise.randomQuestion(enabledModes: enabledModes)
+            buttonFeedback = nil
         }
     }
 }
@@ -476,7 +469,7 @@ private struct KeySigExerciseAnswerButtonStyle: ButtonStyle {
         configuration.label
             .scaleEffect(configuration.isPressed ? 0.96 : 1)
             .opacity(configuration.isPressed ? 0.92 : 1)
-            .animation(.easeOut(duration: 0.12), value: configuration.isPressed)
+            .animation(Motion.press, value: configuration.isPressed)
             .hapticButtonPress(trigger: configuration.isPressed)
     }
 }

@@ -11,13 +11,7 @@ import SwiftUI
 extension MetronomeView {
     var mainContentView: some View {
         ScrollView {
-            Group {
-                if isIPad {
-                    iPadMetronomeLayout
-                } else {
-                    phoneMetronomeLayout
-                }
-            }
+            adaptiveMetronomeLayout
             .padding(.bottom, isIPad ? 40 : 24)
         }
         .background(Color(.systemGroupedBackground))
@@ -76,42 +70,29 @@ extension MetronomeView {
         }
     }
 
-    // MARK: - iPhone
-
-    private var phoneMetronomeLayout: some View {
-        VStack(spacing: 16) {
-            metronomeHeroCard
-            metronomeDetailsCard
-            toneGeneratorSection(compact: true)
-        }
-        .padding(.horizontal, 16)
-        .padding(.top, 8)
-    }
-
-    // MARK: - iPad
-
-    private var iPadMetronomeLayout: some View {
-        VStack(spacing: 20) {
-            HStack(alignment: .top, spacing: 20) {
+    private var adaptiveMetronomeLayout: some View {
+        let columns = isIPad
+            ? AnyLayout(HStackLayout(alignment: .top, spacing: Spacing.xl))
+            : AnyLayout(VStackLayout(spacing: Spacing.lg))
+        return VStack(spacing: isIPad ? Spacing.xl : Spacing.lg) {
+            columns {
                 metronomeHeroCard
                     .frame(maxWidth: .infinity)
-
                 metronomeDetailsCard
                     .frame(maxWidth: .infinity)
             }
 
             toneGeneratorPanel {
-                HStack(alignment: .top, spacing: 20) {
+                columns {
                     toneGeneratorControlsColumn
                         .frame(maxWidth: .infinity)
-
                     toneGeneratorKeyboardColumn
                         .frame(maxWidth: .infinity)
                 }
             }
         }
-        .padding(.horizontal, 32)
-        .padding(.top, 24)
+        .padding(.horizontal, isIPad ? Spacing.xl + Spacing.sm : Spacing.lg)
+        .padding(.top, isIPad ? Spacing.xl : Spacing.sm)
     }
 
     private func toneGeneratorPanel<Content: View>(@ViewBuilder content: () -> Content) -> some View {
@@ -166,10 +147,12 @@ extension MetronomeView {
             }
 
             Button(action: toggleMetronomePlayback) {
-                Label(
-                    metronome.isPlaying ? String(localized: "Stop") : String(localized: "Start"),
-                    systemImage: metronome.isPlaying ? "stop.fill" : "play.fill"
-                )
+                Label {
+                    Text(metronome.isPlaying ? String(localized: "Stop") : String(localized: "Start"))
+                } icon: {
+                    Image(systemName: metronome.isPlaying ? "stop.fill" : "play.fill")
+                        .contentTransition(.symbolEffect(.replace))
+                }
                 .font(.headline)
                 .foregroundStyle(.white)
                 .frame(maxWidth: .infinity)
@@ -185,6 +168,10 @@ extension MetronomeView {
                     ? String(localized: "Stop Metronome")
                     : String(localized: "Start Metronome")
             )
+            .sensoryFeedback(trigger: metronome.isPlaying) { wasPlaying, isPlaying in
+                guard wasPlaying != isPlaying else { return nil }
+                return isPlaying ? .start : .stop
+            }
 
             tempoSliderControl
         }
@@ -253,7 +240,7 @@ extension MetronomeView {
     private var tempoDisplay: some View {
         VStack(spacing: 2) {
             Text("\(metronome.tempo)")
-                .font(.system(size: isIPad ? 88 : 64, weight: .light, design: .rounded))
+                .font(.system(size: isIPad ? regularTempoSize : compactTempoSize, weight: .light, design: .rounded))
                 .foregroundStyle(.primary)
                 .monospacedDigit()
                 .contentTransition(.numericText())
@@ -417,21 +404,6 @@ extension MetronomeView {
 
     // MARK: - Tone generator
 
-    private func toneGeneratorSection(compact: Bool) -> some View {
-        Group {
-            if compact {
-                toneGeneratorPanel {
-                    VStack(alignment: .leading, spacing: 16) {
-                        toneGeneratorControlsColumn
-                        toneGeneratorKeyboardColumn
-                    }
-                }
-            } else {
-                EmptyView()
-            }
-        }
-    }
-
     private var toneGeneratorControlsColumn: some View {
         VStack(spacing: 16) {
             Text(String(format: "%.1f Hz", toneGenerator.frequency))
@@ -472,12 +444,16 @@ extension MetronomeView {
                     toneGenerator.start()
                 }
             } label: {
-                Label(
-                    toneGenerator.isPlaying
-                        ? String(localized: "Stop Tone")
-                        : String(localized: "Play Tone"),
-                    systemImage: toneGenerator.isPlaying ? "stop.fill" : "play.fill"
-                )
+                Label {
+                    Text(
+                        toneGenerator.isPlaying
+                            ? String(localized: "Stop Tone")
+                            : String(localized: "Play Tone")
+                    )
+                } icon: {
+                    Image(systemName: toneGenerator.isPlaying ? "stop.fill" : "play.fill")
+                        .contentTransition(.symbolEffect(.replace))
+                }
                 .frame(maxWidth: .infinity)
             }
             .buttonStyle(.borderedProminent)
@@ -630,7 +606,7 @@ private struct MetronomeBeatCell: View {
         .frame(maxWidth: .infinity)
         .frame(height: 44)
         .scaleEffect(isActive ? 1.03 : 1.0)
-        .animation(.spring(response: 0.16, dampingFraction: 0.62), value: isActive)
+        .animation(Motion.pulse, value: isActive)
         .accessibilityValue(
             isActive
                 ? (isAccented ? String(localized: "Accented, playing") : String(localized: "Playing"))

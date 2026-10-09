@@ -14,19 +14,22 @@ struct Piece: Identifiable, Codable, Hashable {
     var composer: String?
     var createdAt: Date
     var lastModified: Date
+    var isDeleted: Bool
     
     init(
         id: UUID = UUID(),
         name: String,
         composer: String? = nil,
         createdAt: Date = Date(),
-        lastModified: Date? = nil
+        lastModified: Date? = nil,
+        isDeleted: Bool = false
     ) {
         self.id = id
         self.name = name
         self.composer = composer
         self.createdAt = createdAt
         self.lastModified = lastModified ?? createdAt
+        self.isDeleted = isDeleted
     }
     
     var displayName: String {
@@ -42,6 +45,7 @@ struct Piece: Identifiable, Codable, Hashable {
         case composer
         case createdAt
         case lastModified
+        case isDeleted
     }
 
     init(from decoder: Decoder) throws {
@@ -51,6 +55,7 @@ struct Piece: Identifiable, Codable, Hashable {
         composer = try container.decodeIfPresent(String.self, forKey: .composer)
         createdAt = try container.decode(Date.self, forKey: .createdAt)
         lastModified = try container.decodeIfPresent(Date.self, forKey: .lastModified) ?? createdAt
+        isDeleted = try container.decodeIfPresent(Bool.self, forKey: .isDeleted) ?? false
     }
 }
 
