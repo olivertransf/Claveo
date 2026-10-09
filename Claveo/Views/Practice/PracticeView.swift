@@ -80,6 +80,7 @@ struct PracticeView: View {
             .refreshable { await practiceService.refreshFromiCloud() }
             .navigationTitle("Practice")
             .navigationBarTitleDisplayMode(.inline)
+            .moreTabBackButton(for: 3)
             .listSectionSpacing(12)
             .searchable(text: $searchText, prompt: "Search journal notes")
             .onAppear(perform: refreshFilteredEntries)

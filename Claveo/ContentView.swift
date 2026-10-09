@@ -26,6 +26,7 @@ struct ContentView: View {
         return bar.contains(valid) ? valid : ContentView.moreTabValue
     }()
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    @State private var moreTab = MoreTabController()
 
     private static let moreTabValue = 8
 
@@ -45,7 +46,8 @@ struct ContentView: View {
     private var visibleSemanticId: Int? {
         if horizontalSizeClass == .compact {
             if compactTabSelection == Self.moreTabValue {
-                return moreSemanticIds.contains(selectedTabIndex) ? selectedTabIndex : nil
+                guard let route = moreTab.route, moreSemanticIds.contains(route) else { return nil }
+                return route
             }
             return compactTabSelection
         }
@@ -62,6 +64,7 @@ struct ContentView: View {
         }
         .tint(themeManager.accentColor)
         .environmentObject(toneGenerator)
+        .environment(moreTab)
         .onChange(of: selectedTabIndex) { _, newIndex in
             handleTabChange(newIndex: newIndex)
         }
@@ -77,6 +80,9 @@ struct ContentView: View {
         }
         .onChange(of: settingsManager.settings.tabBarCustomizationOrder) { _, _ in
             syncCompactSelection()
+            if let route = moreTab.route, !moreSemanticIds.contains(route) {
+                moreTab.route = nil
+            }
         }
     }
 
@@ -198,26 +204,39 @@ private struct DeferredTab<Content: View>: View {
     }
 }
 
+@Observable
+final class MoreTabController {
+    var route: Int?
+}
+
 private struct MoreHubView: View {
     let tabs: [Int]
     @Binding var selectedTabIndex: Int
     let isMoreSelected: Bool
+    @Environment(MoreTabController.self) private var moreTab
     @EnvironmentObject private var themeManager: ThemeManager
-    @State private var path: [MoreRoute] = []
-    @State private var didRestore = false
 
     var body: some View {
-        NavigationStack(path: $path) {
+        if let route = moreTab.route, tabs.contains(route) {
+            FeatureRootView(
+                semanticId: route,
+                isTabSelected: isMoreSelected
+            )
+        } else {
             ScrollView {
-                VStack(spacing: 12) {
-                    ForEach(Array(stride(from: 0, to: tabs.count, by: 2)), id: \.self) { start in
-                        HStack(spacing: 12) {
-                            moreLink(tabs[start])
-                            if start + 1 < tabs.count {
-                                moreLink(tabs[start + 1])
-                            } else {
-                                Color.clear
-                                    .frame(maxWidth: .infinity)
+                VStack(alignment: .leading, spacing: 16) {
+                    Text("More")
+                        .font(.largeTitle.bold())
+                    VStack(spacing: 12) {
+                        ForEach(Array(stride(from: 0, to: tabs.count, by: 2)), id: \.self) { start in
+                            HStack(spacing: 12) {
+                                moreLink(tabs[start])
+                                if start + 1 < tabs.count {
+                                    moreLink(tabs[start + 1])
+                                } else {
+                                    Color.clear
+                                        .frame(maxWidth: .infinity)
+                                }
                             }
                         }
                     }
@@ -225,66 +244,55 @@ private struct MoreHubView: View {
                 .padding(16)
             }
             .background(Color(.systemGroupedBackground))
-            .navigationTitle("More")
-            .navigationDestination(for: MoreRoute.self) { route in
-                FeatureRootView(
-                    semanticId: route.semanticId,
-                    isTabSelected: isMoreSelected
-                )
-                .environment(\.moreNavigationEmbedded, true)
-            }
-        }
-        .onAppear(perform: restoreIfNeeded)
-        .onChange(of: selectedTabIndex) { _, newValue in
-            if !tabs.contains(newValue), !path.isEmpty {
-                path = []
-            }
-        }
-        .onChange(of: tabs) { _, newTabs in
-            if !path.isEmpty, !newTabs.contains(selectedTabIndex) {
-                path = []
-            }
         }
     }
 
     private func moreLink(_ semanticId: Int) -> some View {
         Button {
-            if selectedTabIndex != semanticId {
-                selectedTabIndex = semanticId
-            }
-            path = [MoreRoute(semanticId: semanticId)]
+            selectedTabIndex = semanticId
+            moreTab.route = semanticId
         } label: {
             MoreHubCard(
                 title: AppTabRegistry.title(semanticId),
                 systemImage: AppTabRegistry.systemImage(semanticId),
                 tint: themeManager.accentColor
             )
+            .contentShape(Rectangle())
         }
-        .buttonStyle(ClaveoPressButtonStyle())
-    }
-
-    private func restoreIfNeeded() {
-        guard !didRestore else { return }
-        didRestore = true
-        if tabs.contains(selectedTabIndex), path.isEmpty {
-            path = [MoreRoute(semanticId: selectedTabIndex)]
-        }
+        .buttonStyle(.borderless)
     }
 }
 
-private nonisolated struct MoreNavigationEmbeddedKey: EnvironmentKey {
-    static let defaultValue = false
-}
-
-extension EnvironmentValues {
-    var moreNavigationEmbedded: Bool {
-        get { self[MoreNavigationEmbeddedKey.self] }
-        set { self[MoreNavigationEmbeddedKey.self] = newValue }
-    }
-}
-
-private struct MoreRoute: Hashable {
+private struct MoreTabBackButtonModifier: ViewModifier {
+    @Environment(MoreTabController.self) private var moreTab: MoreTabController?
+    @Environment(\.dismiss) private var dismiss
     let semanticId: Int
+
+    func body(content: Content) -> some View {
+        content.toolbar {
+            if moreTab?.route == semanticId {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button {
+                        moreTab?.route = nil
+                        dismiss()
+                    } label: {
+                        HStack(spacing: 4) {
+                            Image(systemName: "chevron.backward")
+                                .font(.body.weight(.semibold))
+                            Text("More")
+                        }
+                    }
+                    .accessibilityLabel("More")
+                }
+            }
+        }
+    }
+}
+
+extension View {
+    func moreTabBackButton(for semanticId: Int) -> some View {
+        modifier(MoreTabBackButtonModifier(semanticId: semanticId))
+    }
 }
 
 private struct MoreHubCard: View {
@@ -308,9 +316,6 @@ private struct MoreHubCard: View {
         .frame(maxWidth: .infinity)
         .padding(.vertical, 22)
         .claveoCard()
-        .accessibilityElement(children: .combine)
-        .accessibilityAddTraits(.isButton)
-        .accessibilityLabel(title)
     }
 }
 

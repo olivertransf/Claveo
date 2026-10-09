@@ -38,17 +38,9 @@ struct SettingsView: View {
         )
     }
 
-    @Environment(\.moreNavigationEmbedded) private var moreNavigationEmbedded
-
     var body: some View {
-        Group {
-            if moreNavigationEmbedded {
-                settingsForm
-            } else {
-                NavigationStack {
-                    settingsForm
-                }
-            }
+        NavigationStack {
+            settingsForm
         }
         .onAppear {
             manualFrequencyText = String(format: "%.1f", settingsManager.settings.a4ReferenceFrequency)
@@ -96,6 +88,7 @@ struct SettingsView: View {
         .frame(maxWidth: .infinity)
         .navigationTitle("Settings")
         .navigationBarTitleDisplayMode(.inline)
+        .moreTabBackButton(for: 6)
     }
 
     private static func sanitizedDurations(_ values: [Int]) -> [Int] {

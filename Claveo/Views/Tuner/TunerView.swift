@@ -110,6 +110,7 @@ struct TunerView: View {
             .background(Color(.systemGroupedBackground))
             .navigationTitle("Tuner")
             .navigationBarTitleDisplayMode(.inline)
+            .moreTabBackButton(for: 2)
             .tint(themeManager.accentColor)
             .toolbar {
                 a4ToolbarContent

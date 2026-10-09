@@ -14,7 +14,6 @@ struct MusicDictionaryView: View {
 
     @EnvironmentObject var themeManager: ThemeManager
     @StateObject private var dictionaryService = MusicDictionaryService.shared
-    @StateObject private var settingsManager = SettingsManager.shared
     @State private var searchText = ""
     @State private var isSearchPresented = false
     @State private var path = NavigationPath()
@@ -64,6 +63,7 @@ struct MusicDictionaryView: View {
             }
             .navigationTitle("Dictionary")
             .navigationBarTitleDisplayMode(.inline)
+            .moreTabBackButton(for: 5)
             .navigationDestination(for: String.self) { category in
                 TermsListView(
                     terms: terms(in: category),
