@@ -84,9 +84,6 @@
 <style>
   .hero {
     padding: clamp(56px, 8vw, 104px) 0 clamp(32px, 5vw, 56px);
-    background:
-      radial-gradient(50% 60% at 80% 0%, var(--accent-glow) 0%, transparent 70%),
-      transparent;
   }
 
   .hero .page {
@@ -115,7 +112,7 @@
 
   .value {
     padding: 28px 26px;
-    background: linear-gradient(180deg, color-mix(in srgb, var(--accent-soft) 50%, var(--surface)) 0%, var(--surface) 60%);
+    background: color-mix(in srgb, var(--accent-soft) 50%, var(--surface));
   }
 
   .value h2 {

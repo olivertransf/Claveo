@@ -13,7 +13,6 @@
 </script>
 
 <section class="hero">
-  <div class="glow" aria-hidden="true"></div>
   <div class="page grid">
     <div class="copy">
       <span class="eyebrow">Free on iPhone and iPad</span>
@@ -54,17 +53,6 @@
     position: relative;
     overflow: hidden;
     padding: clamp(48px, 8vw, 112px) 0 clamp(56px, 8vw, 96px);
-  }
-
-  .glow {
-    position: absolute;
-    inset: -20% -10% auto;
-    height: 80%;
-    background:
-      radial-gradient(60% 60% at 70% 40%, var(--accent-glow) 0%, transparent 70%),
-      radial-gradient(40% 50% at 20% 20%, color-mix(in srgb, var(--accent-glow) 50%, transparent) 0%, transparent 70%);
-    filter: blur(20px);
-    pointer-events: none;
   }
 
   .grid {
@@ -186,12 +174,9 @@
   @media (max-width: 959px) {
     .devices {
       min-height: 0;
-      height: 520px;
-      overflow: hidden;
+      height: 680px;
       align-items: flex-start;
       margin-top: -12px;
-      -webkit-mask-image: linear-gradient(to bottom, #000 72%, transparent 100%);
-      mask-image: linear-gradient(to bottom, #000 72%, transparent 100%);
     }
   }
 

@@ -9,7 +9,6 @@
 <section class="section cta-section" id="download">
   <div class="page">
     <div class="band" use:reveal>
-      <div class="band-glow" aria-hidden="true"></div>
       <div class="content">
         <span class="pill">Free, no ads, no account</span>
         <h2>Get Claveo</h2>
@@ -34,19 +33,9 @@
     overflow: hidden;
     padding: clamp(44px, 7vw, 80px) clamp(24px, 6vw, 72px);
     border-radius: var(--radius-xl);
-    background: linear-gradient(135deg, var(--accent-deep) 0%, var(--accent) 60%, #6fb0ff 100%);
+    background: var(--accent);
     color: #fff;
     box-shadow: var(--shadow-lg);
-  }
-
-  .band-glow {
-    position: absolute;
-    inset: auto -20% -60% auto;
-    width: 60%;
-    aspect-ratio: 1;
-    border-radius: 50%;
-    background: radial-gradient(circle, rgba(255, 255, 255, 0.28) 0%, transparent 70%);
-    pointer-events: none;
   }
 
   .content {

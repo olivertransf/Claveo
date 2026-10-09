@@ -84,7 +84,7 @@
 
   .feature {
     padding: 26px 24px 28px;
-    background: linear-gradient(180deg, color-mix(in srgb, var(--accent-soft) 45%, var(--surface)) 0%, var(--surface) 55%);
+    background: color-mix(in srgb, var(--accent-soft) 45%, var(--surface));
   }
 
   .chip {

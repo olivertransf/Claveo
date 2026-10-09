@@ -84,7 +84,6 @@
 <style>
   .hero {
     padding: clamp(56px, 8vw, 104px) 0 clamp(24px, 4vw, 40px);
-    background: radial-gradient(50% 60% at 80% 0%, var(--accent-glow) 0%, transparent 70%);
   }
 
   .hero .page {
@@ -122,8 +121,7 @@
     top: 12px;
     bottom: 12px;
     width: 2px;
-    background: linear-gradient(to bottom, var(--success), var(--accent) 45%, var(--border-strong) 85%);
-    opacity: 0.7;
+    background: var(--border-strong);
   }
 
   .entry {
@@ -207,7 +205,7 @@
     align-items: center;
     justify-content: space-between;
     gap: 20px;
-    background: linear-gradient(180deg, color-mix(in srgb, var(--accent-soft) 50%, var(--surface)) 0%, var(--surface) 70%);
+    background: color-mix(in srgb, var(--accent-soft) 50%, var(--surface));
   }
 
   .suggest h2 {

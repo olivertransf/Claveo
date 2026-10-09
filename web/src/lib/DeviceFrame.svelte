@@ -21,7 +21,7 @@
     aspect-ratio: 9 / 19.5;
     padding: var(--frame);
     border-radius: var(--radius);
-    background: linear-gradient(160deg, #2a2d36 0%, #0c0d12 60%, #1a1c24 100%);
+    background: #1a1c24;
     box-shadow:
       inset 0 0 0 1.5px rgba(255, 255, 255, 0.12),
       inset 0 0 0 4px #000,
