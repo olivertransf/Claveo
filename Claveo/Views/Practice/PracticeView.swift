@@ -21,6 +21,7 @@ struct PracticeView: View {
     @State private var showingSettings = false
     @State private var currentWeekOffset = 0
     @State private var searchText = ""
+    @State private var filteredEntries: [PracticeEntry] = []
 
     private let calendar = Calendar.current
 
@@ -81,6 +82,13 @@ struct PracticeView: View {
             .navigationBarTitleDisplayMode(.inline)
             .listSectionSpacing(12)
             .searchable(text: $searchText, prompt: "Search journal notes")
+            .onAppear(perform: refreshFilteredEntries)
+            .onChange(of: searchText) { _, _ in
+                refreshFilteredEntries()
+            }
+            .onChange(of: practiceService.practiceEntries) { _, _ in
+                refreshFilteredEntries()
+            }
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button {
@@ -334,12 +342,13 @@ struct PracticeView: View {
         calendar.date(byAdding: .day, value: index, to: weekStart) ?? weekStart
     }
 
-    private var filteredEntries: [PracticeEntry] {
+    private func refreshFilteredEntries() {
         guard !searchText.isEmpty else {
-            return practiceService.practiceEntries
+            filteredEntries = practiceService.practiceEntries
+            return
         }
         let q = searchText.lowercased()
-        return practiceService.practiceEntries.filter {
+        filteredEntries = practiceService.practiceEntries.filter {
             $0.notes?.lowercased().contains(q) == true
             || $0.formattedDate.lowercased().contains(q)
             || "\($0.duration)".contains(q)
@@ -372,6 +381,7 @@ private struct WeekDayCell: View {
     let onTap: () -> Void
 
     private let calendar = Calendar.current
+    @ScaledMetric(relativeTo: .body) private var circleSize: CGFloat = 36
 
     private var dayLetter: String {
         let weekday = calendar.component(.weekday, from: date) - 1
@@ -393,32 +403,31 @@ private struct WeekDayCell: View {
         Button(action: onTap) {
             VStack(spacing: 5) {
                 Text(dayLetter)
-                    .font(.system(size: 11, weight: isToday ? .bold : .regular))
+                    .font(isToday ? .caption.weight(.bold) : .caption)
                     .foregroundStyle(isToday ? accentColor : .secondary)
 
                 ZStack {
                     Circle()
                         .fill(circleBackground)
-                        .frame(width: 36, height: 36)
+                        .frame(width: circleSize, height: circleSize)
                     if isToday && !isPracticed {
                         Circle()
                             .strokeBorder(accentColor, lineWidth: 1.5)
-                            .frame(width: 36, height: 36)
+                            .frame(width: circleSize, height: circleSize)
                     }
                     Text(dayNumber)
-                        .font(.system(size: 13, weight: .semibold))
+                        .font(.footnote.weight(.semibold))
                         .foregroundStyle(numberColor)
                 }
 
-                // Duration hint or empty spacer for alignment
                 Group {
                     if let label = durationLabel {
                         Text(label)
-                            .font(.system(size: 9, weight: .medium))
+                            .font(.caption2.weight(.medium))
                             .foregroundStyle(accentColor)
                     } else {
                         Text(" ")
-                            .font(.system(size: 9))
+                            .font(.caption2)
                     }
                 }
             }

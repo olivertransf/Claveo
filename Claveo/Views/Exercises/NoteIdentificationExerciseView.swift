@@ -370,20 +370,11 @@ struct NoteIdentificationExerciseView: View {
 
     private func select(letter: NoteLetter, accidental: WrittenAccidental) {
         let correct = question.matchesSelection(letter: letter, accidental: accidental)
-        if !correct {
-            HapticFeedback.rigidImpact()
-        }
-
-        Motion.animate(correct ? Motion.interactive : Motion.emphasis) {
+        ExerciseAnswerFeedback.reveal(correct: correct) {
             buttonFeedback = AnswerTileFeedback(letter: letter, accidental: accidental, correct: correct)
-            if correct {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.55) {
-                    Motion.animate {
-                        question = Self.randomQuestion(enabledClefs: enabledClefs)
-                        buttonFeedback = nil
-                    }
-                }
-            }
+        } advance: {
+            question = Self.randomQuestion(enabledClefs: enabledClefs)
+            buttonFeedback = nil
         }
     }
 

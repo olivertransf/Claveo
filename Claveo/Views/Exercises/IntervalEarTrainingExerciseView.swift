@@ -289,20 +289,11 @@ struct IntervalEarTrainingExerciseView: View {
 
     private func select(_ interval: EarTrainingInterval) {
         let correct = interval == question.interval
-        if !correct {
-            HapticFeedback.rigidImpact()
-        }
-
-        Motion.animate(correct ? Motion.interactive : Motion.emphasis) {
+        ExerciseAnswerFeedback.reveal(correct: correct) {
             feedback = (interval, correct)
-            if correct {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.55) {
-                    Motion.animate {
-                        feedback = nil
-                        question = IntervalQuestion.random(excluding: question)
-                    }
-                }
-            }
+        } advance: {
+            feedback = nil
+            question = IntervalQuestion.random(excluding: question)
         }
     }
 }

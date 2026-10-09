@@ -455,20 +455,11 @@ struct KeySignatureIdentificationExerciseView: View {
 
     private func select(letter: KSNoteLetter, accidental: KSWrittenAccidental) {
         let correct = question.matchesSelection(letter: letter, accidental: accidental)
-        if !correct {
-            HapticFeedback.rigidImpact()
-        }
-
-        Motion.animate(correct ? Motion.interactive : Motion.emphasis) {
+        ExerciseAnswerFeedback.reveal(correct: correct) {
             buttonFeedback = KSAnswerTileFeedback(letter: letter, accidental: accidental, correct: correct)
-            if correct {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.55) {
-                    Motion.animate {
-                        question = KeySignatureExercise.randomQuestion(enabledModes: enabledModes)
-                        buttonFeedback = nil
-                    }
-                }
-            }
+        } advance: {
+            question = KeySignatureExercise.randomQuestion(enabledModes: enabledModes)
+            buttonFeedback = nil
         }
     }
 }
