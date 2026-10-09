@@ -190,7 +190,7 @@ struct PracticeView: View {
     private var weekStripHeader: some View {
         HStack {
             Button {
-                withAnimation(.easeOut(duration: 0.2)) {
+                Motion.animate {
                     if currentWeekOffset > -52 { currentWeekOffset -= 1 }
                 }
             } label: {
@@ -211,7 +211,7 @@ struct PracticeView: View {
             Spacer()
 
             Button {
-                withAnimation(.easeOut(duration: 0.2)) {
+                Motion.animate {
                     if currentWeekOffset < 0 { currentWeekOffset += 1 }
                 }
             } label: {
@@ -265,7 +265,7 @@ struct PracticeView: View {
             DragGesture()
                 .onChanged { dragOffset = $0.translation.width }
                 .onEnded { value in
-                    withAnimation(.easeOut(duration: 0.2)) {
+                    Motion.animate {
                         if value.translation.width > 50 && currentWeekOffset > -52 {
                             currentWeekOffset -= 1
                         } else if value.translation.width < -50 && currentWeekOffset < 0 {

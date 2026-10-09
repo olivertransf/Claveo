@@ -40,7 +40,7 @@ struct WaveformView: View {
                     .transition(.opacity)
             }
         }
-        .animation(.easeInOut(duration: 0.2), value: hasWaveform)
+        .animation(Motion.interactive, value: hasWaveform)
         .frame(maxWidth: .infinity)
         .frame(height: height)
         .background {

@@ -288,15 +288,17 @@ struct IntervalEarTrainingExerciseView: View {
 
     private func select(_ interval: EarTrainingInterval) {
         let correct = interval == question.interval
-        let generator = UIImpactFeedbackGenerator(style: correct ? .light : .rigid)
-        generator.prepare()
-        generator.impactOccurred()
+        if correct {
+            HapticFeedback.lightImpact()
+        } else {
+            HapticFeedback.rigidImpact()
+        }
 
-        withAnimation(correct ? .easeOut(duration: 0.2) : .easeOut(duration: 0.22)) {
+        Motion.animate(correct ? Motion.interactive : Motion.emphasis) {
             feedback = (interval, correct)
             if correct {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.55) {
-                    withAnimation(.easeInOut(duration: 0.2)) {
+                    Motion.animate {
                         feedback = nil
                         question = IntervalQuestion.random(excluding: question)
                     }
@@ -311,7 +313,7 @@ private struct IntervalExerciseButtonStyle: ButtonStyle {
         configuration.label
             .scaleEffect(configuration.isPressed ? 0.96 : 1)
             .opacity(configuration.isPressed ? 0.92 : 1)
-            .animation(.easeOut(duration: 0.12), value: configuration.isPressed)
+            .animation(Motion.press, value: configuration.isPressed)
             .hapticButtonPress(trigger: configuration.isPressed)
     }
 }

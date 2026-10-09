@@ -224,7 +224,7 @@ private struct MoreHubView: View {
                                 tint: themeManager.accentColor
                             )
                         }
-                        .buttonStyle(.plain)
+                        .buttonStyle(ClaveoPressButtonStyle())
                     }
                 }
                 .padding(16)
@@ -285,14 +285,7 @@ private struct MoreHubCard: View {
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 22)
-        .background(
-            Color(.secondarySystemGroupedBackground),
-            in: RoundedRectangle(cornerRadius: 16, style: .continuous)
-        )
-        .overlay {
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .strokeBorder(Color.primary.opacity(0.08), lineWidth: 1)
-        }
+        .claveoCard()
         .accessibilityElement(children: .combine)
         .accessibilityAddTraits(.isButton)
         .accessibilityLabel(title)

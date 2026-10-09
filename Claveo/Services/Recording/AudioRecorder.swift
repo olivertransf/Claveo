@@ -348,9 +348,7 @@ class AudioRecorder: NSObject, ObservableObject {
             print("Recording started successfully at: \(fileURL)")
             #endif
             
-            // Haptic feedback for recording start
-            let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
-            impactFeedback.impactOccurred()
+            HapticFeedback.mediumImpact()
             
             isRecording = true
             currentRecordingURL = fileURL
@@ -393,9 +391,7 @@ class AudioRecorder: NSObject, ObservableObject {
     func stopRecording() {
         guard isRecording else { return }
         
-        // Haptic feedback for recording stop
-        let impactFeedback = UIImpactFeedbackGenerator(style: .light)
-        impactFeedback.impactOccurred()
+        HapticFeedback.lightImpact()
         
         let url = currentRecordingURL
         let elapsedBeforeStop = audioRecorder?.currentTime ?? recordingTime

@@ -118,7 +118,7 @@ struct RecordingRowView: View {
     private func handleRowTap() {
         HapticFeedback.lightImpact()
         if allowsInlineExpansion {
-            withAnimation(.easeInOut(duration: 0.22)) {
+            Motion.animate(Motion.layout) {
                 isExpanded.toggle()
             }
         } else if !isExpanded {

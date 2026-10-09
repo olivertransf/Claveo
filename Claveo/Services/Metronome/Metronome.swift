@@ -10,7 +10,6 @@ import AVFoundation
 import Combine
 import Foundation
 import QuartzCore
-import UIKit
 
 enum MetronomeSound: String, CaseIterable {
     case click = "Click"
@@ -108,9 +107,6 @@ class Metronome: ObservableObject {
     var isTempoAdjustmentInProgress = false
     var hasPendingTempoReschedule = false
     
-    let hapticGenerator = UIImpactFeedbackGenerator(style: .medium)
-    let hapticGeneratorLight = UIImpactFeedbackGenerator(style: .light)
-    
     var beatsPerMeasure: Int {
         customTimeSignature?.top ?? timeSignature.beatsPerMeasure
     }
@@ -165,9 +161,7 @@ class Metronome: ObservableObject {
             beatPattern = savedPattern
         }
         
-        // Prepare haptic generators
-        hapticGenerator.prepare()
-        hapticGeneratorLight.prepare()
+        HapticFeedback.prepareImpacts()
 
         let interruptionToken = NotificationCenter.default.addObserver(
             forName: AVAudioSession.interruptionNotification,

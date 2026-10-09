@@ -101,7 +101,7 @@ struct QuickPracticeEntryView: View {
                         HStack(spacing: 0) {
                             ForEach(1...5, id: \.self) { star in
                                 Button {
-                                    withAnimation(.spring(response: 0.2, dampingFraction: 0.6)) {
+                                    Motion.animate(Motion.emphasis) {
                                         rating = (rating == star) ? nil : star
                                     }
                                 } label: {

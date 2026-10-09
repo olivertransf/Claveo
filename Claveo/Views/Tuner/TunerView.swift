@@ -565,7 +565,7 @@ struct TuningMeterView: View {
 
                 TunerNeedle(color: needleColor, lineHeight: 52, lineWidth: 3, headSize: 12)
                     .offset(x: needlePosition(centerX: centerX, leftEdge: leftEdge, rightEdge: rightEdge, scaleWidth: scaleWidth) - centerX)
-                    .animation(.interactiveSpring(response: 0.42, dampingFraction: 0.9), value: cents)
+                    .animation(Motion.meter, value: cents)
             }
         }
         .accessibilityElement(children: .ignore)
@@ -652,7 +652,7 @@ struct PreciseTuningMeterView: View {
 
                 TunerNeedle(color: preciseNeedleColor, lineHeight: 40, lineWidth: 2.5, headSize: 10)
                     .offset(x: preciseNeedlePosition(centerX: centerX, leftEdge: leftEdge, rightEdge: rightEdge, scaleWidth: scaleWidth) - centerX)
-                    .animation(.interactiveSpring(response: 0.42, dampingFraction: 0.9), value: cents)
+                    .animation(Motion.meter, value: cents)
             }
         }
         .accessibilityElement(children: .ignore)

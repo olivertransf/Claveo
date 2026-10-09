@@ -95,8 +95,8 @@ struct ChordScaleReferenceView: View {
                     }
                 }
                 .padding(.vertical, 16)
-                .animation(.easeInOut(duration: 0.2), value: selectedRoot)
-                .animation(.easeInOut(duration: 0.2), value: keyMode)
+                .animation(Motion.interactive, value: selectedRoot)
+                .animation(Motion.interactive, value: keyMode)
             }
             .background(Color(.systemGroupedBackground))
             .navigationTitle("Chords & Scales")

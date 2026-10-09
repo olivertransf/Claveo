@@ -630,7 +630,7 @@ private struct MetronomeBeatCell: View {
         .frame(maxWidth: .infinity)
         .frame(height: 44)
         .scaleEffect(isActive ? 1.03 : 1.0)
-        .animation(.spring(response: 0.16, dampingFraction: 0.62), value: isActive)
+        .animation(Motion.pulse, value: isActive)
         .accessibilityValue(
             isActive
                 ? (isAccented ? String(localized: "Accented, playing") : String(localized: "Playing"))
