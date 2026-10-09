@@ -151,7 +151,7 @@ extension MetronomeView {
                     Text(metronome.isPlaying ? String(localized: "Stop") : String(localized: "Start"))
                 } icon: {
                     Image(systemName: metronome.isPlaying ? "stop.fill" : "play.fill")
-                        .symbolEffect(.replace, value: metronome.isPlaying)
+                        .contentTransition(.symbolEffect(.replace))
                 }
                 .font(.headline)
                 .foregroundStyle(.white)
@@ -452,7 +452,7 @@ extension MetronomeView {
                     )
                 } icon: {
                     Image(systemName: toneGenerator.isPlaying ? "stop.fill" : "play.fill")
-                        .symbolEffect(.replace, value: toneGenerator.isPlaying)
+                        .contentTransition(.symbolEffect(.replace))
                 }
                 .frame(maxWidth: .infinity)
             }

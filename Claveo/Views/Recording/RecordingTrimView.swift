@@ -299,7 +299,7 @@ struct RecordingTrimView: View {
                         .font(.system(size: 20, weight: .semibold))
                         .foregroundStyle(.white)
                         .offset(x: previewPlayer.isPlaying ? 0 : 2)
-                        .symbolEffect(.replace, value: previewPlayer.isPlaying)
+                        .contentTransition(.symbolEffect(.replace))
                 }
             }
             .buttonStyle(.plain)

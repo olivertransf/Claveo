@@ -431,7 +431,7 @@ struct TunerView: View {
                 Text(isListening ? String(localized: "Stop Listening") : String(localized: "Start Listening"))
             } icon: {
                 Image(systemName: isListening ? "stop.fill" : "mic.fill")
-                    .symbolEffect(.replace, value: isListening)
+                    .contentTransition(.symbolEffect(.replace))
             }
             .font(.headline)
             .foregroundStyle(.white)

@@ -204,7 +204,7 @@ struct RecordingPlayerSurface: View {
                         .font(.system(size: 32, weight: .regular))
                         .foregroundStyle(.primary)
                         .offset(x: isPlaying ? 0 : 2)
-                        .symbolEffect(.replace, value: isPlaying)
+                        .contentTransition(.symbolEffect(.replace))
                         .frame(width: playButtonSize, height: playButtonSize)
                         .contentShape(Rectangle())
                 }

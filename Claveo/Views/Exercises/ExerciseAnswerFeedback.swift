@@ -21,7 +21,9 @@ enum ExerciseAnswerFeedback {
             show()
             guard correct else { return }
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.55) {
-                Motion.animate(advance)
+                Motion.animate {
+                    advance()
+                }
             }
         }
     }
