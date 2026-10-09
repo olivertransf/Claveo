@@ -126,32 +126,15 @@ class PitchDetector: NSObject, ObservableObject {
         }
         
         let permissionGranted: Bool
-        if #available(iOS 17.0, *) {
-            switch AVAudioApplication.shared.recordPermission {
-            case .granted:
-                permissionGranted = true
-            case .denied:
-                permissionGranted = false
-            case .undetermined:
-                permissionGranted = await AVAudioApplication.requestRecordPermission()
-            @unknown default:
-                permissionGranted = false
-            }
-        } else {
-            switch AVAudioSession.sharedInstance().recordPermission {
-            case .granted:
-                permissionGranted = true
-            case .denied:
-                permissionGranted = false
-            case .undetermined:
-                permissionGranted = await withCheckedContinuation { continuation in
-                    AVAudioSession.sharedInstance().requestRecordPermission { granted in
-                        continuation.resume(returning: granted)
-                    }
-                }
-            @unknown default:
-                permissionGranted = false
-            }
+        switch AVAudioApplication.shared.recordPermission {
+        case .granted:
+            permissionGranted = true
+        case .denied:
+            permissionGranted = false
+        case .undetermined:
+            permissionGranted = await AVAudioApplication.requestRecordPermission()
+        @unknown default:
+            permissionGranted = false
         }
 
         guard lifecycle.isCurrent(lifecycleToken, expectingActive: true) else { return }
