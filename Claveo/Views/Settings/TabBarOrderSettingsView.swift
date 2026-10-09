@@ -9,7 +9,7 @@
 import SwiftUI
 
 struct TabBarOrderSettingsView: View {
-    @StateObject private var settingsManager = SettingsManager.shared
+    @EnvironmentObject private var settingsManager: SettingsManager
     @State private var order: [Int] = AppSettings.normalizedTabBarOrder(
         SettingsManager.shared.settings.tabBarCustomizationOrder
     )
@@ -92,4 +92,5 @@ struct TabBarOrderSettingsView: View {
     NavigationStack {
         TabBarOrderSettingsView()
     }
+    .environmentObject(SettingsManager.shared)
 }

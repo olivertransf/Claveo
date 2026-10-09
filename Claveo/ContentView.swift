@@ -229,13 +229,9 @@ private struct MoreHubView: View {
             .navigationDestination(for: MoreRoute.self) { route in
                 FeatureRootView(
                     semanticId: route.semanticId,
-                    isTabSelected: isMoreSelected && selectedTabIndex == route.semanticId
+                    isTabSelected: isMoreSelected
                 )
-                .onAppear {
-                    if selectedTabIndex != route.semanticId {
-                        selectedTabIndex = route.semanticId
-                    }
-                }
+                .environment(\.moreNavigationEmbedded, true)
             }
         }
         .onAppear(perform: restoreIfNeeded)
@@ -253,7 +249,10 @@ private struct MoreHubView: View {
 
     private func moreLink(_ semanticId: Int) -> some View {
         Button {
-            path.append(MoreRoute(semanticId: semanticId))
+            if selectedTabIndex != semanticId {
+                selectedTabIndex = semanticId
+            }
+            path = [MoreRoute(semanticId: semanticId)]
         } label: {
             MoreHubCard(
                 title: AppTabRegistry.title(semanticId),
@@ -270,6 +269,17 @@ private struct MoreHubView: View {
         if tabs.contains(selectedTabIndex), path.isEmpty {
             path = [MoreRoute(semanticId: selectedTabIndex)]
         }
+    }
+}
+
+private nonisolated struct MoreNavigationEmbeddedKey: EnvironmentKey {
+    static let defaultValue = false
+}
+
+extension EnvironmentValues {
+    var moreNavigationEmbedded: Bool {
+        get { self[MoreNavigationEmbeddedKey.self] }
+        set { self[MoreNavigationEmbeddedKey.self] = newValue }
     }
 }
 
