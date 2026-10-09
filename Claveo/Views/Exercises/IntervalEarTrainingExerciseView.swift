@@ -121,6 +121,7 @@ struct IntervalEarTrainingExerciseView: View {
         }
         .background(Color(.systemGroupedBackground))
         .navigationTitle("Interval Ear Training")
+        .sensoryFeedback(.success, trigger: feedback?.correct == true)
         .navigationBarTitleDisplayMode(.inline)
         .tint(themeManager.accentColor)
         .onAppear {
@@ -288,9 +289,7 @@ struct IntervalEarTrainingExerciseView: View {
 
     private func select(_ interval: EarTrainingInterval) {
         let correct = interval == question.interval
-        if correct {
-            HapticFeedback.lightImpact()
-        } else {
+        if !correct {
             HapticFeedback.rigidImpact()
         }
 

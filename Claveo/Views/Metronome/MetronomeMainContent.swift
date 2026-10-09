@@ -166,10 +166,12 @@ extension MetronomeView {
             }
 
             Button(action: toggleMetronomePlayback) {
-                Label(
-                    metronome.isPlaying ? String(localized: "Stop") : String(localized: "Start"),
-                    systemImage: metronome.isPlaying ? "stop.fill" : "play.fill"
-                )
+                Label {
+                    Text(metronome.isPlaying ? String(localized: "Stop") : String(localized: "Start"))
+                } icon: {
+                    Image(systemName: metronome.isPlaying ? "stop.fill" : "play.fill")
+                        .symbolEffect(.replace, value: metronome.isPlaying)
+                }
                 .font(.headline)
                 .foregroundStyle(.white)
                 .frame(maxWidth: .infinity)
@@ -185,6 +187,10 @@ extension MetronomeView {
                     ? String(localized: "Stop Metronome")
                     : String(localized: "Start Metronome")
             )
+            .sensoryFeedback(trigger: metronome.isPlaying) { wasPlaying, isPlaying in
+                guard wasPlaying != isPlaying else { return nil }
+                return isPlaying ? .start : .stop
+            }
 
             tempoSliderControl
         }
@@ -472,12 +478,16 @@ extension MetronomeView {
                     toneGenerator.start()
                 }
             } label: {
-                Label(
-                    toneGenerator.isPlaying
-                        ? String(localized: "Stop Tone")
-                        : String(localized: "Play Tone"),
-                    systemImage: toneGenerator.isPlaying ? "stop.fill" : "play.fill"
-                )
+                Label {
+                    Text(
+                        toneGenerator.isPlaying
+                            ? String(localized: "Stop Tone")
+                            : String(localized: "Play Tone")
+                    )
+                } icon: {
+                    Image(systemName: toneGenerator.isPlaying ? "stop.fill" : "play.fill")
+                        .symbolEffect(.replace, value: toneGenerator.isPlaying)
+                }
                 .frame(maxWidth: .infinity)
             }
             .buttonStyle(.borderedProminent)

@@ -383,19 +383,27 @@ extension RecordingListView {
                     .fill(Color.red.opacity(0.92))
                     .frame(width: 64, height: 64)
 
-                if recorder.isRecording {
-                    RoundedRectangle(cornerRadius: 6)
-                        .fill(Color.white)
-                        .frame(width: 24, height: 24)
-                } else {
-                    Image(systemName: "mic.fill")
-                        .font(.title2.weight(.semibold))
-                        .foregroundStyle(.white)
+                Group {
+                    if recorder.isRecording {
+                        RoundedRectangle(cornerRadius: 6)
+                            .fill(Color.white)
+                            .frame(width: 24, height: 24)
+                    } else {
+                        Image(systemName: "mic.fill")
+                            .font(.title2.weight(.semibold))
+                            .foregroundStyle(.white)
+                    }
                 }
+                .transition(.blurReplace)
             }
             .frame(width: 76, height: 76)
+            .animation(Motion.interactive, value: recorder.isRecording)
         }
         .shadow(color: .black.opacity(0.08), radius: 4, y: 2)
+        .sensoryFeedback(trigger: recorder.isRecording) { wasRecording, isRecording in
+            guard wasRecording != isRecording else { return nil }
+            return isRecording ? .start : .stop
+        }
     }
 
     func filterMenuRow(title: String, selected: Bool) -> some View {
@@ -452,6 +460,7 @@ struct LiveRecordingIndicatorView: View {
                         .font(.system(.title3, design: .monospaced))
                         .fontWeight(.semibold)
                         .foregroundColor(.white)
+                        .contentTransition(.numericText())
                 }
 
                 LiveWaveformView(audioLevels: meter.waveformLevels, maxBars: maxBars)

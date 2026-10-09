@@ -414,6 +414,7 @@ private struct LiveRecordingSplitCard: View {
                     .font(.system(.title, design: .monospaced))
                     .fontWeight(.semibold)
                     .foregroundStyle(.primary)
+                    .contentTransition(.numericText())
             }
 
             GeometryReader { geometry in

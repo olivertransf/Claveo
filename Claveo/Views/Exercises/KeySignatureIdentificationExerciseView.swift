@@ -190,6 +190,7 @@ struct KeySignatureIdentificationExerciseView: View {
         }
         .background(Color(.systemGroupedBackground))
         .navigationTitle("Key Signature ID")
+        .sensoryFeedback(.success, trigger: buttonFeedback?.correct == true)
         .navigationBarTitleDisplayMode(.inline)
         .tint(themeManager.accentColor)
         .toolbar {
@@ -324,6 +325,7 @@ struct KeySignatureIdentificationExerciseView: View {
                 .frame(height: blockH)
                 .frame(maxWidth: .infinity)
                 .id("\(question.vexKeySpec)-\(question.mode.rawValue)")
+                .transition(.blurReplace)
                 .accessibilityElement(children: .ignore)
                 .accessibilityLabel(
                     question.mode == .major
@@ -453,9 +455,7 @@ struct KeySignatureIdentificationExerciseView: View {
 
     private func select(letter: KSNoteLetter, accidental: KSWrittenAccidental) {
         let correct = question.matchesSelection(letter: letter, accidental: accidental)
-        if correct {
-            HapticFeedback.lightImpact()
-        } else {
+        if !correct {
             HapticFeedback.rigidImpact()
         }
 

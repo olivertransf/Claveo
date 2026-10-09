@@ -160,7 +160,7 @@ struct RecordingRowView: View {
                         .padding(.horizontal, 4)
                         .padding(.top, 10)
                         .padding(.bottom, 4)
-                        .transition(.opacity.combined(with: .move(edge: .top)))
+                        .transition(.blurReplace)
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)

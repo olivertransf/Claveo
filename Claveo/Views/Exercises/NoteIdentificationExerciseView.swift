@@ -161,6 +161,7 @@ struct NoteIdentificationExerciseView: View {
                 .accessibilityLabel("New note")
             }
         }
+        .sensoryFeedback(.success, trigger: buttonFeedback?.correct == true)
         .onChange(of: enabledClefs) { _, newSet in
             persistEnabledClefsToSettings(newSet)
             if !newSet.contains(question.clef) {
@@ -259,6 +260,7 @@ struct NoteIdentificationExerciseView: View {
                 .frame(height: blockH)
                 .frame(maxWidth: .infinity)
                 .id(question)
+                .transition(.blurReplace)
                 .accessibilityElement(children: .ignore)
                 .accessibilityLabel(
                     String(
@@ -368,9 +370,7 @@ struct NoteIdentificationExerciseView: View {
 
     private func select(letter: NoteLetter, accidental: WrittenAccidental) {
         let correct = question.matchesSelection(letter: letter, accidental: accidental)
-        if correct {
-            HapticFeedback.lightImpact()
-        } else {
+        if !correct {
             HapticFeedback.rigidImpact()
         }
 

@@ -193,6 +193,7 @@ struct RecordingPlayerSurface: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .monospacedDigit()
+                .contentTransition(.numericText())
 
             Spacer()
 
@@ -201,6 +202,7 @@ struct RecordingPlayerSurface: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .monospacedDigit()
+                .contentTransition(.numericText())
         }
     }
 
@@ -227,6 +229,7 @@ struct RecordingPlayerSurface: View {
                         .font(.system(size: 32, weight: .regular))
                         .foregroundStyle(.primary)
                         .offset(x: isPlaying ? 0 : 2)
+                        .symbolEffect(.replace, value: isPlaying)
                         .frame(width: playButtonSize, height: playButtonSize)
                         .contentShape(Rectangle())
                 }

@@ -59,6 +59,10 @@ struct TunerView: View {
         return String(format: "%+.1f¢", displayCents)
     }
 
+    private var isInTune: Bool {
+        hasLiveSignal && abs(displayCents) < 2
+    }
+
     private var tuningStatusText: String {
         guard hasLiveSignal else {
             return isListening
@@ -282,7 +286,8 @@ struct TunerView: View {
                     statusChip(
                         title: String(localized: "Cents"),
                         value: centsLabel,
-                        accent: needleAccentColor
+                        accent: needleAccentColor,
+                        numeric: true
                     )
                     statusChip(
                         title: String(localized: "Status"),
@@ -297,6 +302,9 @@ struct TunerView: View {
             listeningControlButton
         }
         .padding(isIPad ? 24 : 20)
+        .sensoryFeedback(.success, trigger: isInTune) { _, inTune in
+            inTune
+        }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .background(panelBackground)
     }
@@ -363,7 +371,7 @@ struct TunerView: View {
         )
     }
 
-    private func statusChip(title: String, value: String, accent: Color) -> some View {
+    private func statusChip(title: String, value: String, accent: Color, numeric: Bool = false) -> some View {
         VStack(alignment: .trailing, spacing: isIPad ? 4 : 2) {
             Text(title)
                 .font((isIPad ? Font.caption : Font.caption2).weight(.semibold))
@@ -372,6 +380,7 @@ struct TunerView: View {
                 .font((isIPad ? Font.body : Font.subheadline).weight(.semibold))
                 .foregroundStyle(hasLiveSignal ? accent : .secondary)
                 .monospacedDigit()
+                .contentTransition(numeric ? .numericText() : .identity)
                 .lineLimit(1)
                 .minimumScaleFactor(0.75)
         }
@@ -396,10 +405,12 @@ struct TunerView: View {
                 }
             }
         } label: {
-            Label(
-                isListening ? String(localized: "Stop Listening") : String(localized: "Start Listening"),
-                systemImage: isListening ? "stop.fill" : "mic.fill"
-            )
+            Label {
+                Text(isListening ? String(localized: "Stop Listening") : String(localized: "Start Listening"))
+            } icon: {
+                Image(systemName: isListening ? "stop.fill" : "mic.fill")
+                    .symbolEffect(.replace, value: isListening)
+            }
             .font(.headline)
             .foregroundStyle(.white)
             .frame(maxWidth: .infinity)
@@ -415,6 +426,10 @@ struct TunerView: View {
                 ? String(localized: "Stop tuner")
                 : String(localized: "Start tuner")
         )
+        .sensoryFeedback(trigger: isListening) { wasListening, listening in
+            guard wasListening != listening else { return nil }
+            return listening ? .start : .stop
+        }
     }
 
     private var needleAccentColor: Color {
