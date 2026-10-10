@@ -130,7 +130,7 @@ enum LibraryFiles {
         }
     }
 
-    static func resolveConflicts(at url: URL) {
+    nonisolated static func resolveConflicts(at url: URL) {
         let conflicts = NSFileVersion.unresolvedConflictVersionsOfItem(at: url) ?? []
         guard !conflicts.isEmpty else { return }
         guard let current = NSFileVersion.currentVersionOfItem(at: url) else { return }
@@ -154,7 +154,7 @@ enum LibraryFiles {
         try? NSFileVersion.removeOtherVersionsOfItem(at: url)
     }
 
-    private static func modificationDate(in data: Data) -> Date? {
+    private nonisolated static func modificationDate(in data: Data) -> Date? {
         guard let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
             return nil
         }

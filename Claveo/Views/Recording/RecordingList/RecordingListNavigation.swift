@@ -63,6 +63,7 @@ extension RecordingListView {
                 }
                 .navigationTitle("Recordings")
                 .navigationBarTitleDisplayMode(.inline)
+                .moreTabBackButton(for: 0)
                 .searchable(
                     text: $searchText,
                     isPresented: $isSearchFocused,

@@ -1,50 +1,149 @@
 <!-- Copyright (c) 2025 Oliver Tran -->
 <script>
+  import { reveal } from '../lib/reveal.js';
+  import { APP_STORE_URL, CONTACT_EMAIL, appStoreBadge } from '../lib/links.js';
+
   export let navigate;
+  export let darkMode = false;
+
+  const values = [
+    {
+      title: 'Free',
+      body: 'No subscriptions, no ads, no in-app purchases. Every feature is included from the first launch.'
+    },
+    {
+      title: 'Private',
+      body: 'Recordings and practice data live on your devices and in your own iCloud. There is no server on my side.'
+    },
+    {
+      title: 'Yours',
+      body: 'Choose recording formats, reorder the tabs, and keep your practice history as long as you like.'
+    }
+  ];
 </script>
 
-<div class="container">
-  <div class="section hero-section">
-    <h1>About Claveo</h1>
-    <p class="hero-subtitle">A free app for musicians</p>
-  </div>
-
-  <div class="section">
-    <div class="about-content">
-      <p>
-        Claveo is a free, comprehensive music practice companion designed to help musicians of all levels improve their skills and track their progress. Whether you're a beginner learning your first instrument or an experienced performer, Claveo provides the tools you need to practice effectively.
-      </p>
-
-      <p>
-        My goal is to make high-quality music practice tools accessible to everyone. That's why Claveo is free to use, with no subscriptions, no ads, and no hidden costs. Your library lives on your devices, with optional iCloud sync when you want recordings and practice history aligned across iPhone and iPad.
-      </p>
-
-      <h2>What Claveo offers</h2>
-      <p>
-        Claveo combines recording (with pieces, tags, and trim), an advanced metronome with reference tone, a precision tuner, practice journaling with streaks and stats, ear-training exercises (note reading, keys, intervals), a chord and scale reference, a searchable music dictionary, and a tab layout you can reorder so the tools you use most are always one tap away.
-      </p>
-
-      <h2>My commitment</h2>
-      <p>
-        I believe great music practice tools shouldn't come with a price tag. I built Claveo with passion for the music community, and I'm committed to keeping it free and accessible for all musicians.
-      </p>
-
-      <p>
-        Have questions or feedback? I'd love to hear from you at <a href="mailto:claveo.app@gmail.com" class="link-primary">claveo.app@gmail.com</a>.
-      </p>
-    </div>
-  </div>
-
-  <div class="divider"></div>
-
-  <div class="section privacy-data-section">
-    <h2>Privacy First</h2>
-    <p>Your privacy matters to me. Claveo does not sell your data or show ads. Content is stored in your app sandbox and can sync through Apple's iCloud under your Apple ID—see the Privacy Policy for the full picture.</p>
-    <p class="margin-top">
-      <a href="/privacy-policy.html" on:click|preventDefault={() => navigate('/privacy-policy.html')} class="link-primary">Privacy Policy →</a>
+<section class="hero">
+  <div class="page">
+    <span class="eyebrow">About</span>
+    <h1>A free app for musicians, made by one.</h1>
+    <p class="lead">
+      Claveo started as the practice tools I wanted in one place: a recorder that keeps full quality, a log that
+      remembers what I worked on, and a metronome and tuner that open instantly.
     </p>
   </div>
-</div>
+</section>
 
+<section class="values">
+  <div class="page grid">
+    {#each values as value, index}
+      <article class="card card-hover value" use:reveal={{ delay: index * 80 }}>
+        <h2>{value.title}</h2>
+        <p>{value.body}</p>
+      </article>
+    {/each}
+  </div>
+</section>
 
+<section class="section story">
+  <div class="page prose" use:reveal>
+    <h2>What Claveo offers</h2>
+    <p>
+      Record in Standard, High, Apple Lossless, or 24-bit WAV, then trim takes without re-encoding so an audition
+      excerpt sounds exactly as it was played. Link recordings to pieces, tag them, and leave notes with measure
+      numbers. The practice log tracks time, ratings, and streaks, and the metronome, tuner, exercises, chord and
+      scale reference, and dictionary cover the rest of a session.
+    </p>
+    <p>
+      Everything syncs live between iPhone and iPad through your iCloud account, with sync status visible in the
+      app so you always know what has landed on the other device.
+    </p>
 
+    <h2>My commitment</h2>
+    <p>
+      Claveo will stay free and will not add tracking or advertising. I build it in the open, so if something is
+      wrong or missing, you can tell me directly and watch it get fixed.
+    </p>
+
+    <h2>Privacy first</h2>
+    <p>
+      I do not collect, transmit, or have access to any of your data. The full details are in the
+      <a href="/privacy-policy" class="link" on:click|preventDefault={() => navigate('/privacy-policy')}>privacy policy</a>.
+    </p>
+
+    <h2>Get in touch</h2>
+    <p>
+      Questions, bugs, or ideas: <a href={`mailto:${CONTACT_EMAIL}`} class="link">{CONTACT_EMAIL}</a>
+    </p>
+
+    <a href={APP_STORE_URL} target="_blank" rel="noopener noreferrer" class="badge">
+      <img src={appStoreBadge(darkMode)} alt="Download on the App Store" width="166" height="55" />
+    </a>
+  </div>
+</section>
+
+<style>
+  .hero {
+    padding: clamp(56px, 8vw, 104px) 0 clamp(32px, 5vw, 56px);
+  }
+
+  .hero .page {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 18px;
+    max-width: calc(var(--page-max));
+  }
+
+  h1 {
+    font-size: var(--text-h1);
+    font-weight: 800;
+    max-width: 18ch;
+  }
+
+  .hero .lead {
+    max-width: 38rem;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 18px;
+  }
+
+  .value {
+    padding: 28px 26px;
+    background: color-mix(in srgb, var(--accent-soft) 50%, var(--surface));
+  }
+
+  .value h2 {
+    font-size: 1.4rem;
+    color: var(--accent-strong);
+    margin-bottom: 10px;
+  }
+
+  .value p {
+    color: var(--text-secondary);
+    font-size: var(--text-small);
+    line-height: 1.6;
+  }
+
+  .story {
+    padding-top: clamp(56px, 8vw, 96px);
+  }
+
+  .badge {
+    display: inline-block;
+    margin-top: 2.2rem;
+    border-radius: 12px;
+    transition: transform 0.2s var(--ease-out);
+  }
+
+  .badge:hover {
+    transform: translateY(-2px);
+  }
+
+  .badge img {
+    width: 166px;
+    height: auto;
+  }
+</style>

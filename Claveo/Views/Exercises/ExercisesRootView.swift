@@ -68,6 +68,7 @@ struct ExercisesRootView: View {
             .claveoInsetGroupedListStyle()
             .navigationTitle("Exercises")
             .navigationBarTitleDisplayMode(.inline)
+            .moreTabBackButton(for: 4)
         }
     }
 }

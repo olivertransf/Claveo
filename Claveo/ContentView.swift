@@ -26,6 +26,7 @@ struct ContentView: View {
         return bar.contains(valid) ? valid : ContentView.moreTabValue
     }()
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    @State private var moreTab = MoreTabController()
 
     private static let moreTabValue = 8
 
@@ -45,7 +46,8 @@ struct ContentView: View {
     private var visibleSemanticId: Int? {
         if horizontalSizeClass == .compact {
             if compactTabSelection == Self.moreTabValue {
-                return moreSemanticIds.contains(selectedTabIndex) ? selectedTabIndex : nil
+                guard let route = moreTab.route, moreSemanticIds.contains(route) else { return nil }
+                return route
             }
             return compactTabSelection
         }
@@ -62,6 +64,7 @@ struct ContentView: View {
         }
         .tint(themeManager.accentColor)
         .environmentObject(toneGenerator)
+        .environment(moreTab)
         .onChange(of: selectedTabIndex) { _, newIndex in
             handleTabChange(newIndex: newIndex)
         }
@@ -77,32 +80,56 @@ struct ContentView: View {
         }
         .onChange(of: settingsManager.settings.tabBarCustomizationOrder) { _, _ in
             syncCompactSelection()
+            if let route = moreTab.route, !moreSemanticIds.contains(route) {
+                moreTab.route = nil
+            }
+        }
+    }
+
+    /// iPad always shows names. iPhone follows the Settings toggle.
+    private var showTabBarText: Bool {
+        if UIDevice.current.userInterfaceIdiom == .pad {
+            return true
+        }
+        return settingsManager.settings.showTabBarText
+    }
+
+    @ViewBuilder
+    private func tabLabel(title: String, systemImage: String) -> some View {
+        if showTabBarText {
+            Label(title, systemImage: systemImage)
+        } else {
+            Image(systemName: systemImage)
+                .accessibilityLabel(title)
         }
     }
 
     private var compactTabView: some View {
         TabView(selection: $compactTabSelection) {
             ForEach(barSemanticIds, id: \.self) { semanticId in
-                Tab(
-                    AppTabRegistry.title(semanticId),
-                    systemImage: AppTabRegistry.systemImage(semanticId),
-                    value: semanticId
-                ) {
+                Tab(value: semanticId) {
                     DeferredTab(isActive: visibleSemanticId == semanticId) {
                         FeatureRootView(
                             semanticId: semanticId,
                             isTabSelected: visibleSemanticId == semanticId
                         )
                     }
+                } label: {
+                    tabLabel(
+                        title: AppTabRegistry.title(semanticId),
+                        systemImage: AppTabRegistry.systemImage(semanticId)
+                    )
                 }
             }
 
-            Tab("More", systemImage: "ellipsis", value: Self.moreTabValue) {
+            Tab(value: Self.moreTabValue) {
                 MoreHubView(
                     tabs: moreSemanticIds,
                     selectedTabIndex: $selectedTabIndex,
                     isMoreSelected: compactTabSelection == Self.moreTabValue
                 )
+            } label: {
+                tabLabel(title: String(localized: "More"), systemImage: "ellipsis")
             }
         }
     }
@@ -110,17 +137,18 @@ struct ContentView: View {
     private var regularTabView: some View {
         TabView(selection: $selectedTabIndex) {
             ForEach(tabOrder, id: \.self) { semanticId in
-                Tab(
-                    AppTabRegistry.title(semanticId),
-                    systemImage: AppTabRegistry.systemImage(semanticId),
-                    value: semanticId
-                ) {
+                Tab(value: semanticId) {
                     DeferredTab(isActive: visibleSemanticId == semanticId) {
                         FeatureRootView(
                             semanticId: semanticId,
                             isTabSelected: visibleSemanticId == semanticId
                         )
                     }
+                } label: {
+                    tabLabel(
+                        title: AppTabRegistry.title(semanticId),
+                        systemImage: AppTabRegistry.systemImage(semanticId)
+                    )
                 }
             }
         }
@@ -198,70 +226,94 @@ private struct DeferredTab<Content: View>: View {
     }
 }
 
+@Observable
+final class MoreTabController {
+    var route: Int?
+}
+
 private struct MoreHubView: View {
     let tabs: [Int]
     @Binding var selectedTabIndex: Int
     let isMoreSelected: Bool
+    @Environment(MoreTabController.self) private var moreTab
     @EnvironmentObject private var themeManager: ThemeManager
-    @State private var path = NavigationPath()
-    @State private var didRestore = false
 
     var body: some View {
-        NavigationStack(path: $path) {
+        if let route = moreTab.route, tabs.contains(route) {
+            FeatureRootView(
+                semanticId: route,
+                isTabSelected: isMoreSelected
+            )
+        } else {
             ScrollView {
-                LazyVGrid(
-                    columns: [
-                        GridItem(.flexible(), spacing: 12),
-                        GridItem(.flexible(), spacing: 12)
-                    ],
-                    spacing: 12
-                ) {
-                    ForEach(tabs, id: \.self) { semanticId in
-                        NavigationLink(value: semanticId) {
-                            MoreHubCard(
-                                title: AppTabRegistry.title(semanticId),
-                                systemImage: AppTabRegistry.systemImage(semanticId),
-                                tint: themeManager.accentColor
-                            )
+                VStack(alignment: .leading, spacing: 16) {
+                    Text("More")
+                        .font(.largeTitle.bold())
+                    VStack(spacing: 12) {
+                        ForEach(Array(stride(from: 0, to: tabs.count, by: 2)), id: \.self) { start in
+                            HStack(spacing: 12) {
+                                moreLink(tabs[start])
+                                if start + 1 < tabs.count {
+                                    moreLink(tabs[start + 1])
+                                } else {
+                                    Color.clear
+                                        .frame(maxWidth: .infinity)
+                                }
+                            }
                         }
-                        .buttonStyle(ClaveoPressButtonStyle())
                     }
                 }
                 .padding(16)
             }
             .background(Color(.systemGroupedBackground))
-            .navigationTitle("More")
-            .navigationDestination(for: Int.self) { semanticId in
-                FeatureRootView(
-                    semanticId: semanticId,
-                    isTabSelected: isMoreSelected && selectedTabIndex == semanticId
-                )
-                .onAppear {
-                    if selectedTabIndex != semanticId {
-                        selectedTabIndex = semanticId
-                    }
-                }
-            }
-        }
-        .onAppear(perform: restoreIfNeeded)
-        .onChange(of: selectedTabIndex) { _, newValue in
-            if !tabs.contains(newValue), !path.isEmpty {
-                path = NavigationPath()
-            }
-        }
-        .onChange(of: tabs) { _, newTabs in
-            if !path.isEmpty, !newTabs.contains(selectedTabIndex) {
-                path = NavigationPath()
-            }
         }
     }
 
-    private func restoreIfNeeded() {
-        guard !didRestore else { return }
-        didRestore = true
-        if tabs.contains(selectedTabIndex), path.isEmpty {
-            path.append(selectedTabIndex)
+    private func moreLink(_ semanticId: Int) -> some View {
+        Button {
+            selectedTabIndex = semanticId
+            moreTab.route = semanticId
+        } label: {
+            MoreHubCard(
+                title: AppTabRegistry.title(semanticId),
+                systemImage: AppTabRegistry.systemImage(semanticId),
+                tint: themeManager.accentColor
+            )
+            .contentShape(Rectangle())
         }
+        .buttonStyle(.borderless)
+    }
+}
+
+private struct MoreTabBackButtonModifier: ViewModifier {
+    @Environment(MoreTabController.self) private var moreTab: MoreTabController?
+    @Environment(\.dismiss) private var dismiss
+    let semanticId: Int
+
+    func body(content: Content) -> some View {
+        content.toolbar {
+            if moreTab?.route == semanticId {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button {
+                        moreTab?.route = nil
+                        dismiss()
+                    } label: {
+                        HStack(spacing: 4) {
+                            Image(systemName: "chevron.backward")
+                                .font(.body.weight(.semibold))
+                            Text("More")
+                        }
+                    }
+                    .accessibilityLabel("More")
+                }
+            }
+        }
+    }
+}
+
+extension View {
+    func moreTabBackButton(for semanticId: Int) -> some View {
+        modifier(MoreTabBackButtonModifier(semanticId: semanticId))
     }
 }
 
@@ -286,9 +338,6 @@ private struct MoreHubCard: View {
         .frame(maxWidth: .infinity)
         .padding(.vertical, 22)
         .claveoCard()
-        .accessibilityElement(children: .combine)
-        .accessibilityAddTraits(.isButton)
-        .accessibilityLabel(title)
     }
 }
 

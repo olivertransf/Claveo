@@ -101,6 +101,7 @@ struct ChordScaleReferenceView: View {
             .background(Color(.systemGroupedBackground))
             .navigationTitle("Chords & Scales")
             .navigationBarTitleDisplayMode(.inline)
+            .moreTabBackButton(for: 7)
         }
     }
 

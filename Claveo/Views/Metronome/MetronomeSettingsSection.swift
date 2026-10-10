@@ -9,7 +9,7 @@
 import SwiftUI
 
 struct MetronomeSettingsSection: View {
-    @StateObject private var settingsManager = SettingsManager.shared
+    @EnvironmentObject private var settingsManager: SettingsManager
 
     private var volume: Double {
         settingsManager.settings.metronomeVolume

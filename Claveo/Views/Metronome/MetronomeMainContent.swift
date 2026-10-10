@@ -18,6 +18,7 @@ extension MetronomeView {
         .scrollDismissesKeyboard(.interactively)
         .navigationTitle("Metronome")
         .navigationBarTitleDisplayMode(.inline)
+        .moreTabBackButton(for: 1)
         .alert(
             "Metronome Unavailable",
             isPresented: Binding(

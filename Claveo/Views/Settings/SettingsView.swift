@@ -11,18 +11,17 @@ import SwiftUI
 
 struct SettingsView: View {
     @EnvironmentObject var themeManager: ThemeManager
+    @EnvironmentObject private var settingsManager: SettingsManager
     @Environment(\.openURL) private var openURL
-    @StateObject private var settingsManager = SettingsManager.shared
     @ObservedObject private var syncEngine = SyncEngine.shared
     @State private var manualFrequencyText = ""
     /// Grows with Dynamic Type so the Hz value is never clipped.
     @ScaledMetric(relativeTo: .body) private var frequencyFieldWidth: CGFloat = 76
     @FocusState private var isFrequencyFieldFocused: Bool
     @State private var practiceDefaultTime: Int = SettingsManager.shared.settings.defaultPracticeTime
-    @State private var practiceDurationOptions: [Int] = {
-        let opts = SettingsManager.shared.settings.practiceDurationOptions.filter { $0 >= 5 && $0 <= 480 }.sorted()
-        return opts.isEmpty ? [15, 30, 45, 60] : opts
-    }()
+    @State private var practiceDurationOptions: [Int] = Self.sanitizedDurations(
+        SettingsManager.shared.settings.practiceDurationOptions
+    )
     @State private var showingResetSettingsAlert = false
     @State private var storageLocationText = iCloudManager.shared.getStorageLocation()
     @State private var storagePathText = iCloudManager.shared.getStoragePath()
@@ -41,28 +40,12 @@ struct SettingsView: View {
 
     var body: some View {
         NavigationStack {
-            Form {
-                appearanceSection
-                tabsSection
-                metronomeSection
-                tunerSection
-                practiceSection
-                recordingSection
-                storageSection
-                resetSection
-                aboutSection
-                contactSection
-            }
-            .frame(maxWidth: 900)
-            .frame(maxWidth: .infinity)
-            .navigationTitle("Settings")
-            .navigationBarTitleDisplayMode(.inline)
+            settingsForm
         }
         .onAppear {
             manualFrequencyText = String(format: "%.1f", settingsManager.settings.a4ReferenceFrequency)
             practiceDefaultTime = settingsManager.settings.defaultPracticeTime
-            let opts = settingsManager.settings.practiceDurationOptions.filter { $0 >= 5 && $0 <= 480 }.sorted()
-            practiceDurationOptions = opts.isEmpty ? [15, 30, 45, 60] : opts
+            practiceDurationOptions = Self.sanitizedDurations(settingsManager.settings.practiceDurationOptions)
             refreshStorageDisplay()
         }
         .onReceive(NotificationCenter.default.publisher(for: .claveoStorageLocationDidChange)) { _ in
@@ -72,8 +55,11 @@ struct SettingsView: View {
             settingsManager.update(\.defaultPracticeTime, value: newValue)
         }
         .onChange(of: practiceDurationOptions) { _, newValue in
-            let cleaned = newValue.filter { $0 >= 5 && $0 <= 480 }.sorted()
-            settingsManager.update(\.practiceDurationOptions, value: cleaned.isEmpty ? [15, 30, 45, 60] : cleaned)
+            let cleaned = Self.sanitizedDurations(newValue)
+            if cleaned != newValue {
+                practiceDurationOptions = cleaned
+            }
+            settingsManager.update(\.practiceDurationOptions, value: cleaned)
         }
         .alert("Reset Settings?", isPresented: $showingResetSettingsAlert) {
             Button("Cancel", role: .cancel) { }
@@ -83,6 +69,31 @@ struct SettingsView: View {
         } message: {
             Text("This restores app preferences to their defaults. Your recordings, pieces, and practice history will not be deleted.")
         }
+    }
+
+    private var settingsForm: some View {
+        Form {
+            appearanceSection
+            tabsSection
+            metronomeSection
+            tunerSection
+            practiceSection
+            recordingSection
+            storageSection
+            resetSection
+            aboutSection
+            contactSection
+        }
+        .frame(maxWidth: 900)
+        .frame(maxWidth: .infinity)
+        .navigationTitle("Settings")
+        .navigationBarTitleDisplayMode(.inline)
+        .moreTabBackButton(for: 6)
+    }
+
+    private static func sanitizedDurations(_ values: [Int]) -> [Int] {
+        let unique = Array(Set(values.filter { $0 >= 5 && $0 <= 480 })).sorted()
+        return unique.isEmpty ? [15, 30, 45, 60] : unique
     }
 
     // MARK: - Appearance
@@ -114,6 +125,13 @@ struct SettingsView: View {
 
     var tabsSection: some View {
         Section("Tabs") {
+            if UIDevice.current.userInterfaceIdiom == .phone {
+                Toggle("Show Tab Bar Labels", isOn: Binding(
+                    get: { settingsManager.settings.showTabBarText },
+                    set: { settingsManager.update(\.showTabBarText, value: $0) }
+                ))
+            }
+
             NavigationLink {
                 TabBarOrderSettingsView()
             } label: {
@@ -482,4 +500,5 @@ struct SettingsView: View {
 #Preview {
     SettingsView()
         .environmentObject(ThemeManager.shared)
+        .environmentObject(SettingsManager.shared)
 }
