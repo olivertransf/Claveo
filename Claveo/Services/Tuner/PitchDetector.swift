@@ -146,9 +146,7 @@ class PitchDetector: NSObject, ObservableObject {
         AudioSessionCoordinator.prepareForTuner()
         
         do {
-            let audioSession = AVAudioSession.sharedInstance()
-            try audioSession.setCategory(.record, mode: .measurement, options: [])
-            try audioSession.setActive(true, options: [])
+            try await Self.activateTunerSession()
             ownsAudioSession = true
             try await Task.sleep(for: .milliseconds(50))
         } catch is CancellationError {
@@ -328,6 +326,33 @@ class PitchDetector: NSObject, ObservableObject {
         guard lifecycle.isCurrent(token, expectingActive: true) else { return }
         lifecycleError = error
         stopDetection()
+    }
+
+    /// Category changes and activation block. Never run them on the main actor.
+    private nonisolated static func activateTunerSession() async throws {
+        try await Task.detached {
+            let session = AVAudioSession.sharedInstance()
+            try session.setCategory(.record, mode: .measurement, options: [])
+            try await activate(session)
+        }.value
+    }
+
+    private nonisolated static func activate(_ session: AVAudioSession) async throws {
+        if #available(iOS 27, *) {
+            try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+                session.activate(options: []) { activated, error in
+                    if activated {
+                        continuation.resume()
+                    } else if let error {
+                        continuation.resume(throwing: error)
+                    } else {
+                        continuation.resume(throwing: CancellationError())
+                    }
+                }
+            }
+        } else {
+            try session.setActive(true, options: [])
+        }
     }
 
     private func deactivateAudioSession() {
