@@ -22,6 +22,8 @@ final class iCloudManager: @unchecked Sendable {
 
     private let containerIdentifier = "iCloud.com.olivertran.Claveo"
     private nonisolated(unsafe) let fileCoordinator = NSFileCoordinator()
+    /// `NSFileCoordinator` must not run two operations at once. Reloads and saves overlap.
+    private let coordinationLock = NSLock()
     private let localDocumentsURL: URL
     private nonisolated(unsafe) var resolvedDocumentsURL: URL?
     private nonisolated(unsafe) var resolvedICloudDocumentsURL: URL?
@@ -82,12 +84,12 @@ final class iCloudManager: @unchecked Sendable {
         let coordinator = fileCoordinator
         let localURL = localDocumentsURL
         warmUpTask = Task.detached(priority: .utility) {
-            let iCloudURL = Self.resolveUbiquityDocumentsURL(
+            let iCloudURL = iCloudManager.shared.resolveUbiquityDocumentsURL(
                 containerIdentifier: containerId,
                 fileCoordinator: coordinator
             )
             let resolved = iCloudURL ?? localURL
-             iCloudManager.shared.storeResolvedURL(resolved, iCloudActive: iCloudURL != nil)
+            iCloudManager.shared.storeResolvedURL(resolved, iCloudActive: iCloudURL != nil)
         }
         lock.unlock()
     }
@@ -272,6 +274,9 @@ final class iCloudManager: @unchecked Sendable {
     }
 
     nonisolated func writeFile(data: Data, to url: URL) throws {
+        coordinationLock.lock()
+        defer { coordinationLock.unlock() }
+
         var coordinationError: NSError?
         var writeError: Error?
 
@@ -292,6 +297,9 @@ final class iCloudManager: @unchecked Sendable {
     }
 
     nonisolated func readFile(from url: URL) throws -> Data {
+        coordinationLock.lock()
+        defer { coordinationLock.unlock() }
+
         var coordinationError: NSError?
         var readError: Error?
         var fileData: Data?
@@ -341,7 +349,7 @@ final class iCloudManager: @unchecked Sendable {
         try FileManager.default.evictUbiquitousItem(at: url)
     }
 
-    nonisolated private static func resolveUbiquityDocumentsURL(
+    nonisolated private func resolveUbiquityDocumentsURL(
         containerIdentifier: String,
         fileCoordinator: NSFileCoordinator
     ) -> URL? {
@@ -349,6 +357,9 @@ final class iCloudManager: @unchecked Sendable {
             return nil
         }
         let documentsURL = ubiquityURL.appendingPathComponent("Documents")
+
+        coordinationLock.lock()
+        defer { coordinationLock.unlock() }
 
         var coordinationError: NSError?
         fileCoordinator.coordinate(writingItemAt: documentsURL, options: [], error: &coordinationError) { writingURL in

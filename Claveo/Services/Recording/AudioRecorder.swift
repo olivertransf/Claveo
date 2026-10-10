@@ -87,7 +87,7 @@ class AudioRecorder: NSObject, ObservableObject {
         if showLoading { isLoadingRecordings = true }
         defer {
             if generation == reloadGeneration {
-                if showLoading { isLoadingRecordings = false }
+                isLoadingRecordings = false
                 hasLoadedFromDisk = true
             }
         }
