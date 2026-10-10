@@ -62,6 +62,7 @@ final class SyncEngine: ObservableObject {
     private var retryAttempt = 0
     private var retryTask: Task<Void, Never>?
     private var reloadTask: Task<Void, Never>?
+    private var checkingTask: Task<Void, Never>?
     private var started = false
 
     func start() {
@@ -79,16 +80,33 @@ final class SyncEngine: ObservableObject {
             }
         )
         if !SettingsManager.shared.settings.storeFilesOnDeviceOnly {
-            status = .checking
+            beginChecking()
         }
         restartQuery()
     }
 
     func retry() {
         retryAttempt = 0
-        status = pendingCount > 0 ? .syncing(pending: pendingCount) : .checking
+        if pendingCount > 0 {
+            status = .syncing(pending: pendingCount)
+        } else {
+            beginChecking()
+        }
         restartQuery()
         scheduleReload()
+    }
+
+    /// The metadata query should replace this. If it never reports, leave the banner.
+    private func beginChecking() {
+        status = .checking
+        checkingTask?.cancel()
+        checkingTask = Task { @MainActor in
+            try? await Task.sleep(for: .seconds(8))
+            guard !Task.isCancelled else { return }
+            if case .checking = self.status {
+                self.status = .upToDate
+            }
+        }
     }
 
     private func handleIdentityChange() async {
@@ -109,6 +127,7 @@ final class SyncEngine: ObservableObject {
     }
 
     private func apply(_ snapshot: MetadataLibrarySnapshot) {
+        checkingTask?.cancel()
         switch snapshot.phase {
         case .failed:
             status = .error(String(localized: "iCloud could not be checked."))
@@ -183,8 +202,16 @@ nonisolated struct MetadataLibrarySnapshot: Sendable {
     var metadataChanged: Bool = false
 }
 
-/// Owns the iCloud metadata query on a background queue so file coordination never runs on the main actor.
+/// Owns the iCloud metadata query. `start()` has to run on the main thread or the gather notification never arrives.
 nonisolated final class MetadataQueryMonitor: @unchecked Sendable {
+    private struct ItemSnapshot: Sendable {
+        var name: String
+        var url: URL?
+        var downloaded: Double
+        var uploaded: Double
+        var conflicted: Bool
+    }
+
     private let queue: OperationQueue = {
         let queue = OperationQueue()
         queue.name = "claveo.sync.metadata"
@@ -193,92 +220,123 @@ nonisolated final class MetadataQueryMonitor: @unchecked Sendable {
         return queue
     }()
 
+    private let lock = NSLock()
+    private var generation = 0
     private var query: NSMetadataQuery?
     private var observers: [NSObjectProtocol] = []
     private var downloadedJSONNames = Set<String>()
     private var didFinishInitialGather = false
 
     func restart(deviceOnly: Bool, onSnapshot: @escaping @Sendable (MetadataLibrarySnapshot) -> Void) {
+        if Thread.isMainThread {
+            install(deviceOnly: deviceOnly, onSnapshot: onSnapshot)
+        } else {
+            DispatchQueue.main.async { [weak self] in
+                self?.install(deviceOnly: deviceOnly, onSnapshot: onSnapshot)
+            }
+        }
+    }
+
+    private func install(deviceOnly: Bool, onSnapshot: @escaping @Sendable (MetadataLibrarySnapshot) -> Void) {
+        let generation = bumpGeneration()
+        stopQuery()
+
+        guard FileManager.default.ubiquityIdentityToken != nil else {
+            onSnapshot(MetadataLibrarySnapshot(phase: deviceOnly ? .idle : .offline))
+            return
+        }
+        if deviceOnly {
+            onSnapshot(MetadataLibrarySnapshot(phase: .idle))
+            return
+        }
+
+        let query = NSMetadataQuery()
+        query.searchScopes = [NSMetadataQueryUbiquitousDocumentsScope]
+        query.predicate = NSPredicate(
+            format: "%K ENDSWITH '.json' OR %K ENDSWITH '.m4a' OR %K ENDSWITH '.wav'",
+            NSMetadataItemFSNameKey,
+            NSMetadataItemFSNameKey,
+            NSMetadataItemFSNameKey
+        )
+        observers.append(
+            NotificationCenter.default.addObserver(
+                forName: .NSMetadataQueryDidFinishGathering,
+                object: query,
+                queue: .main
+            ) { [weak self] _ in
+                guard let self, let query = self.query else { return }
+                self.deliver(query: query, generation: generation, initialGather: true, onSnapshot: onSnapshot)
+            }
+        )
+        observers.append(
+            NotificationCenter.default.addObserver(
+                forName: .NSMetadataQueryDidUpdate,
+                object: query,
+                queue: .main
+            ) { [weak self] _ in
+                guard let self, let query = self.query else { return }
+                self.deliver(query: query, generation: generation, initialGather: false, onSnapshot: onSnapshot)
+            }
+        )
+        guard query.start() else {
+            stopQuery()
+            onSnapshot(MetadataLibrarySnapshot(phase: .failed))
+            return
+        }
+        self.query = query
+    }
+
+    private func deliver(
+        query: NSMetadataQuery,
+        generation: Int,
+        initialGather: Bool,
+        onSnapshot: @escaping @Sendable (MetadataLibrarySnapshot) -> Void
+    ) {
+        guard isCurrent(generation) else { return }
+        query.disableUpdates()
+        let items = query.results.compactMap { result -> ItemSnapshot? in
+            guard let item = result as? NSMetadataItem else { return nil }
+            let url = item.value(forAttribute: NSMetadataItemURLKey) as? URL
+            return ItemSnapshot(
+                name: item.value(forAttribute: NSMetadataItemFSNameKey) as? String ?? "",
+                url: url,
+                downloaded: (item.value(forAttribute: NSMetadataUbiquitousItemPercentDownloadedKey) as? NSNumber)?.doubleValue ?? 100,
+                uploaded: (item.value(forAttribute: NSMetadataUbiquitousItemPercentUploadedKey) as? NSNumber)?.doubleValue ?? 100,
+                conflicted: (item.value(forAttribute: NSMetadataUbiquitousItemHasUnresolvedConflictsKey) as? NSNumber)?.boolValue ?? false
+            )
+        }
+        query.enableUpdates()
+
         queue.addOperation { [weak self] in
-            guard let self else { return }
-            self.stopQuery()
-
-            guard FileManager.default.ubiquityIdentityToken != nil else {
-                onSnapshot(MetadataLibrarySnapshot(phase: deviceOnly ? .idle : .offline))
-                return
-            }
-            if deviceOnly {
-                onSnapshot(MetadataLibrarySnapshot(phase: .idle))
-                return
-            }
-
-            let query = NSMetadataQuery()
-            query.searchScopes = [NSMetadataQueryUbiquitousDocumentsScope]
-            query.predicate = NSPredicate(
-                format: "%K ENDSWITH '.json' OR %K ENDSWITH '.m4a' OR %K ENDSWITH '.wav'",
-                NSMetadataItemFSNameKey,
-                NSMetadataItemFSNameKey,
-                NSMetadataItemFSNameKey
-            )
-            self.observers.append(
-                NotificationCenter.default.addObserver(
-                    forName: .NSMetadataQueryDidFinishGathering,
-                    object: query,
-                    queue: self.queue
-                ) { [weak self] _ in
-                    self?.publish(query: query, initialGather: true, onSnapshot: onSnapshot)
-                }
-            )
-            self.observers.append(
-                NotificationCenter.default.addObserver(
-                    forName: .NSMetadataQueryDidUpdate,
-                    object: query,
-                    queue: self.queue
-                ) { [weak self] _ in
-                    self?.publish(query: query, initialGather: false, onSnapshot: onSnapshot)
-                }
-            )
-            guard query.start() else {
-                self.stopQuery()
-                onSnapshot(MetadataLibrarySnapshot(phase: .failed))
-                return
-            }
-            self.query = query
+            guard let self, self.isCurrent(generation) else { return }
+            self.publish(items: items, initialGather: initialGather, onSnapshot: onSnapshot)
         }
     }
 
     private func publish(
-        query: NSMetadataQuery,
+        items: [ItemSnapshot],
         initialGather: Bool,
         onSnapshot: @escaping @Sendable (MetadataLibrarySnapshot) -> Void
     ) {
-        query.disableUpdates()
-        defer { query.enableUpdates() }
-
         var pending = 0
         var progress: [String: Double] = [:]
         var downloadedJSON = Set<String>()
 
-        for case let item as NSMetadataItem in query.results {
-            let name = item.value(forAttribute: NSMetadataItemFSNameKey) as? String ?? ""
-            let downloaded = item.value(forAttribute: NSMetadataUbiquitousItemPercentDownloadedKey) as? Double ?? 100
-            let uploaded = item.value(forAttribute: NSMetadataUbiquitousItemPercentUploadedKey) as? Double ?? 100
-            if downloaded < 100 || uploaded < 100 {
+        for item in items {
+            if item.downloaded < 100 || item.uploaded < 100 {
                 pending += 1
             }
-            if downloaded < 100 {
-                progress[name] = downloaded / 100
+            if item.downloaded < 100 {
+                progress[item.name] = item.downloaded / 100
             }
-            guard let url = item.value(forAttribute: NSMetadataItemURLKey) as? URL else { continue }
-            guard url.pathExtension.lowercased() == "json" else { continue }
+            guard let url = item.url, url.pathExtension.lowercased() == "json" else { continue }
 
-            if downloaded >= 100 {
-                downloadedJSON.insert(name)
+            if item.downloaded >= 100 {
+                downloadedJSON.insert(item.name)
             } else {
                 try? FileManager.default.startDownloadingUbiquitousItem(at: url)
             }
-            let conflicted = item.value(forAttribute: NSMetadataUbiquitousItemHasUnresolvedConflictsKey) as? Bool ?? false
-            if conflicted {
+            if item.conflicted {
                 LibraryFiles.resolveConflicts(at: url)
             }
         }
@@ -314,5 +372,18 @@ nonisolated final class MetadataQueryMonitor: @unchecked Sendable {
         observers.removeAll()
         didFinishInitialGather = false
         downloadedJSONNames.removeAll()
+    }
+
+    private func bumpGeneration() -> Int {
+        lock.lock()
+        defer { lock.unlock() }
+        generation += 1
+        return generation
+    }
+
+    private func isCurrent(_ generation: Int) -> Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        return self.generation == generation
     }
 }
