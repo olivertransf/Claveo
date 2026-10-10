@@ -102,6 +102,34 @@ class AudioPlayer: NSObject, ObservableObject {
         }.value
     }
 
+    private nonisolated enum OpenedPlayer: Sendable {
+        case ready(LoadedPlayer)
+        case missing
+        case failed
+    }
+
+    private nonisolated final class LoadedPlayer: @unchecked Sendable {
+        let player: AVAudioPlayer
+        init(_ player: AVAudioPlayer) { self.player = player }
+    }
+
+    /// Opens the file away from the main actor. `AVAudioPlayer` activates the session while it loads.
+    private nonisolated static func openPlayer(at url: URL, rate: Float) async -> OpenedPlayer {
+        await Task.detached {
+            await configurePlaybackSession()
+            guard FileManager.default.fileExists(atPath: url.path) else { return .missing }
+            do {
+                let player = try AVAudioPlayer(contentsOf: url)
+                player.enableRate = true
+                player.prepareToPlay()
+                player.rate = rate
+                return .ready(LoadedPlayer(player))
+            } catch {
+                return .failed
+            }
+        }.value
+    }
+
     @available(iOS 27, *)
     private nonisolated static func activate(_ session: AVAudioSession) async {
         await withCheckedContinuation { continuation in
@@ -136,22 +164,33 @@ class AudioPlayer: NSObject, ObservableObject {
         playbackError = nil
 
         let startTime = resumeTime(for: recording)
+        let url = recording.fileURL
+        let rate = playbackRate
+        let replacePlayer = currentRecording?.id != recording.id || audioPlayer == nil
         Task {
-            await Self.configurePlaybackSession()
-            guard generation == playbackGeneration else { return }
-            beginPlayback(recording, startTime: startTime)
+            if replacePlayer {
+                let opened = await Self.openPlayer(at: url, rate: rate)
+                guard generation == playbackGeneration else { return }
+                switch opened {
+                case .ready(let loaded):
+                    install(loaded.player, for: recording, startTime: startTime, startPlaying: true)
+                case .missing:
+                    playbackError = String(localized: "Recording file not found. It may still be downloading from iCloud.")
+                case .failed:
+                    playbackError = String(localized: "Failed to play recording.")
+                }
+            } else {
+                await Self.configurePlaybackSession()
+                guard generation == playbackGeneration else { return }
+                beginPlayback(recording, startTime: startTime)
+            }
         }
     }
 
     private func beginPlayback(_ recording: Recording, startTime: TimeInterval) {
-        if currentRecording?.id != recording.id || audioPlayer == nil {
-            guard load(recording, startTime: startTime) else { return }
-        } else if let player = audioPlayer {
-            player.currentTime = min(max(0, startTime), player.duration)
-            currentTime = player.currentTime
-        }
-
         guard let player = audioPlayer else { return }
+        player.currentTime = min(max(0, startTime), player.duration)
+        currentTime = player.currentTime
         player.enableRate = true
         player.rate = playbackRate
         guard player.play() else {
@@ -196,7 +235,21 @@ class AudioPlayer: NSObject, ObservableObject {
         currentTime = clamped
 
         if currentRecording?.id != recording.id || audioPlayer == nil {
-            _ = load(recording, startTime: clamped)
+            let generation = playbackGeneration
+            let url = recording.fileURL
+            let rate = playbackRate
+            Task {
+                let opened = await Self.openPlayer(at: url, rate: rate)
+                guard generation == playbackGeneration else { return }
+                switch opened {
+                case .ready(let loaded):
+                    install(loaded.player, for: recording, startTime: clamped, startPlaying: false)
+                case .missing:
+                    playbackError = String(localized: "Recording file not found. It may still be downloading from iCloud.")
+                case .failed:
+                    playbackError = String(localized: "Failed to play recording.")
+                }
+            }
             return
         }
 
@@ -253,35 +306,30 @@ class AudioPlayer: NSObject, ObservableObject {
         return 0
     }
 
-    @discardableResult
-    private func load(_ recording: Recording, startTime: TimeInterval) -> Bool {
-        playbackError = nil
-
+    private func install(
+        _ player: AVAudioPlayer,
+        for recording: Recording,
+        startTime: TimeInterval,
+        startPlaying: Bool
+    ) {
         audioPlayer?.stop()
-        audioPlayer = nil
+        player.delegate = self
+        duration = player.duration
+        currentRecording = recording
+        audioPlayer = player
         isPlaying = false
         stopTimer()
-
-        do {
-            guard FileManager.default.fileExists(atPath: recording.fileURL.path) else {
-                playbackError = String(localized: "Recording file not found. It may still be downloading from iCloud.")
-                return false
-            }
-
-            let player = try AVAudioPlayer(contentsOf: recording.fileURL)
-            player.delegate = self
-            player.enableRate = true
-            player.prepareToPlay()
-            player.rate = playbackRate
-            duration = player.duration
-            currentRecording = recording
-            audioPlayer = player
-            applySeek(startTime)
-            return true
-        } catch {
-            playbackError = String(localized: "Failed to play recording: \(error.localizedDescription)")
-            return false
+        applySeek(startTime)
+        guard startPlaying else { return }
+        player.enableRate = true
+        player.rate = playbackRate
+        guard player.play() else {
+            playbackError = String(localized: "Playback could not start.")
+            return
         }
+        isPlaying = true
+        startTimer()
+        HapticFeedback.lightImpact()
     }
 
     private func applySeek(_ time: TimeInterval) {

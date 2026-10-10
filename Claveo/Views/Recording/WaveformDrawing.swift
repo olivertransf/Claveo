@@ -23,7 +23,7 @@ enum WaveformDrawing {
         return min(maximum, max(minimum, Int((width + spacing) / pitch)))
     }
 
-    static func resample(_ samples: [Float], to count: Int) -> [Float] {
+    nonisolated static func resample(_ samples: [Float], to count: Int) -> [Float] {
         guard count > 0 else { return [] }
         guard !samples.isEmpty else { return Array(repeating: 0, count: count) }
         if samples.count == count { return samples }
@@ -49,7 +49,7 @@ enum WaveformDrawing {
     }
 
     /// Downsamples by taking the peak in each bucket so transients stay visible.
-    static func resamplePeaks(_ samples: [Float], to count: Int) -> [Float] {
+    nonisolated static func resamplePeaks(_ samples: [Float], to count: Int) -> [Float] {
         guard count > 0, !samples.isEmpty else { return [] }
         if samples.count == count { return samples }
 

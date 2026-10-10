@@ -1,13 +1,19 @@
 import AVFoundation
 import Foundation
 
-enum WaveformExtractor {
+nonisolated enum WaveformExtractor {
     private static let cachedBarCount = 512
 
     /// Returns normalized amplitudes in the range [0, 1] with exactly `bars` samples,
     /// each aligned to an equal slice of the file timeline.
     /// Full-resolution bars are cached under Caches/waveforms and downsampled for smaller requests.
     static func extractBars(from url: URL, bars: Int = 200) async throws -> [Float] {
+        try await Task.detached(priority: .utility) {
+            try extractBarsOffMain(from: url, bars: bars)
+        }.value
+    }
+
+    private static func extractBarsOffMain(from url: URL, bars: Int) throws -> [Float] {
         guard FileManager.default.fileExists(atPath: url.path) else { return [] }
 
         let values = try? url.resourceValues(forKeys: [.contentModificationDateKey, .fileSizeKey])
@@ -19,7 +25,7 @@ enum WaveformExtractor {
         if let cached = readCache(at: cacheURL), cached.count == cachedBarCount {
             full = cached
         } else {
-            full = try await computeBars(from: url, bars: cachedBarCount)
+            full = try computeBars(from: url, bars: cachedBarCount)
             writeCache(full, to: cacheURL)
         }
 
@@ -28,45 +34,43 @@ enum WaveformExtractor {
         return WaveformDrawing.resample(full, to: target)
     }
 
-    private static func computeBars(from url: URL, bars: Int) async throws -> [Float] {
-        try await Task.detached(priority: .utility) {
-            let file = try AVAudioFile(forReading: url)
-            let format = file.processingFormat
-            let totalFrames = Int(file.length)
-            guard totalFrames > 0 else { return [] }
+    private static func computeBars(from url: URL, bars: Int) throws -> [Float] {
+        let file = try AVAudioFile(forReading: url)
+        let format = file.processingFormat
+        let totalFrames = Int(file.length)
+        guard totalFrames > 0 else { return [] }
 
-            let targetBars = max(10, bars)
-            var results = [Float]()
-            results.reserveCapacity(targetBars)
+        let targetBars = max(10, bars)
+        var results = [Float]()
+        results.reserveCapacity(targetBars)
 
-            for barIndex in 0..<targetBars {
-                let startFrame = (barIndex * totalFrames) / targetBars
-                let endFrame = ((barIndex + 1) * totalFrames) / targetBars
-                let frameCount = endFrame - startFrame
+        for barIndex in 0..<targetBars {
+            let startFrame = (barIndex * totalFrames) / targetBars
+            let endFrame = ((barIndex + 1) * totalFrames) / targetBars
+            let frameCount = endFrame - startFrame
 
-                guard frameCount > 0 else {
-                    results.append(0)
-                    continue
-                }
-
-                file.framePosition = AVAudioFramePosition(startFrame)
-
-                guard let buffer = AVAudioPCMBuffer(
-                    pcmFormat: format,
-                    frameCapacity: AVAudioFrameCount(frameCount)
-                ) else {
-                    results.append(0)
-                    continue
-                }
-
-                buffer.frameLength = AVAudioFrameCount(frameCount)
-                try file.read(into: buffer)
-
-                results.append(amplitude(for: buffer, format: format))
+            guard frameCount > 0 else {
+                results.append(0)
+                continue
             }
 
-            return normalize(results)
-        }.value
+            file.framePosition = AVAudioFramePosition(startFrame)
+
+            guard let buffer = AVAudioPCMBuffer(
+                pcmFormat: format,
+                frameCapacity: AVAudioFrameCount(frameCount)
+            ) else {
+                results.append(0)
+                continue
+            }
+
+            buffer.frameLength = AVAudioFrameCount(frameCount)
+            try file.read(into: buffer)
+
+            results.append(amplitude(for: buffer, format: format))
+        }
+
+        return normalize(results)
     }
 
     private static func cacheFileURL(fileName: String, stamp: Int, size: Int) -> URL {

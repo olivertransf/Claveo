@@ -134,11 +134,12 @@ class AudioRecorder: NSObject, ObservableObject {
         }
         // Never persist over incomplete cloud reads — that can wipe richer remote metadata.
         if metadataChanged, loadedResult.readSucceeded {
-            _ = saveRecordings()
+            persistRecordingsWithoutBlocking()
         }
     }
 
     func refreshRecordings() async {
+        await Task.yield()
         await reloadRecordingsFromDisk(force: true)
     }
     
@@ -154,7 +155,7 @@ class AudioRecorder: NSObject, ObservableObject {
                 let typeValue = notification.userInfo?[AVAudioSessionInterruptionTypeKey] as? UInt
                 let optionsValue = notification.userInfo?[AVAudioSessionInterruptionOptionKey] as? UInt
                 Task { @MainActor [weak self] in
-                    self?.handleAudioSessionInterruption(typeValue: typeValue, optionsValue: optionsValue)
+                    await self?.handleAudioSessionInterruption(typeValue: typeValue, optionsValue: optionsValue)
                 }
             }
         )
@@ -191,17 +192,17 @@ class AudioRecorder: NSObject, ObservableObject {
                 queue: .main
             ) { [weak self] _ in
                 Task { @MainActor [weak self] in
-                    self?.maintainRecordingSessionInBackground()
+                    await self?.maintainRecordingSessionInBackground()
                 }
             }
         )
     }
 
     /// Keeps the recorder alive when the screen locks or the app is backgrounded (requires `audio` background mode).
-    private func maintainRecordingSessionInBackground() {
+    private func maintainRecordingSessionInBackground() async {
         guard isRecording else { return }
         do {
-            try activateRecordingAudioSession()
+            try await activateRecordingAudioSession()
         } catch {
             #if DEBUG
             print("Failed to keep recording session active in background: \(error)")
@@ -210,7 +211,7 @@ class AudioRecorder: NSObject, ObservableObject {
         refreshRecordingProgressFromFile()
     }
 
-    private func handleAudioSessionInterruption(typeValue: UInt?, optionsValue: UInt?) {
+    private func handleAudioSessionInterruption(typeValue: UInt?, optionsValue: UInt?) async {
         guard let typeValue,
               let type = AVAudioSession.InterruptionType(rawValue: typeValue) else {
             return
@@ -228,7 +229,7 @@ class AudioRecorder: NSObject, ObservableObject {
             let options = AVAudioSession.InterruptionOptions(rawValue: optionsValue)
             if options.contains(.shouldResume) {
                 do {
-                    try activateRecordingAudioSession()
+                    try await activateRecordingAudioSession()
                     if audioRecorder?.isRecording != true {
                         guard audioRecorder?.record() == true else {
                             forceStopRecordingAfterCaptureLoss()
@@ -280,45 +281,86 @@ class AudioRecorder: NSObject, ObservableObject {
         recordingStartedAt = nil
     }
 
-    private func activateRecordingAudioSession() throws {
+    private func activateRecordingAudioSession() async throws {
         let preferences = SettingsManager.shared.settings
-        let session = AVAudioSession.sharedInstance()
-        var options: AVAudioSession.CategoryOptions = [.defaultToSpeaker, .allowBluetoothA2DP]
-        if preferences.allowBluetoothHeadsetMic {
-            options.insert(.allowBluetoothHFP)
-        }
-
-        let wantsStereo = preferences.recordingMicMode == .stereo
-        try session.setCategory(
-            .playAndRecord,
-            mode: wantsStereo ? .default : .measurement,
-            options: options
+        let prepared = try await Self.prepareRecordingSession(
+            allowHeadsetMic: preferences.allowBluetoothHeadsetMic,
+            wantsStereo: preferences.recordingMicMode == .stereo
         )
-        try session.setPreferredSampleRate(48_000)
-        try session.setActive(true, options: [])
-
-        let captureMode = resolvedMicMode(requested: preferences.recordingMicMode, session: session)
-        if wantsStereo && captureMode == .natural {
-            try session.setCategory(.playAndRecord, mode: .measurement, options: options)
-            try session.setActive(true, options: [])
+        if !prepared.inputName.isEmpty {
+            currentInputName = prepared.inputName
+        } else if currentInputName.isEmpty {
+            currentInputName = String(localized: "iPhone Microphone")
         }
+    }
 
-        try? session.setPreferredInputNumberOfChannels(captureMode.channelCount)
-        if captureMode == .stereo {
-            applyStereoCaptureIfNeeded()
+    private struct PreparedRecordingSession: Sendable {
+        var inputName: String
+    }
+
+    /// Category changes and activation block. Never run them on the main actor.
+    private nonisolated static func prepareRecordingSession(
+        allowHeadsetMic: Bool,
+        wantsStereo: Bool
+    ) async throws -> PreparedRecordingSession {
+        try await Task.detached {
+            let session = AVAudioSession.sharedInstance()
+            var options: AVAudioSession.CategoryOptions = [.defaultToSpeaker, .allowBluetoothA2DP]
+            if allowHeadsetMic {
+                options.insert(.allowBluetoothHFP)
+            }
+
+            try session.setCategory(
+                .playAndRecord,
+                mode: wantsStereo ? .default : .measurement,
+                options: options
+            )
+            try session.setPreferredSampleRate(48_000)
+            try await activate(session)
+
+            let supportsStereo = sessionSupportsStereo(session)
+            let useStereo = wantsStereo && supportsStereo
+            if wantsStereo && !useStereo {
+                try session.setCategory(.playAndRecord, mode: .measurement, options: options)
+                try await activate(session)
+            }
+
+            try? session.setPreferredInputNumberOfChannels(useStereo ? 2 : 1)
+            if useStereo {
+                applyStereoCapture(on: session)
+            }
+            let inputName = session.currentRoute.inputs.first?.portName ?? ""
+            return PreparedRecordingSession(inputName: inputName)
+        }.value
+    }
+
+    private nonisolated static func activate(_ session: AVAudioSession) async throws {
+        if #available(iOS 27, *) {
+            try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+                session.activate(options: []) { activated, error in
+                    if activated {
+                        continuation.resume()
+                    } else if let error {
+                        continuation.resume(throwing: error)
+                    } else {
+                        continuation.resume(throwing: CancellationError())
+                    }
+                }
+            }
+        } else {
+            try session.setActive(true)
         }
-        refreshCurrentInputName()
     }
 
     private func resolvedMicMode(
         requested: RecordingMicMode,
         session: AVAudioSession
     ) -> RecordingMicMode {
-        guard requested == .stereo, sessionSupportsStereo(session) else { return .natural }
+        guard requested == .stereo, Self.sessionSupportsStereo(session) else { return .natural }
         return .stereo
     }
 
-    private func sessionSupportsStereo(_ session: AVAudioSession) -> Bool {
+    private nonisolated static func sessionSupportsStereo(_ session: AVAudioSession) -> Bool {
         let inputs = session.availableInputs ?? []
         return inputs.contains { port in
             port.dataSources?.contains { source in
@@ -327,11 +369,7 @@ class AudioRecorder: NSObject, ObservableObject {
         }
     }
 
-    private func applyStereoCaptureIfNeeded() {
-        let session = AVAudioSession.sharedInstance()
-        guard resolvedMicMode(requested: SettingsManager.shared.settings.recordingMicMode, session: session) == .stereo else {
-            return
-        }
+    private nonisolated static func applyStereoCapture(on session: AVAudioSession) {
         if let input = session.preferredInput ?? session.availableInputs?.first,
            let dataSource = input.selectedDataSource ?? input.dataSources?.first,
            dataSource.supportedPolarPatterns?.contains(.stereo) == true {
@@ -339,6 +377,14 @@ class AudioRecorder: NSObject, ObservableObject {
             try? input.setPreferredDataSource(dataSource)
         }
         try? session.setPreferredInputOrientation(.portrait)
+    }
+
+    private func applyStereoCaptureIfNeeded() {
+        let session = AVAudioSession.sharedInstance()
+        guard resolvedMicMode(requested: SettingsManager.shared.settings.recordingMicMode, session: session) == .stereo else {
+            return
+        }
+        Self.applyStereoCapture(on: session)
     }
 
     private func refreshCurrentInputName() {
@@ -389,7 +435,7 @@ class AudioRecorder: NSObject, ObservableObject {
         }
         
         do {
-            try activateRecordingAudioSession()
+            try await activateRecordingAudioSession()
         } catch {
             permissionError = String(localized: "Failed to setup audio session: \(error.localizedDescription)")
             return
@@ -674,6 +720,48 @@ class AudioRecorder: NSObject, ObservableObject {
             }
         }
         return true
+    }
+
+    /// Encodes and writes the library off the main actor so a pull-to-refresh can finish.
+    private func persistRecordingsWithoutBlocking() {
+        let snapshot = recordings + Array(deletionTombstones.values)
+        let kept = LibraryFiles.keepingLive(snapshot)
+        let expired = LibraryFiles.expired(snapshot)
+        let root = iCloudManager.shared.getDocumentsURL()
+        Task.detached(priority: .utility) {
+            let encoded: Data
+            do {
+                encoded = try JSONEncoder().encode(snapshot)
+            } catch {
+                await MainActor.run {
+                    AudioRecorder.shared.recordingError = String(localized: "Recording details could not be encoded for saving.")
+                }
+                return
+            }
+            await MainActor.run {
+                UserDefaults.standard.set(encoded, forKey: "recordings_cache")
+            }
+
+            let payloads = kept.compactMap { recording -> (id: UUID, data: Data)? in
+                guard let data = try? JSONEncoder().encode(recording) else { return nil }
+                return (recording.id, data)
+            }
+            let removingIDs = expired.map(\.id)
+            let audioNames = expired.flatMap { [$0.fileName, $0.originalFileName].compactMap { $0 } }
+            do {
+                try await LibraryStore.shared.replace(
+                    payloads: payloads,
+                    removingIDs: removingIDs,
+                    audioFileNames: audioNames,
+                    collection: .recordings,
+                    root: root
+                )
+            } catch {
+                await MainActor.run {
+                    AudioRecorder.shared.recordingError = String(localized: "Recording details could not be saved: \(error.localizedDescription)")
+                }
+            }
+        }
     }
     
     private func loadRecordingsFromCache() {

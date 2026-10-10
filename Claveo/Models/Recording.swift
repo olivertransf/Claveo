@@ -15,7 +15,7 @@ enum RecordingStorageLocation: String, Codable, Sendable {
     case iCloud
 }
 
-struct Recording: Identifiable, Codable, Equatable, Sendable {
+nonisolated struct Recording: Identifiable, Codable, Equatable, Sendable {
     var id: UUID
     let fileName: String
     var createdAt: Date
@@ -237,7 +237,7 @@ struct Recording: Identifiable, Codable, Equatable, Sendable {
     }
 }
 
-private enum RecordingDateFormatters {
+private nonisolated enum RecordingDateFormatters {
     static let mediumDateTime: DateFormatter = {
         let formatter = DateFormatter()
         formatter.dateStyle = .medium
