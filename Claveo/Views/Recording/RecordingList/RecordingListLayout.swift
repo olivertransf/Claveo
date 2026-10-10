@@ -71,7 +71,7 @@ extension RecordingListView {
     @ViewBuilder
     var mainContentView: some View {
         if recorder.isLoadingRecordings && recorder.recordings.isEmpty {
-            ProgressView("Loading recordings…")
+            ProgressView(syncActivityTitle ?? String(localized: "Loading recordings…"))
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
         } else if shouldShowEmptyState {
             emptyStateView

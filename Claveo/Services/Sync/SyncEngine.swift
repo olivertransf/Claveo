@@ -2,17 +2,28 @@ import Combine
 import Foundation
 
 enum SyncStatus: Equatable {
+    case checking
+    case updating
     case upToDate
     case syncing(pending: Int)
     case offline
     case error(String)
 
+    var isActive: Bool {
+        switch self {
+        case .checking, .updating, .syncing:
+            return true
+        case .upToDate, .offline, .error:
+            return false
+        }
+    }
+
     var systemImage: String {
         switch self {
+        case .checking, .updating, .syncing:
+            return "arrow.triangle.2.circlepath.icloud"
         case .upToDate:
             return "icloud"
-        case .syncing:
-            return "icloud.and.arrow.up"
         case .offline:
             return "icloud.slash"
         case .error:
@@ -22,10 +33,14 @@ enum SyncStatus: Equatable {
 
     var title: String {
         switch self {
+        case .checking:
+            return String(localized: "Checking iCloud…")
+        case .updating:
+            return String(localized: "Updating from iCloud…")
         case .upToDate:
             return String(localized: "Up to Date")
         case .syncing(let pending):
-            return String(localized: "Syncing \(pending)")
+            return String(localized: "Syncing \(pending) with iCloud…")
         case .offline:
             return String(localized: "Offline")
         case .error:
@@ -63,12 +78,15 @@ final class SyncEngine: ObservableObject {
                 }
             }
         )
+        if !SettingsManager.shared.settings.storeFilesOnDeviceOnly {
+            status = .checking
+        }
         restartQuery()
     }
 
     func retry() {
         retryAttempt = 0
-        status = .syncing(pending: pendingCount)
+        status = pendingCount > 0 ? .syncing(pending: pendingCount) : .checking
         restartQuery()
         scheduleReload()
     }
@@ -110,8 +128,12 @@ final class SyncEngine: ObservableObject {
 
         retryAttempt = 0
         pendingCount = snapshot.pending
-        status = snapshot.pending > 0 ? .syncing(pending: snapshot.pending) : .upToDate
-        if snapshot.pending == 0 {
+        if snapshot.pending > 0 {
+            status = .syncing(pending: snapshot.pending)
+        } else if snapshot.metadataChanged {
+            status = .updating
+        } else {
+            status = .upToDate
             lastSyncedAt = Date()
         }
         AudioRecorder.shared.applyDownloadProgress(snapshot.progressByFileName)
@@ -126,6 +148,11 @@ final class SyncEngine: ObservableObject {
             try? await Task.sleep(nanoseconds: 400_000_000)
             guard !Task.isCancelled else { return }
             await AudioRecorder.shared.reloadRecordingsFromDisk(force: true)
+            guard !Task.isCancelled else { return }
+            if case .updating = self.status, self.pendingCount == 0 {
+                self.status = .upToDate
+                self.lastSyncedAt = Date()
+            }
         }
     }
 

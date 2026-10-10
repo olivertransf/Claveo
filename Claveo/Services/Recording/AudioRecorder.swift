@@ -23,6 +23,8 @@ class AudioRecorder: NSObject, ObservableObject {
     @Published var downloadProgress: [UUID: Double] = [:]
     @Published var newlyCreatedRecordingId: UUID?
     @Published private(set) var isLoadingRecordings = false
+    /// True for every library reload, including when cached recordings are already on screen.
+    @Published private(set) var isReloadingRecordings = false
     @Published private(set) var currentInputName = ""
     let meter = RecordingMeter()
 
@@ -85,9 +87,11 @@ class AudioRecorder: NSObject, ObservableObject {
         let revisionAtStart = mutationRevision
         let showLoading = recordings.isEmpty
         if showLoading { isLoadingRecordings = true }
+        isReloadingRecordings = true
         defer {
             if generation == reloadGeneration {
                 isLoadingRecordings = false
+                isReloadingRecordings = false
                 hasLoadedFromDisk = true
             }
         }

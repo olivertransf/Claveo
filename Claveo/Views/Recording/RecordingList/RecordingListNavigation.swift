@@ -78,10 +78,15 @@ extension RecordingListView {
             Color(.systemGroupedBackground)
                 .ignoresSafeArea(edges: usesSplitPlayback ? [] : .all)
 
-            mainContentView
-                .refreshable {
-                    await recorder.refreshRecordings()
+            VStack(spacing: 0) {
+                if showsSyncActivityBanner, let title = syncActivityTitle {
+                    syncActivityBanner(title)
                 }
+                mainContentView
+            }
+            .refreshable {
+                await recorder.refreshRecordings()
+            }
         }
         .overlay {
             if recorder.isRecording && !usesSplitPlayback {
@@ -175,6 +180,39 @@ extension RecordingListView {
         .padding(.top, 0)
         .padding(.bottom, 8)
         .background(Color(.systemGroupedBackground))
+    }
+
+    /// Visible while iCloud is checking, transferring, or folding changes into the library.
+    var syncActivityTitle: String? {
+        if SettingsManager.shared.settings.storeFilesOnDeviceOnly {
+            return recorder.isLoadingRecordings ? String(localized: "Loading recordings…") : nil
+        }
+        if syncEngine.status.isActive {
+            return syncEngine.status.title
+        }
+        if recorder.isReloadingRecordings {
+            return String(localized: "Updating from iCloud…")
+        }
+        return nil
+    }
+
+    private var showsSyncActivityBanner: Bool {
+        !(recorder.isLoadingRecordings && recorder.recordings.isEmpty)
+    }
+
+    func syncActivityBanner(_ title: String) -> some View {
+        HStack(spacing: 8) {
+            ProgressView()
+                .controlSize(.small)
+            Text(title)
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 10)
+        .background(Color.themeSecondaryBackground)
+        .accessibilityElement(children: .combine)
     }
 
     func splitSidebarIcon(_ systemImage: String) -> some View {
@@ -289,7 +327,7 @@ extension RecordingListView {
                     }
                 } label: {
                     Image(systemName: syncEngine.status.systemImage)
-                        .symbolEffect(.pulse, isActive: syncEngine.pendingCount > 0)
+                        .symbolEffect(.pulse, isActive: syncEngine.status.isActive || recorder.isReloadingRecordings)
                 }
                 .accessibilityLabel(syncEngine.status.title)
             }
