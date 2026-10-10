@@ -28,10 +28,11 @@ class AudioPlayer: NSObject, ObservableObject {
     private var timer: Timer?
     private var interruptionObserver: NSObjectProtocol?
     private var pendingSeek: (id: UUID, time: TimeInterval)?
+    /// Bumped by play, pause, and stop so a session activation that finishes late cannot start audio the user already cancelled.
+    private var playbackGeneration = 0
 
     override init() {
         super.init()
-        activatePlaybackSession()
         observeInterruptions()
     }
 
@@ -69,7 +70,9 @@ class AudioPlayer: NSObject, ObservableObject {
                         AVAudioSession.InterruptionOptions(rawValue: rawOptions).contains(.shouldResume),
                         let player = self.audioPlayer
                     else { return }
-                    self.activatePlaybackSession()
+                    let generation = self.playbackGeneration
+                    await Self.configurePlaybackSession()
+                    guard generation == self.playbackGeneration else { return }
                     guard player.play() else { return }
                     self.isPlaying = true
                     self.startTimer()
@@ -80,15 +83,31 @@ class AudioPlayer: NSObject, ObservableObject {
         }
     }
 
-    private func activatePlaybackSession() {
-        do {
+    /// Category changes and session activation block. Keep them off the main actor.
+    private nonisolated static func configurePlaybackSession() async {
+        await Task.detached {
             let session = AVAudioSession.sharedInstance()
-            try session.setCategory(.playback, mode: .default, options: [.mixWithOthers])
-            try session.setActive(true, options: [])
-        } catch {
-            #if DEBUG
-            print("Failed to setup playback audio session: \(error)")
-            #endif
+            do {
+                try session.setCategory(.playback, mode: .default, options: [.mixWithOthers])
+                if #available(iOS 27, *) {
+                    await Self.activate(session)
+                } else {
+                    try session.setActive(true)
+                }
+            } catch {
+                #if DEBUG
+                print("Failed to setup playback audio session: \(error)")
+                #endif
+            }
+        }.value
+    }
+
+    @available(iOS 27, *)
+    private nonisolated static func activate(_ session: AVAudioSession) async {
+        await withCheckedContinuation { continuation in
+            session.activate(options: []) { _, _ in
+                continuation.resume()
+            }
         }
     }
 
@@ -112,11 +131,19 @@ class AudioPlayer: NSObject, ObservableObject {
     }
 
     func play(_ recording: Recording) {
-        activatePlaybackSession()
+        playbackGeneration += 1
+        let generation = playbackGeneration
         playbackError = nil
 
         let startTime = resumeTime(for: recording)
+        Task {
+            await Self.configurePlaybackSession()
+            guard generation == playbackGeneration else { return }
+            beginPlayback(recording, startTime: startTime)
+        }
+    }
 
+    private func beginPlayback(_ recording: Recording, startTime: TimeInterval) {
         if currentRecording?.id != recording.id || audioPlayer == nil {
             guard load(recording, startTime: startTime) else { return }
         } else if let player = audioPlayer {
@@ -138,6 +165,7 @@ class AudioPlayer: NSObject, ObservableObject {
     }
 
     func pause() {
+        playbackGeneration += 1
         audioPlayer?.pause()
         isPlaying = false
         stopTimer()
@@ -146,6 +174,7 @@ class AudioPlayer: NSObject, ObservableObject {
     }
 
     func stop() {
+        playbackGeneration += 1
         audioPlayer?.stop()
         audioPlayer = nil
         isPlaying = false
@@ -226,7 +255,6 @@ class AudioPlayer: NSObject, ObservableObject {
 
     @discardableResult
     private func load(_ recording: Recording, startTime: TimeInterval) -> Bool {
-        activatePlaybackSession()
         playbackError = nil
 
         audioPlayer?.stop()
