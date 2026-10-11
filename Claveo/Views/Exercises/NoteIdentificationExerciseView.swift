@@ -211,7 +211,7 @@ struct NoteIdentificationExerciseView: View {
                     RoundedRectangle(cornerRadius: 12, style: .continuous)
                         .fill(on ? themeManager.accentColor : Color(.tertiarySystemFill))
                 )
-                .foregroundStyle(on ? Color.white : Color.primary)
+                .foregroundStyle(on ? themeManager.onAccent : Color.primary)
                 .overlay(
                     RoundedRectangle(cornerRadius: 12, style: .continuous)
                         .stroke(on ? Color.clear : Color.primary.opacity(0.12), lineWidth: 1)
@@ -288,14 +288,14 @@ struct NoteIdentificationExerciseView: View {
         guard let f = buttonFeedback, f.letter == letter, f.accidental == accidental else {
             return Color(.tertiarySystemFill)
         }
-        return f.correct ? Color.green.opacity(0.44) : Color.red.opacity(0.4)
+        return f.correct ? Color.themeCorrect.opacity(0.28) : Color.themeIncorrect.opacity(0.28)
     }
 
     private func answerCellBorder(letter: NoteLetter, accidental: WrittenAccidental) -> Color {
         guard let f = buttonFeedback, f.letter == letter, f.accidental == accidental else {
             return Color.clear
         }
-        return f.correct ? Color.green.opacity(0.55) : Color.red.opacity(0.55)
+        return f.correct ? Color.themeCorrect : Color.themeIncorrect
     }
 
     private var answerGrid: some View {
@@ -317,7 +317,7 @@ struct NoteIdentificationExerciseView: View {
         VStack(spacing: 10) {
             Text(title)
                 .font(.subheadline.weight(.semibold))
-                .foregroundStyle(.tertiary)
+                .foregroundStyle(.secondary)
                 .frame(maxWidth: .infinity)
                 .multilineTextAlignment(.center)
             content()

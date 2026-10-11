@@ -150,26 +150,7 @@ struct RecordingListView: View {
             showingPlaybackErrorAlert = newValue != nil
         }
         .sheet(item: $recordingToShare) { recording in
-            if recording.isLocallyAvailable, let shareableURL = try? recording.shareableFileURL() {
-                ShareSheet(activityItems: [shareableURL])
-                    .onDisappear {
-                        try? FileManager.default.removeItem(at: shareableURL)
-                    }
-            } else {
-                ContentUnavailableView {
-                    Label(
-                        recording.isStoredIniCloud
-                            ? String(localized: "Not downloaded")
-                            : String(localized: "File not found"),
-                        systemImage: recording.isStoredIniCloud ? "icloud.and.arrow.down" : "exclamationmark.triangle"
-                    )
-                } description: {
-                    Text(recording.isStoredIniCloud
-                         ? String(localized: "This recording is stored in iCloud and needs to be downloaded before exporting.")
-                         : String(localized: "This recording’s audio file could not be found on this device."))
-                }
-                .padding()
-            }
+            RecordingExportSheet(recording: recording)
         }
         .sheet(item: $bulkShareSession) { session in
             ShareSheet(activityItems: session.urls)
@@ -240,5 +221,49 @@ private struct RecordingListAlertsModifier: ViewModifier {
             .onChange(of: recorder.recordingError) { _, newValue in
                 showingRecordingErrorAlert = newValue != nil
             }
+    }
+}
+
+private struct RecordingExportSheet: View {
+    let recording: Recording
+    @State private var shareURL: URL?
+    @State private var failed = false
+
+    var body: some View {
+        Group {
+            if let shareURL {
+                ShareSheet(activityItems: [shareURL])
+                    .onDisappear {
+                        try? FileManager.default.removeItem(at: shareURL)
+                    }
+            } else if failed {
+                ContentUnavailableView {
+                    Label("File not found", systemImage: "exclamationmark.triangle")
+                } description: {
+                    Text("This recording’s audio file could not be downloaded.")
+                }
+                .padding()
+            } else {
+                ProgressView("Downloading…")
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
+        }
+        .task {
+            let ready = await RecordingDownload.waitUntilLocal(at: recording.fileURL) { fraction in
+                Task { @MainActor in
+                    AudioRecorder.shared.setUserDownloadProgress(
+                        id: recording.id,
+                        fraction: fraction < 1 ? fraction : nil
+                    )
+                }
+            }
+            AudioRecorder.shared.setUserDownloadProgress(id: recording.id, fraction: nil)
+            guard ready, let url = try? recording.shareableFileURL() else {
+                failed = true
+                return
+            }
+            AudioRecorder.shared.markRecordingLocal(recording.id)
+            shareURL = url
+        }
     }
 }

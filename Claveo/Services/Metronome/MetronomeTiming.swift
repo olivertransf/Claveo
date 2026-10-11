@@ -69,14 +69,18 @@ extension Metronome {
         scheduleBeatsAhead()
     }
     
-    func start() {
+    func start() async {
         guard !isPlaying else { return }
 
+        startGeneration += 1
+        let generation = startGeneration
         startupError = nil
-        if let error = setupAudioSession() {
+        if let error = await setupAudioSession() {
+            guard generation == startGeneration else { return }
             failPlayback(with: error)
             return
         }
+        guard generation == startGeneration else { return }
         if let error = setupAudioPlayer() {
             failPlayback(with: error)
             return
@@ -110,6 +114,7 @@ extension Metronome {
     }
     
     func stop() {
+        startGeneration += 1
         isPlaying = false
         stopBeatTimer()
         currentBeat = 0
@@ -325,9 +330,16 @@ extension Metronome {
         return true
     }
 
-    func restartForAudioRouteChange() {
+    func restartForAudioRouteChange() async {
         guard isPlaying else { return }
-        if let error = setupAudioSession() ?? setupAudioPlayer() {
+        let generation = startGeneration
+        if let error = await setupAudioSession() {
+            guard generation == startGeneration, isPlaying else { return }
+            failPlayback(with: error)
+            return
+        }
+        guard generation == startGeneration, isPlaying else { return }
+        if let error = setupAudioPlayer() {
             failPlayback(with: error)
             return
         }

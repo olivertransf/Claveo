@@ -113,6 +113,34 @@ class AudioPlayer: NSObject, ObservableObject {
         init(_ player: AVAudioPlayer) { self.player = player }
     }
 
+    private nonisolated static func ensureLocal(recordingID: UUID, url: URL) async -> Bool {
+        if RecordingDownload.isLocal(at: url) { return true }
+        guard RecordingTransferPolicy.shouldStartDownload(
+            userRequested: true,
+            isPlaceholder: RecordingDownload.isPlaceholder(at: url)
+        ) else {
+            return false
+        }
+        await MainActor.run {
+            AudioRecorder.shared.setUserDownloadProgress(id: recordingID, fraction: 0)
+        }
+        let ready = await RecordingDownload.waitUntilLocal(at: url) { fraction in
+            Task { @MainActor in
+                AudioRecorder.shared.setUserDownloadProgress(
+                    id: recordingID,
+                    fraction: fraction < 1 ? fraction : nil
+                )
+            }
+        }
+        await MainActor.run {
+            AudioRecorder.shared.setUserDownloadProgress(id: recordingID, fraction: nil)
+            if ready {
+                AudioRecorder.shared.markRecordingLocal(recordingID)
+            }
+        }
+        return ready
+    }
+
     /// Opens the file away from the main actor. `AVAudioPlayer` activates the session while it loads.
     private nonisolated static func openPlayer(at url: URL, rate: Float) async -> OpenedPlayer {
         await Task.detached {
@@ -167,7 +195,13 @@ class AudioPlayer: NSObject, ObservableObject {
         let url = recording.fileURL
         let rate = playbackRate
         let replacePlayer = currentRecording?.id != recording.id || audioPlayer == nil
+        let recordingID = recording.id
         Task {
+            guard await Self.ensureLocal(recordingID: recordingID, url: url) else {
+                playbackError = String(localized: "The recording could not be downloaded from iCloud.")
+                return
+            }
+            guard generation == playbackGeneration else { return }
             if replacePlayer {
                 let opened = await Self.openPlayer(at: url, rate: rate)
                 guard generation == playbackGeneration else { return }
@@ -238,7 +272,13 @@ class AudioPlayer: NSObject, ObservableObject {
             let generation = playbackGeneration
             let url = recording.fileURL
             let rate = playbackRate
+            let recordingID = recording.id
             Task {
+                guard await Self.ensureLocal(recordingID: recordingID, url: url) else {
+                    playbackError = String(localized: "The recording could not be downloaded from iCloud.")
+                    return
+                }
+                guard generation == playbackGeneration else { return }
                 let opened = await Self.openPlayer(at: url, rate: rate)
                 guard generation == playbackGeneration else { return }
                 switch opened {

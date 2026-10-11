@@ -37,35 +37,73 @@ extension RecordingListView {
     func toggleKeepDownloaded(_ recording: Recording) {
         var updated = recording
         updated.keepDownloaded.toggle()
+        let url = recording.fileURL
         if !updated.keepDownloaded {
             player.pauseIfPlaying(recording)
-        }
-        do {
-            if updated.keepDownloaded {
-                try iCloudManager.shared.startKeepingDownloaded(at: recording.fileURL)
-                updated.isLocallyAvailable = true
-            } else {
-                try iCloudManager.shared.removeLocalDownload(at: recording.fileURL)
+            do {
+                try iCloudManager.shared.removeLocalDownload(at: url)
                 updated.isLocallyAvailable = false
+            } catch {
+                #if DEBUG
+                print("Failed to update iCloud download: \(error)")
+                #endif
             }
+            recorder.updateRecording(updated)
+            return
+        }
+
+        let alreadyLocal = RecordingDownload.isLocal(at: url)
+        updated.isLocallyAvailable = alreadyLocal
+        do {
+            try iCloudManager.shared.startKeepingDownloaded(at: url)
         } catch {
             #if DEBUG
             print("Failed to update iCloud download: \(error)")
             #endif
         }
         recorder.updateRecording(updated)
+        guard !alreadyLocal else { return }
+        let recordingID = recording.id
+        Task {
+            let ready = await RecordingDownload.waitUntilLocal(at: url) { fraction in
+                Task { @MainActor in
+                    AudioRecorder.shared.setUserDownloadProgress(
+                        id: recordingID,
+                        fraction: fraction < 1 ? fraction : nil
+                    )
+                }
+            }
+            await MainActor.run {
+                AudioRecorder.shared.setUserDownloadProgress(id: recordingID, fraction: nil)
+                if ready {
+                    AudioRecorder.shared.markRecordingLocal(recordingID)
+                }
+            }
+        }
     }
 
     func exportSelectedRecordings() {
         let recordings = filteredRecordings.filter { selectedRecordingIds.contains($0.id) }
-        var urls: [URL] = []
-        for recording in recordings {
-            guard recording.isLocallyAvailable else { continue }
-            guard let url = try? recording.shareableFileURL() else { continue }
-            urls.append(url)
+        Task {
+            var urls: [URL] = []
+            for recording in recordings {
+                let ready = await RecordingDownload.waitUntilLocal(at: recording.fileURL) { fraction in
+                    Task { @MainActor in
+                        AudioRecorder.shared.setUserDownloadProgress(
+                            id: recording.id,
+                            fraction: fraction < 1 ? fraction : nil
+                        )
+                    }
+                }
+                AudioRecorder.shared.setUserDownloadProgress(id: recording.id, fraction: nil)
+                guard ready else { continue }
+                AudioRecorder.shared.markRecordingLocal(recording.id)
+                guard let url = try? recording.shareableFileURL() else { continue }
+                urls.append(url)
+            }
+            guard !urls.isEmpty else { return }
+            bulkShareSession = RecordingListView.BulkShareSession(urls: urls)
         }
-        guard !urls.isEmpty else { return }
-        bulkShareSession = RecordingListView.BulkShareSession(urls: urls)
     }
     
     @ViewBuilder
@@ -414,7 +452,7 @@ private struct LiveRecordingSplitCard: View {
         VStack(spacing: 20) {
             HStack(spacing: 10) {
                 Circle()
-                    .fill(Color.red)
+                    .fill(Color.themeStop)
                     .frame(width: 10, height: 10)
                     .opacity(isRecording ? 1 : 0.45)
                     .symbolEffect(.pulse, options: .repeating, isActive: isRecording)

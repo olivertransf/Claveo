@@ -36,13 +36,30 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Claveo does not access your camera. This permission may be referenced by audio processing libraries but is not used by the app."
+            "value" : "Claveo uses the camera to photograph the edition you are practicing."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Claveo no accede a tu cámara. Este permiso puede aparecer por bibliotecas de procesamiento de audio, pero la app no lo usa."
+            "value" : "Claveo usa la cámara para fotografiar la edición que estás practicando."
+          }
+        }
+      }
+    },
+    "NSSpeechRecognitionUsageDescription" : {
+      "comment" : "Privacy - Speech Recognition Usage Description",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Claveo uses speech recognition to turn practice voice memos into notes. The transcript may be inaccurate."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Claveo usa el reconocimiento de voz para convertir las notas de voz de práctica en notas. La transcripción puede ser inexacta."
           }
         }
       }
@@ -53,13 +70,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Claveo needs access to your microphone to record practice sessions and detect pitch for tuning."
+            "value" : "Claveo needs access to your microphone to record practice sessions, voice memos, and detect pitch for tuning."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Claveo necesita acceso a tu micrófono para grabar sesiones de práctica y detectar la afinación."
+            "value" : "Claveo necesita acceso a tu micrófono para grabar sesiones de práctica, notas de voz y detectar la afinación."
           }
         }
       }

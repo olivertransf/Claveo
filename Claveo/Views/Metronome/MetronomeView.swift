@@ -118,6 +118,8 @@ struct MetronomeView: View {
                     Button("Save Custom Time Signature") {
                         saveCustomTimeSignature()
                     }
+                    .fontWeight(.semibold)
+                    .foregroundStyle(themeManager.onAccent)
                     .buttonStyle(.borderedProminent)
                     .tint(themeManager.accentColor)
                 }

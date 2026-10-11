@@ -15,11 +15,11 @@ struct PracticeView: View {
     @EnvironmentObject var themeManager: ThemeManager
     @State private var selectedEntry: PracticeEntry?
     @State private var selectedDate = Date()
-    @State private var sheetDate = Date()
-    @State private var showingQuickEntry = false
-    @State private var quickEntryPrefersNew = false
+    @State private var quickEntry: QuickEntryRequest?
     @State private var showingSettings = false
-    @State private var currentWeekOffset = 0
+    @State private var showingWeekPicker = false
+    @State private var weekPickerDate = Date()
+    @State private var currentWeekOffset: Int? = 0
     @State private var searchText = ""
     @State private var filteredEntries: [PracticeEntry] = []
 
@@ -41,6 +41,7 @@ struct PracticeView: View {
                         if searchText.isEmpty {
                             emptyState
                                 .listRowBackground(Color.clear)
+                                .listRowSeparator(.hidden)
                         } else {
                             ContentUnavailableView {
                                 Label("No matches", systemImage: "magnifyingglass")
@@ -48,6 +49,7 @@ struct PracticeView: View {
                                 Text("Try a different search term.")
                             }
                             .listRowBackground(Color.clear)
+                            .listRowSeparator(.hidden)
                         }
                     } else {
                         ForEach(filteredEntries) { entry in
@@ -57,8 +59,8 @@ struct PracticeView: View {
                                 JournalEntryRow(entry: entry, accentColor: themeManager.accentColor)
                             }
                             .buttonStyle(.plain)
-                            .listRowInsets(EdgeInsets(top: 8, leading: 14, bottom: 8, trailing: 14))
-                            .claveoListRowChrome()
+                            .listRowInsets(EdgeInsets(top: 14, leading: 16, bottom: 14, trailing: 16))
+                            .claveoListRowChrome(hideSeparator: entry.id == filteredEntries.last?.id)
                             .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                                 Button(role: .destructive) {
                                     practiceService.deleteEntry(entry)
@@ -75,6 +77,7 @@ struct PracticeView: View {
                         }
                     }
                 }
+                .listSectionSeparator(.hidden, edges: .bottom)
             }
             .claveoInsetGroupedListStyle()
             .refreshable { await practiceService.refreshFromiCloud() }
@@ -90,20 +93,20 @@ struct PracticeView: View {
             .onChange(of: practiceService.practiceEntries) { _, _ in
                 refreshFilteredEntries()
             }
+            .onChange(of: currentWeekOffset) { _, _ in
+                refreshFilteredEntries()
+            }
             .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
+                ToolbarItemGroup(placement: .navigationBarTrailing) {
                     Button {
                         showingSettings = true
                     } label: {
                         Image(systemName: "slider.horizontal.3")
                     }
                     .accessibilityLabel("Practice settings")
-                }
-                ToolbarItem(placement: .navigationBarTrailing) {
+
                     Button {
-                        sheetDate = Date()
-                        quickEntryPrefersNew = true
-                        showingQuickEntry = true
+                        logPractice(on: selectedDate)
                     } label: {
                         Image(systemName: "plus")
                             .fontWeight(.semibold)
@@ -115,13 +118,39 @@ struct PracticeView: View {
                 PracticeEntryDetailView(entry: entry)
                     .environmentObject(themeManager)
             }
-            .sheet(isPresented: $showingQuickEntry) {
-                QuickPracticeEntryView(date: sheetDate, prefersNewEntry: quickEntryPrefersNew)
+            .sheet(item: $quickEntry) { request in
+                QuickPracticeEntryView(date: request.date, prefersNewEntry: request.prefersNewEntry)
                     .environmentObject(themeManager)
+                    .id(request.id)
             }
             .sheet(isPresented: $showingSettings) {
                 PracticeSettingsView()
                     .environmentObject(themeManager)
+            }
+            .sheet(isPresented: $showingWeekPicker) {
+                NavigationStack {
+                    DatePicker(
+                        "Week",
+                        selection: $weekPickerDate,
+                        displayedComponents: .date
+                    )
+                    .datePickerStyle(.graphical)
+                    .padding()
+                    .navigationTitle("Jump to Week")
+                    .navigationBarTitleDisplayMode(.inline)
+                    .toolbar {
+                        ToolbarItem(placement: .cancellationAction) {
+                            Button("Cancel") { showingWeekPicker = false }
+                        }
+                        ToolbarItem(placement: .confirmationAction) {
+                            Button("Done") {
+                                Motion.animate { currentWeekOffset = offset(for: weekPickerDate) }
+                                showingWeekPicker = false
+                            }
+                        }
+                    }
+                }
+                .presentationDetents([.medium, .large])
             }
         }
     }
@@ -134,7 +163,7 @@ struct PracticeView: View {
                 value: "\(practiceService.currentStreak)",
                 label: String(localized: "Day Streak"),
                 icon: "flame.fill",
-                iconColor: practiceService.currentStreak > 0 ? .orange : .secondary
+                iconColor: practiceService.currentStreak > 0 ? Color.themeRating : .secondary
             )
             statDivider
             statItem(
@@ -156,7 +185,7 @@ struct PracticeView: View {
                     value: String(format: "%.1f", avg),
                     label: String(localized: "Avg Rating"),
                     icon: "star.fill",
-                    iconColor: .yellow
+                    iconColor: Color.themeRating
                 )
             }
         }
@@ -189,101 +218,99 @@ struct PracticeView: View {
     // MARK: - Week Strip
 
     private var weekStrip: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: 4) {
             weekStripHeader
-            weekDaysRow
+            weekPager
         }
-        .listRowInsets(EdgeInsets(top: 8, leading: 12, bottom: 8, trailing: 12))
+        .listRowInsets(EdgeInsets(top: 4, leading: 12, bottom: 8, trailing: 12))
+    }
+
+    private var weekOffsets: [Int] {
+        Array(stride(from: -52, through: 52, by: 1))
+    }
+
+    private var weekPager: some View {
+        ScrollView(.horizontal) {
+            HStack(spacing: 0) {
+                ForEach(weekOffsets, id: \.self) { offset in
+                    weekDaysRow(offset: offset)
+                        .containerRelativeFrame(.horizontal)
+                }
+            }
+            .scrollTargetLayout()
+        }
+        .scrollTargetBehavior(.paging)
+        .scrollPosition(id: $currentWeekOffset, anchor: .center)
+        .scrollIndicators(.hidden)
+        .scrollBounceBehavior(.basedOnSize)
+        .frame(height: 86)
     }
 
     private var weekStripHeader: some View {
         HStack {
             Button {
-                Motion.animate {
-                    if currentWeekOffset > -52 { currentWeekOffset -= 1 }
-                }
+                guard weekOffset > -52 else { return }
+                Motion.animate { currentWeekOffset = weekOffset - 1 }
             } label: {
                 Image(systemName: "chevron.left")
                     .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(currentWeekOffset <= -52 ? Color(.tertiaryLabel) : themeManager.accentColor)
+                    .foregroundStyle(weekOffset <= -52 ? Color(.tertiaryLabel) : themeManager.accentColor)
                     .frame(width: 44, height: 44)
             }
-            .disabled(currentWeekOffset <= -52)
+            .disabled(weekOffset <= -52)
             .accessibilityLabel("Previous week")
 
             Spacer()
 
-            Text(weekTitle)
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(.primary)
+            HStack(spacing: 2) {
+                Text(weekTitle)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.primary)
+                Button {
+                    weekPickerDate = startOfWeek(offset: weekOffset)
+                    showingWeekPicker = true
+                } label: {
+                    Image(systemName: "calendar")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(themeManager.accentColor)
+                        .frame(width: 44, height: 44)
+                }
+                .accessibilityLabel("Jump to Week")
+            }
 
             Spacer()
 
             Button {
-                Motion.animate {
-                    if currentWeekOffset < 0 { currentWeekOffset += 1 }
-                }
+                guard weekOffset < 52 else { return }
+                Motion.animate { currentWeekOffset = weekOffset + 1 }
             } label: {
                 Image(systemName: "chevron.right")
                     .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(currentWeekOffset >= 0 ? Color(.tertiaryLabel) : themeManager.accentColor)
+                    .foregroundStyle(weekOffset >= 52 ? Color(.tertiaryLabel) : themeManager.accentColor)
                     .frame(width: 44, height: 44)
             }
-            .disabled(currentWeekOffset >= 0)
+            .disabled(weekOffset >= 52)
             .accessibilityLabel("Next week")
         }
     }
 
-    @State private var dragOffset: CGFloat = 0
-
-    private var weekDayItems: [(index: Int, date: Date, isToday: Bool, isPracticed: Bool, isFuture: Bool, mins: Int)] {
-        (0..<7).map { index in
-            let date = dateForIndex(index)
-            let mins = practiceService.entriesForDate(date).reduce(0) { $0 + $1.duration }
-            return (
-                index,
-                date,
-                calendar.isDateInToday(date),
-                practiceService.hasPracticeOnDate(date),
-                date > Date(),
-                mins
-            )
-        }
-    }
-
-    private var weekDaysRow: some View {
+    private func weekDaysRow(offset: Int) -> some View {
         HStack(spacing: 6) {
-            ForEach(weekDayItems, id: \.index) { item in
+            ForEach(0..<7, id: \.self) { index in
+                let date = dateForIndex(index, weekOffset: offset)
+                let mins = practiceService.entriesForDate(date).reduce(0) { $0 + $1.duration }
                 WeekDayCell(
-                    date: item.date,
-                    isToday: item.isToday,
-                    isPracticed: item.isPracticed,
-                    isFuture: item.isFuture,
-                    minutesPracticed: item.mins,
-                    accentColor: themeManager.accentColor
+                    date: date,
+                    isToday: calendar.isDateInToday(date),
+                    isPracticed: practiceService.hasPracticeOnDate(date),
+                    minutesPracticed: mins,
+                    accentColor: themeManager.accentColor,
+                    onAccent: themeManager.onAccent
                 ) {
-                    sheetDate = item.date
-                    selectedDate = item.date
-                    quickEntryPrefersNew = false
-                    showingQuickEntry = true
+                    logPractice(on: date)
                 }
             }
         }
-        .offset(x: dragOffset)
-        .gesture(
-            DragGesture()
-                .onChanged { dragOffset = $0.translation.width }
-                .onEnded { value in
-                    Motion.animate {
-                        if value.translation.width > 50 && currentWeekOffset > -52 {
-                            currentWeekOffset -= 1
-                        } else if value.translation.width < -50 && currentWeekOffset < 0 {
-                            currentWeekOffset += 1
-                        }
-                        dragOffset = 0
-                    }
-                }
-        )
     }
 
     // MARK: - Empty State
@@ -292,27 +319,27 @@ struct PracticeView: View {
         VStack(spacing: 16) {
             Image(systemName: "music.note.list")
                 .font(.system(size: 44, weight: .light))
-                .foregroundStyle(themeManager.accentColor.opacity(0.5))
+                .foregroundStyle(themeManager.accentColor)
                 .padding(.top, 20)
             VStack(spacing: 6) {
-                Text("No sessions yet")
+                Text(practiceService.practiceEntries.isEmpty ? "No sessions yet" : "No sessions this week")
                     .font(.headline)
-                Text("Tap a day above or use + to log your first practice session.")
+                Text(practiceService.practiceEntries.isEmpty
+                     ? "Tap a day above or use + to log your first practice session."
+                     : "Tap a day above to log a session for this week.")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
             }
             Button {
-                sheetDate = Date()
-                quickEntryPrefersNew = true
-                showingQuickEntry = true
+                logPractice(on: startOfWeek(offset: weekOffset))
             } label: {
                 Label("Log Practice", systemImage: "plus")
                     .font(.subheadline.weight(.semibold))
                     .padding(.horizontal, 24)
                     .padding(.vertical, 12)
                     .background(themeManager.accentColor)
-                    .foregroundStyle(.white)
+                    .foregroundStyle(themeManager.onAccent)
                     .clipShape(Capsule(style: .continuous))
             }
             .padding(.bottom, 8)
@@ -322,35 +349,62 @@ struct PracticeView: View {
 
     // MARK: - Helpers
 
-    private var weekStart: Date {
+    private var weekOffset: Int { currentWeekOffset ?? 0 }
+
+    private func startOfWeek(offset: Int) -> Date {
         let today = calendar.startOfDay(for: Date())
         let start = calendar.date(from: calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: today)) ?? today
-        return calendar.date(byAdding: .weekOfYear, value: currentWeekOffset, to: start) ?? start
+        return calendar.date(byAdding: .weekOfYear, value: offset, to: start) ?? start
+    }
+
+    private func offset(for date: Date) -> Int {
+        let target = startOfWeek(offset: 0)
+        let selected = calendar.date(
+            from: calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: date)
+        ) ?? calendar.startOfDay(for: date)
+        let weeks = calendar.dateComponents([.weekOfYear], from: target, to: selected).weekOfYear ?? 0
+        return min(52, max(-52, weeks))
     }
 
     private var weekTitle: String {
-        switch currentWeekOffset {
+        switch weekOffset {
         case 0: return String(localized: "This Week")
         case -1: return String(localized: "Last Week")
+        case 1: return String(localized: "Next Week")
         default:
+            let start = startOfWeek(offset: weekOffset)
             let formatter = PracticeWeekFormatters.monthDay
-            let end = calendar.date(byAdding: .day, value: 6, to: weekStart) ?? weekStart
-            return "\(formatter.string(from: weekStart)) – \(formatter.string(from: end))"
+            let end = calendar.date(byAdding: .day, value: 6, to: start) ?? start
+            return "\(formatter.string(from: start)) – \(formatter.string(from: end))"
         }
     }
 
-    private func dateForIndex(_ index: Int) -> Date {
-        calendar.date(byAdding: .day, value: index, to: weekStart) ?? weekStart
+    private func dateForIndex(_ index: Int, weekOffset: Int) -> Date {
+        let start = startOfWeek(offset: weekOffset)
+        return calendar.date(byAdding: .day, value: index, to: start) ?? start
+    }
+
+    private func logPractice(on date: Date) {
+        let day = calendar.startOfDay(for: date)
+        selectedDate = day
+        quickEntry = QuickEntryRequest(date: day, prefersNewEntry: true)
     }
 
     private func refreshFilteredEntries() {
+        let start = startOfWeek(offset: weekOffset)
+        let end = calendar.date(byAdding: .day, value: 7, to: start) ?? start
+        let weekEntries = practiceService.practiceEntries.filter { entry in
+            let day = calendar.startOfDay(for: entry.date)
+            return day >= start && day < end
+        }
         guard !searchText.isEmpty else {
-            filteredEntries = practiceService.practiceEntries
+            filteredEntries = weekEntries
             return
         }
         let q = searchText.lowercased()
-        filteredEntries = practiceService.practiceEntries.filter {
+        filteredEntries = weekEntries.filter {
             $0.notes?.lowercased().contains(q) == true
+            || $0.voiceMemoTranscript?.lowercased().contains(q) == true
             || $0.formattedDate.lowercased().contains(q)
             || "\($0.duration)".contains(q)
             || $0.formattedDuration.lowercased().contains(q)
@@ -376,9 +430,9 @@ private struct WeekDayCell: View {
     let date: Date
     let isToday: Bool
     let isPracticed: Bool
-    let isFuture: Bool
     let minutesPracticed: Int
     let accentColor: Color
+    let onAccent: Color
     let onTap: () -> Void
 
     private let calendar = Calendar.current
@@ -434,12 +488,10 @@ private struct WeekDayCell: View {
             }
         }
         .frame(maxWidth: .infinity)
-        .opacity(isFuture ? 0.35 : 1)
-        .disabled(isFuture)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(date.formatted(date: .complete, time: .omitted))
         .accessibilityValue(accessibilityValue)
-        .accessibilityHint(isFuture ? "" : String(localized: "Log a practice session"))
+        .accessibilityHint(String(localized: "Log a practice session"))
     }
 
     private var accessibilityValue: String {
@@ -454,12 +506,12 @@ private struct WeekDayCell: View {
 
     private var circleBackground: Color {
         if isPracticed { return accentColor }
-        if isToday { return accentColor.opacity(0.08) }
+        if isToday { return accentColor.opacity(0.18) }
         return Color(.tertiarySystemFill)
     }
 
     private var numberColor: Color {
-        if isPracticed { return .white }
+        if isPracticed { return onAccent }
         if isToday { return accentColor }
         return .primary.opacity(0.7)
     }
@@ -484,17 +536,20 @@ private struct JournalEntryRow: View {
     }
 
     private var trimmedNotes: String? {
-        guard let notes = entry.notes?.trimmingCharacters(in: .whitespacesAndNewlines), !notes.isEmpty else {
-            return nil
+        if let notes = entry.notes?.trimmingCharacters(in: .whitespacesAndNewlines), !notes.isEmpty {
+            return notes
         }
-        return notes
+        if let transcript = entry.voiceMemoTranscript?.trimmingCharacters(in: .whitespacesAndNewlines), !transcript.isEmpty {
+            return transcript
+        }
+        return nil
     }
 
     var body: some View {
-        HStack(alignment: .center, spacing: 12) {
+        HStack(alignment: .top, spacing: 14) {
             dateBadge
 
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: 6) {
                 Text(entry.formattedDuration)
                     .font(.headline)
 
@@ -503,6 +558,7 @@ private struct JournalEntryRow: View {
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                         .lineLimit(2)
+                        .fixedSize(horizontal: false, vertical: true)
                 } else {
                     Text(entry.formattedDate)
                         .font(.subheadline)
@@ -511,49 +567,51 @@ private struct JournalEntryRow: View {
 
                 if trimmedNotes != nil || !entry.linkedRecordingIds.isEmpty {
                     metadataRow
+                        .padding(.top, 2)
                 }
             }
-
-            Spacer(minLength: 6)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.top, 2)
 
             if let rating = entry.rating {
                 ratingStars(rating)
+                    .padding(.top, 4)
             }
         }
     }
 
     private var dateBadge: some View {
-        VStack(spacing: 1) {
+        VStack(spacing: 2) {
             Text(dayNumber)
-                .font(.system(size: 17, weight: .bold, design: .rounded))
+                .font(.system(size: 18, weight: .bold, design: .rounded))
             Text(monthAbbrev)
-                .font(.system(size: 9, weight: .semibold))
+                .font(.system(size: 10, weight: .semibold))
                 .foregroundStyle(.secondary)
                 .kerning(0.4)
         }
-        .frame(width: 44, height: 44)
+        .frame(width: 48, height: 52)
         .background(
-            RoundedRectangle(cornerRadius: 10, style: .continuous)
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
                 .fill(Color(.tertiarySystemFill))
         )
     }
 
     private var metadataRow: some View {
-        HStack(spacing: 6) {
+        HStack(spacing: 8) {
             if trimmedNotes != nil {
                 Text(entry.formattedDate)
                     .font(.caption)
-                    .foregroundStyle(.tertiary)
+                    .foregroundStyle(.secondary)
             }
 
             if !entry.linkedRecordingIds.isEmpty {
                 if trimmedNotes != nil {
                     Text("·")
                         .font(.caption)
-                        .foregroundStyle(.tertiary)
+                        .foregroundStyle(.secondary)
                 }
 
-                HStack(spacing: 3) {
+                HStack(spacing: 4) {
                     Image(systemName: "waveform")
                         .font(.caption2.weight(.semibold))
                     Text("\(entry.linkedRecordingIds.count)")
@@ -565,11 +623,11 @@ private struct JournalEntryRow: View {
     }
 
     private func ratingStars(_ rating: Int) -> some View {
-        HStack(spacing: 2) {
+        HStack(spacing: 3) {
             ForEach(1...5, id: \.self) { star in
                 Image(systemName: star <= rating ? "star.fill" : "star")
-                    .font(.system(size: 10))
-                    .foregroundStyle(star <= rating ? .orange : Color(.tertiaryLabel))
+                    .font(.system(size: 11))
+                    .foregroundStyle(star <= rating ? Color.themeRating : Color.secondary.opacity(0.45))
             }
         }
         .accessibilityElement(children: .ignore)
@@ -583,6 +641,7 @@ struct PracticeSettingsView: View {
     @Environment(\.dismiss) var dismiss
     @EnvironmentObject var themeManager: ThemeManager
     @StateObject private var settingsManager = SettingsManager.shared
+    @State private var maximumTime: Int
     @State private var defaultTime: Int
     @State private var durationOptions: [Int]
     @State private var reminderEnabled: Bool
@@ -591,11 +650,12 @@ struct PracticeSettingsView: View {
 
     init() {
         let settings = SettingsManager.shared.settings
+        _maximumTime = State(initialValue: settings.maximumPracticeMinutes)
         _defaultTime = State(initialValue: settings.defaultPracticeTime)
-        var options = settings.practiceDurationOptions
-        options = options.filter { $0 >= 5 && $0 <= 480 }.sorted()
-        if options.isEmpty { options = [15, 30, 45, 60] }
-        _durationOptions = State(initialValue: options)
+        _durationOptions = State(initialValue: PracticeDuration.sanitizedOptions(
+            settings.practiceDurationOptions,
+            maximum: settings.maximumPracticeMinutes
+        ))
         _reminderEnabled = State(initialValue: settings.practiceReminderEnabled)
 
         var components = DateComponents()
@@ -611,81 +671,23 @@ struct PracticeSettingsView: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section("Default Practice Duration") {
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text("\(defaultTime) minutes")
-                            .font(.title3.weight(.semibold))
-                        HStack {
-                            ForEach([15, 30, 45, 60, 90], id: \.self) { mins in
-                                Button {
-                                    defaultTime = mins
-                                } label: {
-                                    Text("\(mins)")
-                                        .font(.subheadline.weight(.medium))
-                                        .foregroundStyle(defaultTime == mins ? .white : themeManager.accentColor)
-                                        .frame(maxWidth: .infinity)
-                                        .frame(minHeight: 44)
-                                        .background(defaultTime == mins ? themeManager.accentColor : themeManager.accentColor.opacity(0.1))
-                                        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-                                }
-                                .accessibilityLabel(String(localized: "\(mins) minutes"))
-                                .accessibilityAddTraits(defaultTime == mins ? .isSelected : [])
-                            }
-                        }
-                        Slider(value: .init(get: { Double(defaultTime) }, set: { defaultTime = Int($0) }), in: 5...180, step: 5)
-                            .tint(themeManager.accentColor)
-                            .accessibilityLabel("Default practice duration")
-                            .accessibilityValue(String(localized: "\(defaultTime) minutes"))
-                    }
+                Section("Practice Duration") {
+                    PracticeDurationControls(
+                        title: String(localized: "Maximum Duration"),
+                        minutes: $maximumTime,
+                        maximum: PracticeDuration.absoluteMaximum
+                    )
                     .padding(.vertical, 4)
-                }
 
-                Section("Quick Duration Options") {
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text("Buttons shown when logging a session")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                        HStack(spacing: 8) {
-                            ForEach(durationOptions, id: \.self) { option in
-                                Button {
-                                    durationOptions.removeAll { $0 == option }
-                                } label: {
-                                    HStack(spacing: 4) {
-                                        Text("\(option)")
-                                        Image(systemName: "xmark.circle.fill")
-                                            .font(.caption)
-                                    }
-                                    .font(.subheadline)
-                                    .foregroundStyle(themeManager.accentColor)
-                                    .padding(.horizontal, 8)
-                                    .frame(minHeight: 44)
-                                    .background(themeManager.accentColor.opacity(0.1))
-                                    .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-                                }
-                                .accessibilityLabel(String(localized: "Remove \(option)-minute option"))
-                            }
-                        }
-                        if durationOptions.count < 6 {
-                            HStack(spacing: 8) {
-                                ForEach([15, 30, 45, 60, 90, 120, 180].filter { !durationOptions.contains($0) }.prefix(5), id: \.self) { mins in
-                                    Button {
-                                        durationOptions.append(mins)
-                                        durationOptions.sort()
-                                    } label: {
-                                        Text("+\(mins)")
-                                            .font(.subheadline)
-                                            .foregroundStyle(.secondary)
-                                            .padding(.horizontal, 8)
-                                            .frame(minHeight: 44)
-                                            .background(Color(.tertiarySystemFill))
-                                            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-                                    }
-                                    .accessibilityLabel(String(localized: "Add \(mins)-minute option"))
-                                }
-                            }
-                        }
-                    }
+                    PracticeDurationControls(
+                        title: String(localized: "Default Duration"),
+                        minutes: $defaultTime,
+                        maximum: maximumTime
+                    )
                     .padding(.vertical, 4)
+
+                    QuickDurationOptionsEditor(options: $durationOptions, maximum: maximumTime)
+                        .padding(.vertical, 4)
                 }
 
                 Section {
@@ -741,12 +743,14 @@ struct PracticeSettingsView: View {
     }
 
     private func savePracticeSettings() {
-        var cleaned = durationOptions.filter { $0 >= 5 && $0 <= 480 }.sorted()
-        if cleaned.isEmpty { cleaned = [15, 30, 45, 60] }
-
+        let maximum = PracticeDuration.clampMaximum(maximumTime)
+        let cleaned = PracticeDuration.sanitizedOptions(durationOptions, maximum: maximum)
         let timeParts = Calendar.current.dateComponents([.hour, .minute], from: reminderTime)
-        settingsManager.update(\.defaultPracticeTime, value: defaultTime)
-        settingsManager.update(\.practiceDurationOptions, value: cleaned)
+        settingsManager.updatePracticeDurations(
+            maximum: maximum,
+            defaultMinutes: defaultTime,
+            options: cleaned
+        )
         settingsManager.update(\.practiceReminderEnabled, value: reminderEnabled)
         settingsManager.update(\.practiceReminderHour, value: timeParts.hour ?? 18)
         settingsManager.update(\.practiceReminderMinute, value: timeParts.minute ?? 0)
@@ -765,6 +769,12 @@ struct PracticeSettingsView: View {
             dismiss()
         }
     }
+}
+
+private struct QuickEntryRequest: Identifiable {
+    let id = UUID()
+    var date: Date
+    var prefersNewEntry: Bool
 }
 
 #Preview {

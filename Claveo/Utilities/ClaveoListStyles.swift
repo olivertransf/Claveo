@@ -11,7 +11,7 @@ import SwiftUI
 extension View {
     func claveoInsetGroupedListStyle() -> some View {
         listStyle(.insetGrouped)
-            .listSectionSeparator(.visible, edges: .all)
+            .listSectionSeparator(.hidden, edges: .bottom)
     }
 
     func claveoPlainListStyle() -> some View {
@@ -40,11 +40,11 @@ private struct ClaveoListRowChromeModifier: ViewModifier {
         if showsBackground {
             content
                 .listRowBackground(Color(.secondarySystemGroupedBackground))
-                .listRowSeparator(hideSeparator ? .hidden : .visible, edges: .bottom)
+                .listRowSeparator(hideSeparator ? .hidden : .automatic, edges: .bottom)
                 .listRowSeparatorTint(Color(.separator))
         } else {
             content
-                .listRowSeparator(hideSeparator ? .hidden : .visible, edges: .bottom)
+                .listRowSeparator(hideSeparator ? .hidden : .automatic, edges: .bottom)
                 .listRowSeparatorTint(Color(.separator))
         }
     }

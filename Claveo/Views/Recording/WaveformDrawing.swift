@@ -127,7 +127,7 @@ enum WaveformDrawing {
             let rect = CGRect(x: x - barWidth / 2, y: midY - height / 2, width: barWidth, height: height)
             context.fill(
                 Path(roundedRect: rect, cornerRadius: 2),
-                with: .color(inSelection ? accentColor : accentColor.opacity(0.22))
+                with: .color(inSelection ? accentColor : accentColor.opacity(0.45))
             )
         }
     }

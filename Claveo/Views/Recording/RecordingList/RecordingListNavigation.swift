@@ -184,14 +184,8 @@ extension RecordingListView {
 
     /// Visible while iCloud is checking, transferring, or folding changes into the library.
     var syncActivityTitle: String? {
-        if SettingsManager.shared.settings.storeFilesOnDeviceOnly {
-            return recorder.isLoadingRecordings ? String(localized: "Loading recordings…") : nil
-        }
-        if syncEngine.status.isActive {
-            return syncEngine.status.title
-        }
-        if recorder.isReloadingRecordings {
-            return String(localized: "Updating from iCloud…")
+        if recorder.isLoadingRecordings && recorder.recordings.isEmpty {
+            return String(localized: "Loading recordings…")
         }
         return nil
     }
@@ -327,7 +321,7 @@ extension RecordingListView {
                     }
                 } label: {
                     Image(systemName: syncEngine.status.systemImage)
-                        .symbolEffect(.pulse, isActive: syncEngine.status.isActive || recorder.isReloadingRecordings)
+                        .symbolEffect(.pulse, isActive: syncEngine.status.isActive || (recorder.isLoadingRecordings && recorder.recordings.isEmpty))
                 }
                 .accessibilityLabel(syncEngine.status.title)
             }
@@ -376,7 +370,7 @@ extension RecordingListView {
                             .foregroundColor(themeManager.accentColor)
                     } else {
                         Label("iCloud Drive is not available. Files are stored locally.", systemImage: "exclamationmark.triangle")
-                            .foregroundColor(.orange)
+                            .foregroundColor(.themeRating)
                     }
 
                     if !settingsManager.settings.storeFilesOnDeviceOnly && iCloudManager.shared.isAvailable {
@@ -429,11 +423,11 @@ extension RecordingListView {
         }) {
             ZStack {
                 Circle()
-                    .fill(Color.red.opacity(0.14))
+                    .fill(Color.themeStop.opacity(0.22))
                     .frame(width: 76, height: 76)
 
                 Circle()
-                    .fill(Color.red.opacity(0.92))
+                    .fill(Color.themeStop)
                     .frame(width: 64, height: 64)
 
                 Group {
@@ -505,7 +499,7 @@ struct LiveRecordingIndicatorView: View {
             VStack(spacing: 12) {
                 HStack(spacing: 10) {
                     Circle()
-                        .fill(Color.red)
+                        .fill(Color.themeStop)
                         .frame(width: 10, height: 10)
                         .opacity(isRecording ? 1 : 0.45)
                         .symbolEffect(.pulse, options: .repeating, isActive: isRecording)

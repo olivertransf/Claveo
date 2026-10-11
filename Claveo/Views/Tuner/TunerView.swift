@@ -376,7 +376,7 @@ struct TunerView: View {
     private var listeningBadge: some View {
         HStack(spacing: 6) {
             Circle()
-                .fill(isListening ? Color.green : Color.secondary.opacity(0.4))
+                .fill(isListening ? Color.themeCorrect : Color.secondary)
                 .frame(width: 8, height: 8)
             Text(isListening ? String(localized: "On") : String(localized: "Off"))
                 .font(.caption.weight(.semibold))
@@ -435,11 +435,11 @@ struct TunerView: View {
                     .contentTransition(.symbolEffect(.replace))
             }
             .font(.headline)
-            .foregroundStyle(.white)
+            .foregroundStyle(isListening ? Color.white : themeManager.onAccent)
             .frame(maxWidth: .infinity)
             .padding(.vertical, isIPad ? 16 : 14)
             .background(
-                isListening ? Color.red : themeManager.accentColor,
+                isListening ? Color.themeStop : themeManager.accentColor,
                 in: RoundedRectangle(cornerRadius: 14, style: .continuous)
             )
         }
@@ -736,9 +736,9 @@ private struct TunerNeedle: View {
 }
 
 enum TunerPalette {
-    private static let flat = Color(red: 0.86, green: 0.38, blue: 0.36)
-    private static let near = Color(red: 0.93, green: 0.66, blue: 0.28)
-    private static let inTune = Color(red: 0.22, green: 0.66, blue: 0.48)
+    private static let flat = AccentPalette.color(light: (176, 72, 68), dark: (219, 120, 114))
+    private static let near = AccentPalette.color(light: (168, 96, 12), dark: (237, 176, 84))
+    private static let inTune = AccentPalette.color(light: (12, 112, 78), dark: (72, 184, 138))
 
     static let coarseGradient: [Color] = [
         flat.opacity(0.38),

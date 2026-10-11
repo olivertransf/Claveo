@@ -328,7 +328,7 @@ private struct MoreHubCard: View {
                 .font(.title2.weight(.semibold))
                 .foregroundStyle(tint)
                 .frame(width: 44, height: 44)
-                .background(tint.opacity(0.14), in: Circle())
+                .background(tint.opacity(0.22), in: Circle())
             Text(title)
                 .font(.subheadline.weight(.medium))
                 .foregroundStyle(.primary)

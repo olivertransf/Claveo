@@ -105,7 +105,7 @@ struct RecordingRowView: View {
                 if let piece = recording.piece, !piece.isEmpty {
                     Text("·")
                         .font(.subheadline)
-                        .foregroundStyle(.tertiary)
+                        .foregroundStyle(.secondary)
                     Text(piece)
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
@@ -117,7 +117,7 @@ struct RecordingRowView: View {
             if showsInlinePlayer, !recording.tags.isEmpty {
                 Text(recording.tags.map { RecordingTag.localizedName(for: $0) }.joined(separator: " · "))
                     .font(.caption)
-                    .foregroundStyle(.tertiary)
+                    .foregroundStyle(.secondary)
                     .lineLimit(1)
             }
         }
@@ -193,7 +193,7 @@ struct RecordingRowView: View {
 
     private var rowBackground: Color {
         if isSplitFocused {
-            return themeManager.accentColor.opacity(0.16)
+            return themeManager.accentWash
         }
         return Color(.secondarySystemGroupedBackground)
     }

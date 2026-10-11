@@ -86,8 +86,10 @@ class AudioRecorder: NSObject, ObservableObject {
         let generation = reloadGeneration
         let revisionAtStart = mutationRevision
         let showLoading = recordings.isEmpty
-        if showLoading { isLoadingRecordings = true }
-        isReloadingRecordings = true
+        if showLoading {
+            isLoadingRecordings = true
+            isReloadingRecordings = true
+        }
         defer {
             if generation == reloadGeneration {
                 isLoadingRecordings = false
@@ -120,13 +122,16 @@ class AudioRecorder: NSObject, ObservableObject {
         let knownAvailability = Dictionary(
             uniqueKeysWithValues: previousActive.map { ($0.id, $0.isLocallyAvailable) }
         )
-        recordings = active.map { recording in
+        let nextRecordings = active.map { recording in
             guard let known = knownAvailability[recording.id], known != recording.isLocallyAvailable else {
                 return recording
             }
             var kept = recording
             kept.isLocallyAvailable = known
             return kept
+        }
+        if nextRecordings != recordings {
+            recordings = nextRecordings
         }
         refreshKeepDownloadedFiles()
         let metadataChanged =
@@ -804,7 +809,6 @@ class AudioRecorder: NSObject, ObservableObject {
             ]),
                values.isUbiquitousItem == true,
                values.ubiquitousItemDownloadingStatus == .notDownloaded {
-                try? FileManager.default.startDownloadingUbiquitousItem(at: fileURL)
                 readSucceeded = false
                 continue
             }
@@ -876,6 +880,25 @@ class AudioRecorder: NSObject, ObservableObject {
         ].joined(separator: "\u{1E}")
     }
 
+    func setUserDownloadProgress(id: UUID, fraction: Double?) {
+        if let fraction, fraction < 1 {
+            userDownloadProgress[id] = fraction
+        } else {
+            userDownloadProgress.removeValue(forKey: id)
+        }
+        publishDownloadProgress()
+        SyncEngine.shared.noteUserTransfer(active: !userDownloadProgress.isEmpty)
+    }
+
+    func markRecordingLocal(_ id: UUID) {
+        guard let index = recordings.firstIndex(where: { $0.id == id }) else { return }
+        guard recordings[index].isLocallyAvailable == false else { return }
+        recordings[index].isLocallyAvailable = true
+    }
+
+    private var userDownloadProgress: [UUID: Double] = [:]
+    private var metadataDownloadProgress: [UUID: Double] = [:]
+
     func applyDownloadProgress(_ byFileName: [String: Double]) {
         var mapped: [UUID: Double] = [:]
         for recording in recordings {
@@ -883,8 +906,17 @@ class AudioRecorder: NSObject, ObservableObject {
                 mapped[recording.id] = progress
             }
         }
-        if mapped != downloadProgress {
-            downloadProgress = mapped
+        metadataDownloadProgress = mapped
+        publishDownloadProgress()
+    }
+
+    private func publishDownloadProgress() {
+        var merged = metadataDownloadProgress
+        for (id, fraction) in userDownloadProgress {
+            merged[id] = fraction
+        }
+        if merged != downloadProgress {
+            downloadProgress = merged
         }
     }
 
@@ -900,7 +932,7 @@ class AudioRecorder: NSObject, ObservableObject {
             pinnedLocation: pinned,
             roots: roots,
             defaultRoot: defaultRoot,
-            startDownloadIfMissing: true
+            startDownloadIfMissing: false
         ) else { return }
         guard !Task.isCancelled else { return }
         guard let index = recordings.firstIndex(where: { $0.id == id }) else { return }

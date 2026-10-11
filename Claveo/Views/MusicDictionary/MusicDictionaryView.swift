@@ -34,7 +34,7 @@ struct MusicDictionaryView: View {
                         VStack(spacing: 16) {
                             Image(systemName: "exclamationmark.triangle")
                                 .font(.system(size: 48))
-                                .foregroundColor(.orange)
+                                .foregroundColor(.themeRating)
                             Text("Error Loading Dictionary")
                                 .font(.headline)
                             Text(error)
@@ -46,7 +46,10 @@ struct MusicDictionaryView: View {
                                 HapticFeedback.lightImpact()
                                 dictionaryService.loadDictionary()
                             }
+                            .fontWeight(.semibold)
+                            .foregroundStyle(themeManager.onAccent)
                             .buttonStyle(.borderedProminent)
+                            .tint(themeManager.accentColor)
                         }
                         Spacer()
                     }
@@ -171,7 +174,7 @@ struct MusicDictionaryView: View {
 
                 Image(systemName: "chevron.right")
                     .font(.caption.weight(.semibold))
-                    .foregroundStyle(.tertiary)
+                    .foregroundStyle(.secondary)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, 14)

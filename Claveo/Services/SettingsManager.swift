@@ -188,10 +188,22 @@ class SettingsManager: ObservableObject {
         }
         
         // Practice
-        settings.defaultPracticeTime = defaults.integer(forKey: "defaultPracticeTime") == 0 ? 30 : defaults.integer(forKey: "defaultPracticeTime")
+        if defaults.object(forKey: "maximumPracticeMinutes") != nil {
+            settings.maximumPracticeMinutes = PracticeDuration.clampMaximum(
+                defaults.integer(forKey: "maximumPracticeMinutes")
+            )
+        }
+        let storedDefault = defaults.integer(forKey: "defaultPracticeTime")
+        settings.defaultPracticeTime = PracticeDuration.clamp(
+            storedDefault == 0 ? 30 : storedDefault,
+            maximum: settings.maximumPracticeMinutes
+        )
         if let data = defaults.data(forKey: "practiceDurationOptions"),
            let decoded = try? JSONDecoder().decode([Int].self, from: data) {
-            settings.practiceDurationOptions = decoded
+            settings.practiceDurationOptions = PracticeDuration.sanitizedOptions(
+                decoded,
+                maximum: settings.maximumPracticeMinutes
+            )
         }
         settings.practiceReminderEnabled = defaults.bool(forKey: "practiceReminderEnabled")
         if defaults.object(forKey: "practiceReminderHour") != nil {
@@ -310,6 +322,7 @@ class SettingsManager: ObservableObject {
         
         // Practice
         defaults.set(settings.defaultPracticeTime, forKey: "defaultPracticeTime")
+        defaults.set(settings.maximumPracticeMinutes, forKey: "maximumPracticeMinutes")
         if let encoded = try? JSONEncoder().encode(settings.practiceDurationOptions) {
             defaults.set(encoded, forKey: "practiceDurationOptions")
         }
@@ -418,6 +431,14 @@ class SettingsManager: ObservableObject {
     
     // MARK: - Property Updates
     
+    func updatePracticeDurations(maximum: Int, defaultMinutes: Int, options: [Int]) {
+        let cap = PracticeDuration.clampMaximum(maximum)
+        settings.maximumPracticeMinutes = cap
+        settings.defaultPracticeTime = PracticeDuration.clamp(defaultMinutes, maximum: cap)
+        settings.practiceDurationOptions = PracticeDuration.sanitizedOptions(options, maximum: cap)
+        saveSettings()
+    }
+
     func update<T>(_ keyPath: WritableKeyPath<AppSettings, T>, value: T) {
         settings[keyPath: keyPath] = value
         saveSettings()
@@ -456,6 +477,7 @@ class SettingsManager: ObservableObject {
             "customTimeSignatureBottom",
             "favoriteTempos",
             "defaultPracticeTime",
+            "maximumPracticeMinutes",
             "practiceDurationOptions",
             "practiceReminderEnabled",
             "practiceReminderHour",

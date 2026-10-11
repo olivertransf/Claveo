@@ -14,12 +14,16 @@ struct PracticeEntry: Identifiable, Codable, Equatable {
     var duration: Int // in minutes
     var notes: String? // optional journal entry
     var linkedRecordingIds: [UUID] = [] // IDs of linked recordings
+    var photoFileNames: [String] = []
+    var voiceMemoFileNames: [String] = []
+    var transcribedVoiceMemoFileNames: [String] = []
+    var voiceMemoTranscript: String?
     var rating: Int? // 1-5 stars, optional
     var lastModified: Date = Date()
     var isDeleted: Bool = false
 
     enum CodingKeys: String, CodingKey {
-        case id, date, duration, notes, linkedRecordingIds, rating, lastModified, isDeleted
+        case id, date, duration, notes, linkedRecordingIds, photoFileNames, voiceMemoFileNames, transcribedVoiceMemoFileNames, voiceMemoTranscript, rating, lastModified, isDeleted
     }
 
     init(from decoder: Decoder) throws {
@@ -36,6 +40,10 @@ struct PracticeEntry: Identifiable, Codable, Equatable {
         duration = try c.decode(Int.self, forKey: .duration)
         notes = try c.decodeIfPresent(String.self, forKey: .notes)
         linkedRecordingIds = try c.decodeIfPresent([UUID].self, forKey: .linkedRecordingIds) ?? []
+        photoFileNames = try c.decodeIfPresent([String].self, forKey: .photoFileNames) ?? []
+        voiceMemoFileNames = try c.decodeIfPresent([String].self, forKey: .voiceMemoFileNames) ?? []
+        transcribedVoiceMemoFileNames = try c.decodeIfPresent([String].self, forKey: .transcribedVoiceMemoFileNames) ?? []
+        voiceMemoTranscript = try c.decodeIfPresent(String.self, forKey: .voiceMemoTranscript)
         rating = try c.decodeIfPresent(Int.self, forKey: .rating)
         lastModified = try c.decodeIfPresent(Date.self, forKey: .lastModified) ?? Date()
         isDeleted = try c.decodeIfPresent(Bool.self, forKey: .isDeleted) ?? false
@@ -47,17 +55,7 @@ struct PracticeEntry: Identifiable, Codable, Equatable {
     }
 
     var formattedDuration: String {
-        if duration < 60 {
-            return "\(duration) min"
-        } else {
-            let hours = duration / 60
-            let minutes = duration % 60
-            if minutes == 0 {
-                return "\(hours) hr"
-            } else {
-                return "\(hours) hr \(minutes) min"
-            }
-        }
+        PracticeDuration.label(minutes: duration)
     }
 
     var ratingStars: String {
@@ -66,11 +64,15 @@ struct PracticeEntry: Identifiable, Codable, Equatable {
     }
 
     // Initialize with current date
-    init(date: Date = Date(), duration: Int, notes: String? = nil, linkedRecordingIds: [UUID] = [], rating: Int? = nil, lastModified: Date = Date(), isDeleted: Bool = false) {
+    init(date: Date = Date(), duration: Int, notes: String? = nil, linkedRecordingIds: [UUID] = [], photoFileNames: [String] = [], voiceMemoFileNames: [String] = [], transcribedVoiceMemoFileNames: [String] = [], voiceMemoTranscript: String? = nil, rating: Int? = nil, lastModified: Date = Date(), isDeleted: Bool = false) {
         self.date = date
         self.duration = duration
         self.notes = notes
         self.linkedRecordingIds = linkedRecordingIds
+        self.photoFileNames = photoFileNames
+        self.voiceMemoFileNames = voiceMemoFileNames
+        self.transcribedVoiceMemoFileNames = transcribedVoiceMemoFileNames
+        self.voiceMemoTranscript = voiceMemoTranscript
         self.rating = rating
         self.lastModified = lastModified
         self.isDeleted = isDeleted

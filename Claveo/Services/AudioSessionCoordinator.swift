@@ -25,3 +25,24 @@ enum AudioSessionCoordinator {
         try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
     }
 }
+
+/// Session activation blocks. Call it from a detached task, and use the async API on iOS 27.
+nonisolated enum AudioSessionActivation {
+    static func activate(_ session: AVAudioSession) async throws {
+        if #available(iOS 27, *) {
+            try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+                session.activate(options: []) { activated, error in
+                    if activated {
+                        continuation.resume()
+                    } else if let error {
+                        continuation.resume(throwing: error)
+                    } else {
+                        continuation.resume(throwing: CancellationError())
+                    }
+                }
+            }
+        } else {
+            try session.setActive(true)
+        }
+    }
+}
