@@ -18,9 +18,11 @@ struct SettingsView: View {
     /// Grows with Dynamic Type so the Hz value is never clipped.
     @ScaledMetric(relativeTo: .body) private var frequencyFieldWidth: CGFloat = 76
     @FocusState private var isFrequencyFieldFocused: Bool
+    @State private var practiceMaximum: Int = SettingsManager.shared.settings.maximumPracticeMinutes
     @State private var practiceDefaultTime: Int = SettingsManager.shared.settings.defaultPracticeTime
-    @State private var practiceDurationOptions: [Int] = Self.sanitizedDurations(
-        SettingsManager.shared.settings.practiceDurationOptions
+    @State private var practiceDurationOptions: [Int] = PracticeDuration.sanitizedOptions(
+        SettingsManager.shared.settings.practiceDurationOptions,
+        maximum: SettingsManager.shared.settings.maximumPracticeMinutes
     )
     @State private var showingResetSettingsAlert = false
     @State private var storageLocationText = iCloudManager.shared.getStorageLocation()
@@ -44,23 +46,20 @@ struct SettingsView: View {
         }
         .onAppear {
             manualFrequencyText = String(format: "%.1f", settingsManager.settings.a4ReferenceFrequency)
+            practiceMaximum = settingsManager.settings.maximumPracticeMinutes
             practiceDefaultTime = settingsManager.settings.defaultPracticeTime
-            practiceDurationOptions = Self.sanitizedDurations(settingsManager.settings.practiceDurationOptions)
+            practiceDurationOptions = PracticeDuration.sanitizedOptions(
+                settingsManager.settings.practiceDurationOptions,
+                maximum: settingsManager.settings.maximumPracticeMinutes
+            )
             refreshStorageDisplay()
         }
         .onReceive(NotificationCenter.default.publisher(for: .claveoStorageLocationDidChange)) { _ in
             refreshStorageDisplay()
         }
-        .onChange(of: practiceDefaultTime) { _, newValue in
-            settingsManager.update(\.defaultPracticeTime, value: newValue)
-        }
-        .onChange(of: practiceDurationOptions) { _, newValue in
-            let cleaned = Self.sanitizedDurations(newValue)
-            if cleaned != newValue {
-                practiceDurationOptions = cleaned
-            }
-            settingsManager.update(\.practiceDurationOptions, value: cleaned)
-        }
+        .onChange(of: practiceMaximum) { _, _ in commitPracticeDurations() }
+        .onChange(of: practiceDefaultTime) { _, _ in commitPracticeDurations() }
+        .onChange(of: practiceDurationOptions) { _, _ in commitPracticeDurations() }
         .alert("Reset Settings?", isPresented: $showingResetSettingsAlert) {
             Button("Cancel", role: .cancel) { }
             Button("Reset", role: .destructive) {
@@ -91,9 +90,22 @@ struct SettingsView: View {
         .moreTabBackButton(for: 6)
     }
 
-    private static func sanitizedDurations(_ values: [Int]) -> [Int] {
-        let unique = Array(Set(values.filter { $0 >= 5 && $0 <= 480 })).sorted()
-        return unique.isEmpty ? [15, 30, 45, 60] : unique
+    private func commitPracticeDurations() {
+        let maximum = PracticeDuration.clampMaximum(practiceMaximum)
+        let defaultTime = PracticeDuration.clamp(practiceDefaultTime, maximum: maximum)
+        let options = PracticeDuration.sanitizedOptions(practiceDurationOptions, maximum: maximum)
+        if practiceMaximum != maximum { practiceMaximum = maximum }
+        if practiceDefaultTime != defaultTime { practiceDefaultTime = defaultTime }
+        if practiceDurationOptions != options { practiceDurationOptions = options }
+        let settings = settingsManager.settings
+        guard settings.maximumPracticeMinutes != maximum
+                || settings.defaultPracticeTime != defaultTime
+                || settings.practiceDurationOptions != options else { return }
+        settingsManager.updatePracticeDurations(
+            maximum: maximum,
+            defaultMinutes: defaultTime,
+            options: options
+        )
     }
 
     // MARK: - Appearance
@@ -208,96 +220,22 @@ struct SettingsView: View {
 
     var practiceSection: some View {
         Section("Practice") {
-            VStack(alignment: .leading, spacing: 8) {
-                HStack {
-                    Text("Default Duration")
-                    Spacer()
-                    Text("\(practiceDefaultTime) min")
-                        .foregroundColor(.secondary)
-                        .font(.caption)
-                }
-                Slider(
-                    value: Binding(
-                        get: { Double(practiceDefaultTime) },
-                        set: { practiceDefaultTime = Int($0) }
-                    ),
-                    in: 5...180,
-                    step: 5
-                )
-                .accessibilityLabel("Default duration")
-                .accessibilityValue(String(localized: "\(practiceDefaultTime) minutes"))
-                HStack {
-                    ForEach([15, 30, 45, 60, 90], id: \.self) { mins in
-                        Button {
-                            practiceDefaultTime = mins
-                        } label: {
-                            Text("\(mins)")
-                                .font(.subheadline.weight(.medium))
-                                .foregroundColor(practiceDefaultTime == mins ? .white : themeManager.accentColor)
-                                .frame(maxWidth: .infinity)
-                                .frame(minHeight: 44)
-                                .padding(.vertical, 8)
-                                .background(practiceDefaultTime == mins ? themeManager.accentColor : themeManager.accentColor.opacity(0.1))
-                                .cornerRadius(8)
-                        }
-                        .accessibilityLabel(String(localized: "\(mins) minutes"))
-                        .accessibilityAddTraits(practiceDefaultTime == mins ? .isSelected : [])
-                    }
-                }
-            }
+            PracticeDurationControls(
+                title: String(localized: "Maximum Duration"),
+                minutes: $practiceMaximum,
+                maximum: PracticeDuration.absoluteMaximum
+            )
             .padding(.vertical, 4)
 
-            VStack(alignment: .leading, spacing: 10) {
-                Text("Quick Duration Options")
-                    .font(.subheadline)
-                Text("Tap active options to remove, tap grayed ones to add")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                HStack {
-                    ForEach(practiceDurationOptions, id: \.self) { option in
-                        Button {
-                            practiceDurationOptions.removeAll { $0 == option }
-                        } label: {
-                            HStack(spacing: 4) {
-                                Text("\(option)")
-                                    .font(.subheadline)
-                                Image(systemName: "xmark.circle.fill")
-                                    .font(.caption)
-                            }
-                            .foregroundColor(themeManager.accentColor)
-                            .padding(.horizontal, 8)
-                            .frame(minHeight: 44)
-                            .background(themeManager.accentColor.opacity(0.1))
-                            .cornerRadius(8)
-                        }
-                        .accessibilityLabel(String(localized: "Remove \(option)-minute option"))
-                    }
-                }
-                if practiceDurationOptions.count < 6 {
-                    HStack {
-                        ForEach([15, 30, 45, 60, 90, 120, 180], id: \.self) { mins in
-                            if !practiceDurationOptions.contains(mins) {
-                                Button {
-                                    if !practiceDurationOptions.contains(mins) {
-                                        practiceDurationOptions.append(mins)
-                                        practiceDurationOptions.sort()
-                                    }
-                                } label: {
-                                    Text("+\(mins)")
-                                        .font(.subheadline)
-                                        .foregroundColor(.secondary)
-                                        .padding(.horizontal, 8)
-                                        .frame(minHeight: 44)
-                                        .background(Color.secondary.opacity(0.1))
-                                        .cornerRadius(8)
-                                }
-                                .accessibilityLabel(String(localized: "Add \(mins)-minute option"))
-                            }
-                        }
-                    }
-                }
-            }
+            PracticeDurationControls(
+                title: String(localized: "Default Duration"),
+                minutes: $practiceDefaultTime,
+                maximum: practiceMaximum
+            )
             .padding(.vertical, 4)
+
+            QuickDurationOptionsEditor(options: $practiceDurationOptions, maximum: practiceMaximum)
+                .padding(.vertical, 4)
         }
     }
 
@@ -448,6 +386,7 @@ struct SettingsView: View {
     private func resetSettings() {
         settingsManager.resetSettings()
         manualFrequencyText = String(format: "%.1f", settingsManager.settings.a4ReferenceFrequency)
+        practiceMaximum = settingsManager.settings.maximumPracticeMinutes
         practiceDefaultTime = settingsManager.settings.defaultPracticeTime
         practiceDurationOptions = settingsManager.settings.practiceDurationOptions
         Task {
@@ -475,6 +414,15 @@ struct SettingsView: View {
                 openAppStoreReview()
             } label: {
                 Label("Leave a Review", systemImage: "star")
+            }
+
+            if let keysCreditURL = URL(string: "https://freesound.org/s/85688/") {
+                Link(destination: keysCreditURL) {
+                    LabeledContent("Keys click") {
+                        Text("tmkappelt, Freesound")
+                            .foregroundStyle(.secondary)
+                    }
+                }
             }
         }
     }

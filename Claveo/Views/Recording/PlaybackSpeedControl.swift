@@ -32,7 +32,7 @@ struct PlaybackSpeedControl: View {
                     Text(label)
                         .font(.caption2)
                         .fontWeight(.medium)
-                        .foregroundColor(selectedSpeed == speed ? .white : .themeLabel)
+                        .foregroundStyle(selectedSpeed == speed ? themeManager.onAccent : Color.themeLabel)
                         .padding(.horizontal, 8)
                         .padding(.vertical, 4)
                         .background(selectedSpeed == speed ? themeManager.accentColor : Color.themeFill)

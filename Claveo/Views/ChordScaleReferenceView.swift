@@ -121,7 +121,7 @@ struct ChordScaleReferenceView: View {
                             RoundedRectangle(cornerRadius: 8, style: .continuous)
                                 .fill(isSelected ? themeManager.accentColor : Color.clear)
                         )
-                        .foregroundStyle(isSelected ? .white : .primary)
+                        .foregroundStyle(isSelected ? themeManager.onAccent : .primary)
                 }
                 .accessibilityAddTraits(isSelected ? .isSelected : [])
             }
@@ -159,7 +159,7 @@ struct ChordScaleReferenceView: View {
                                     Capsule(style: .continuous)
                                         .fill(isSelected ? themeManager.accentColor : Color(.tertiarySystemFill))
                                 )
-                                .foregroundStyle(isSelected ? .white : .primary)
+                                .foregroundStyle(isSelected ? themeManager.onAccent : .primary)
                         }
                         .accessibilityLabel(String(localized: "\(noteNameFor(root)) major"))
                         .accessibilityAddTraits(isSelected ? .isSelected : [])
@@ -260,7 +260,7 @@ struct ChordScaleReferenceView: View {
                             .font(.subheadline.weight(.semibold))
                             .minimumScaleFactor(0.6)
                             .lineLimit(1)
-                            .foregroundStyle(index == 0 ? .white : .primary)
+                            .foregroundStyle(index == 0 ? themeManager.onAccent : .primary)
                     }
                     .frame(width: scaleNoteCircleSize, height: scaleNoteCircleSize)
 
@@ -323,7 +323,7 @@ struct ChordScaleReferenceView: View {
                     .font(.caption2.weight(.bold))
                     .padding(.horizontal, 6)
                     .padding(.vertical, 3)
-                    .background(themeManager.accentColor.opacity(0.15), in: Capsule())
+                    .background(themeManager.accentWash, in: Capsule())
                     .foregroundStyle(themeManager.accentColor)
                     .fixedSize()
             }

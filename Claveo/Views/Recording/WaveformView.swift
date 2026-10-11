@@ -85,7 +85,7 @@ struct WaveformView: View {
                 )
                 context.fill(
                     Path(roundedRect: playedRect, cornerRadius: 2),
-                    with: .color(themeManager.accentColor.opacity(0.85))
+                    with: .color(themeManager.accentColor)
                 )
             }
 
@@ -109,7 +109,7 @@ struct WaveformView: View {
                 colorForIndex: { _, progress in
                     progress <= playProgress
                         ? themeManager.accentColor
-                        : themeManager.accentColor.opacity(0.3)
+                        : themeManager.accentColor.opacity(0.45)
                 }
             )
         }

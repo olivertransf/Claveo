@@ -24,6 +24,13 @@ struct QuickPracticeEntryView: View {
     @State private var rating: Int? = nil
     @State private var showingRecordings = false
     @State private var selectedRecordings: Set<UUID> = []
+    @State private var photoFileNames: [String] = []
+    @State private var voiceMemoFileNames: [String] = []
+    @State private var transcribedVoiceMemoFileNames: [String] = []
+    @State private var voiceMemoTranscript = ""
+    @State private var isTranscribingMemo = false
+    @State private var transcriptMessage: String?
+    @State private var savedAttachmentNames: Set<String> = []
 
     var existingEntry: PracticeEntry? {
         prefersNewEntry ? nil : practiceService.entriesForDate(date).first
@@ -53,40 +60,42 @@ struct QuickPracticeEntryView: View {
                             .font(.subheadline.weight(.semibold))
                             .foregroundStyle(.secondary)
 
-                        HStack(alignment: .firstTextBaseline, spacing: 4) {
-                            Text("\(duration)")
-                                .font(.system(size: 48, weight: .bold, design: .rounded))
-                                .monospacedDigit()
-                            Text("min")
-                                .font(.title3)
-                                .foregroundStyle(.secondary)
-                                .padding(.bottom, 4)
-                        }
+                        DurationEntryButton(
+                            minutes: $duration,
+                            maximum: settingsManager.settings.maximumPracticeMinutes,
+                            prominent: true
+                        )
 
                         if !durationOptions.isEmpty {
-                            HStack(spacing: 8) {
-                                ForEach(durationOptions, id: \.self) { mins in
-                                    Button { duration = mins } label: {
-                                        Text("\(mins)")
-                                            .font(.subheadline.weight(.semibold))
-                                            .foregroundStyle(duration == mins ? .white : themeManager.accentColor)
-                                            .frame(maxWidth: .infinity)
-                                            .frame(minHeight: 44)
-                                            .background(
-                                                RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                                    .fill(duration == mins ? themeManager.accentColor : themeManager.accentColor.opacity(0.1))
-                                            )
+                            ScrollView(.horizontal, showsIndicators: false) {
+                                HStack(spacing: 8) {
+                                    ForEach(durationOptions, id: \.self) { mins in
+                                        Button { duration = mins } label: {
+                                            Text(PracticeDuration.label(minutes: mins))
+                                                .font(.subheadline.weight(.semibold).monospacedDigit())
+                                                .foregroundStyle(duration == mins ? themeManager.onAccent : themeManager.accentColor)
+                                                .padding(.horizontal, 12)
+                                                .frame(minHeight: 44)
+                                                .background(
+                                                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                                        .fill(duration == mins ? themeManager.accentColor : themeManager.accentWash)
+                                                )
+                                        }
+                                        .accessibilityLabel(PracticeDuration.label(minutes: mins))
+                                        .accessibilityAddTraits(duration == mins ? .isSelected : [])
                                     }
-                                    .accessibilityLabel(String(localized: "\(mins) minutes"))
-                                    .accessibilityAddTraits(duration == mins ? .isSelected : [])
                                 }
                             }
                         }
 
-                        Slider(value: .init(get: { Double(duration) }, set: { duration = Int($0) }), in: 5...180, step: 5)
+                        Slider(
+                            value: .init(get: { Double(duration) }, set: { duration = Int($0) }),
+                            in: Double(PracticeDuration.minimum)...Double(settingsManager.settings.maximumPracticeMinutes),
+                            step: Double(PracticeDuration.step)
+                        )
                             .tint(themeManager.accentColor)
                             .accessibilityLabel("Duration")
-                            .accessibilityValue(String(localized: "\(duration) minutes"))
+                            .accessibilityValue(PracticeDuration.label(minutes: duration))
                     }
                     .padding(18)
                     .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(Color(.secondarySystemGroupedBackground)))
@@ -107,7 +116,7 @@ struct QuickPracticeEntryView: View {
                                 } label: {
                                     Image(systemName: star <= (rating ?? 0) ? "star.fill" : "star")
                                         .font(.system(size: 32))
-                                        .foregroundStyle(star <= (rating ?? 0) ? .yellow : Color(.tertiaryLabel))
+                                        .foregroundStyle(star <= (rating ?? 0) ? Color.themeRating : Color.secondary.opacity(0.45))
                                         .frame(maxWidth: .infinity)
                                         .padding(.vertical, 6)
                                         .contentShape(Rectangle())
@@ -133,7 +142,35 @@ struct QuickPracticeEntryView: View {
                             placeholder: "What did you practice today?",
                             minHeight: 90
                         )
+                        VoiceMemoTranscriptStatus(
+                            isTranscribing: isTranscribingMemo,
+                            message: transcriptMessage
+                        )
                     }
+                    .background {
+                        VoiceMemoTranscriptionTask(
+                            transcript: $voiceMemoTranscript,
+                            transcribedFileNames: $transcribedVoiceMemoFileNames,
+                            memoFileNames: voiceMemoFileNames,
+                            isTranscribing: $isTranscribingMemo,
+                            message: $transcriptMessage
+                        )
+                    }
+                    .padding(18)
+                    .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(Color(.secondarySystemGroupedBackground)))
+                    .padding(.horizontal, 20)
+
+                    if !voiceMemoTranscript.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                        VoiceMemoTranscriptBox(transcript: voiceMemoTranscript)
+                            .padding(18)
+                            .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(Color(.secondarySystemGroupedBackground)))
+                            .padding(.horizontal, 20)
+                    }
+
+                    PracticeEntryAttachmentsEditor(
+                        photoFileNames: $photoFileNames,
+                        voiceMemoFileNames: $voiceMemoFileNames
+                    )
                     .padding(18)
                     .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(Color(.secondarySystemGroupedBackground)))
                     .padding(.horizontal, 20)
@@ -155,7 +192,7 @@ struct QuickPracticeEntryView: View {
                                 }
                                 Image(systemName: "chevron.right")
                                     .font(.caption.weight(.semibold))
-                                    .foregroundStyle(.tertiary)
+                                    .foregroundStyle(.secondary)
                             }
                             .padding(18)
                             .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(Color(.secondarySystemGroupedBackground)))
@@ -173,8 +210,8 @@ struct QuickPracticeEntryView: View {
                                 .font(.subheadline.weight(.semibold))
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, 14)
-                                .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(Color.red.opacity(0.1)))
-                                .foregroundStyle(.red)
+                                .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(Color.themeIncorrect.opacity(0.16)))
+                                .foregroundStyle(Color.themeIncorrect)
                         }
                         .padding(.horizontal, 20)
                     }
@@ -184,7 +221,10 @@ struct QuickPracticeEntryView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Cancel") { dismiss() }
+                    Button("Cancel") {
+                        discardUnsavedAttachments()
+                        dismiss()
+                    }
                 }
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Save") {
@@ -201,22 +241,35 @@ struct QuickPracticeEntryView: View {
                 durationOptions = settingsManager.settings.practiceDurationOptions
                 if let entry = existingEntry {
                     duration = entry.duration
-                    notes = entry.notes ?? ""
+                    let separated = PracticeMemoTranscript.detached(entry)
+                    notes = separated.notes ?? ""
+                    voiceMemoTranscript = separated.voiceMemoTranscript ?? ""
                     rating = entry.rating
                     selectedRecordings = Set(entry.linkedRecordingIds)
+                    photoFileNames = entry.photoFileNames
+                    voiceMemoFileNames = entry.voiceMemoFileNames
+                    transcribedVoiceMemoFileNames = separated.transcribedVoiceMemoFileNames
                 } else {
                     duration = settingsManager.settings.defaultPracticeTime
                 }
+                savedAttachmentNames = Set(photoFileNames + voiceMemoFileNames)
             }
         }
     }
 
     private func saveEntry() {
+        let currentNames = Set(photoFileNames + voiceMemoFileNames)
+        PracticeAttachmentStore.remove(Array(savedAttachmentNames.subtracting(currentNames)))
+        savedAttachmentNames = currentNames
         let entry = PracticeEntry(
             date: date,
             duration: duration,
             notes: notes.isEmpty ? nil : notes,
             linkedRecordingIds: Array(selectedRecordings),
+            photoFileNames: photoFileNames,
+            voiceMemoFileNames: voiceMemoFileNames,
+            transcribedVoiceMemoFileNames: transcribedVoiceMemoFileNames,
+            voiceMemoTranscript: voiceMemoTranscript.isEmpty ? nil : voiceMemoTranscript,
             rating: rating
         )
 
@@ -227,6 +280,11 @@ struct QuickPracticeEntryView: View {
         } else {
             practiceService.addEntry(entry)
         }
+    }
+
+    private func discardUnsavedAttachments() {
+        let current = Set(photoFileNames + voiceMemoFileNames)
+        PracticeAttachmentStore.remove(Array(current.subtracting(savedAttachmentNames)))
     }
 
     private func formattedDate(_ date: Date) -> String {

@@ -16,10 +16,12 @@ struct PracticeEntryDetailView: View {
     @ObservedObject private var recorder = AudioRecorder.shared
     @StateObject private var player = AudioPlayer()
     @State private var showingEditSheet = false
+    @State private var isTranscribingMemo = false
+    @State private var transcriptMessage: String?
     @State private var expandedRecordingId: UUID?
 
     init(entry: PracticeEntry) {
-        _currentEntry = State(initialValue: entry)
+        _currentEntry = State(initialValue: PracticeMemoTranscript.detached(entry))
     }
 
     var linkedRecordings: [Recording] {
@@ -49,7 +51,7 @@ struct PracticeEntryDetailView: View {
                                 HStack(spacing: 2) {
                                     ForEach(1...5, id: \.self) { star in
                                         Image(systemName: star <= rating ? "star.fill" : "star")
-                                            .foregroundColor(.yellow)
+                                            .foregroundColor(star <= rating ? Color.themeRating : Color.secondary.opacity(0.45))
                                             .font(.caption)
                                     }
                                 }
@@ -67,17 +69,34 @@ struct PracticeEntryDetailView: View {
                     .background(Color.themeSecondaryBackground)
                     .cornerRadius(12)
 
-                    // Notes Section
+                    PracticeEntryAttachmentsSummary(
+                        photoFileNames: currentEntry.photoFileNames,
+                        voiceMemoFileNames: currentEntry.voiceMemoFileNames
+                    )
+
                     if let notes = currentEntry.notes, !notes.isEmpty {
                         VStack(alignment: .leading, spacing: 12) {
                             Text("Practice Notes")
                                 .font(.headline)
-
                             Text(notes)
                                 .font(.body)
                                 .foregroundColor(.primary)
                                 .fixedSize(horizontal: false, vertical: true)
                                 .textSelection(.enabled)
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding()
+                        .background(Color.themeSecondaryBackground)
+                        .cornerRadius(12)
+                    }
+
+                    if isTranscribingMemo || transcriptMessage != nil || currentEntry.voiceMemoTranscript?.isEmpty == false {
+                        VStack(alignment: .leading, spacing: 12) {
+                            VoiceMemoTranscriptBox(transcript: currentEntry.voiceMemoTranscript ?? "")
+                            VoiceMemoTranscriptStatus(
+                                isTranscribing: isTranscribingMemo,
+                                message: transcriptMessage
+                            )
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding()
@@ -154,7 +173,37 @@ struct PracticeEntryDetailView: View {
                     currentEntry = updatedEntry
                 }
             }
+            .task(id: showingEditSheet ? [] : currentEntry.voiceMemoFileNames) {
+                guard !showingEditSheet else { return }
+                await transcribeVoiceMemos()
+            }
         }
+    }
+
+    private func transcribeVoiceMemos() async {
+        var transcript = currentEntry.voiceMemoTranscript ?? ""
+        var transcribed = currentEntry.transcribedVoiceMemoFileNames
+        let originalTranscript = transcript
+        let originalTranscribed = transcribed
+        isTranscribingMemo = true
+        defer { isTranscribingMemo = false }
+        let batch = await PracticeMemoNoteTranscription.transcribe(
+            fileNames: currentEntry.voiceMemoFileNames,
+            alreadyTranscribed: transcribed
+        )
+        guard !Task.isCancelled else { return }
+        PracticeMemoNoteTranscription.apply(
+            batch,
+            transcript: &transcript,
+            transcribedFileNames: &transcribed
+        )
+        transcriptMessage = batch.message
+        guard transcript != originalTranscript || transcribed != originalTranscribed else { return }
+        var updated = currentEntry
+        updated.voiceMemoTranscript = transcript.isEmpty ? nil : transcript
+        updated.transcribedVoiceMemoFileNames = transcribed
+        currentEntry = updated
+        practiceService.updateEntry(updated)
     }
 
     private func ratingDescription(_ rating: Int) -> String {
@@ -336,17 +385,30 @@ struct EditPracticeView: View {
     @State private var duration: Int
     @State private var notes: String
     @State private var selectedRecordings: Set<UUID>
+    @State private var photoFileNames: [String]
+    @State private var voiceMemoFileNames: [String]
+    @State private var transcribedVoiceMemoFileNames: [String]
+    @State private var voiceMemoTranscript: String
+    @State private var isTranscribingMemo = false
+    @State private var transcriptMessage: String?
+    @State private var originalAttachmentNames: Set<String>
     @State private var rating: Int?
     @State private var showingRecordingPicker = false
 
     init(entry: PracticeEntry, onSave: @escaping (PracticeEntry) -> Void = { _ in }) {
-        self.entry = entry
+        let separated = PracticeMemoTranscript.detached(entry)
+        self.entry = separated
         self.onSave = onSave
-        _date = State(initialValue: entry.date)
-        _duration = State(initialValue: entry.duration)
-        _notes = State(initialValue: entry.notes ?? "")
-        _selectedRecordings = State(initialValue: Set(entry.linkedRecordingIds))
-        _rating = State(initialValue: entry.rating)
+        _date = State(initialValue: separated.date)
+        _duration = State(initialValue: separated.duration)
+        _notes = State(initialValue: separated.notes ?? "")
+        _selectedRecordings = State(initialValue: Set(separated.linkedRecordingIds))
+        _photoFileNames = State(initialValue: separated.photoFileNames)
+        _voiceMemoFileNames = State(initialValue: separated.voiceMemoFileNames)
+        _transcribedVoiceMemoFileNames = State(initialValue: separated.transcribedVoiceMemoFileNames)
+        _voiceMemoTranscript = State(initialValue: separated.voiceMemoTranscript ?? "")
+        _originalAttachmentNames = State(initialValue: Set(separated.photoFileNames + separated.voiceMemoFileNames))
+        _rating = State(initialValue: separated.rating)
     }
 
     var body: some View {
@@ -357,22 +419,19 @@ struct EditPracticeView: View {
                     DatePicker("Date", selection: $date, displayedComponents: [.date])
                         .datePickerStyle(.compact)
 
-                    VStack(alignment: .leading) {
-                        Text("Duration: \(formatDuration(duration))")
-                            .font(.headline)
-                        Slider(value: .init(get: { Double(duration) }, set: { duration = Int($0) }),
-                               in: 5...480, step: 5)
-                        HStack {
-                            Text("5 min")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                            Spacer()
-                            Text("8 hours")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                        }
-                    }
+                    PracticeDurationControls(
+                        title: String(localized: "Duration"),
+                        minutes: $duration,
+                        maximum: SettingsManager.shared.settings.maximumPracticeMinutes
+                    )
                     .padding(.vertical, 8)
+                }
+
+                Section("Photos and Voice Memos") {
+                    PracticeEntryAttachmentsEditor(
+                        photoFileNames: $photoFileNames,
+                        voiceMemoFileNames: $voiceMemoFileNames
+                    )
                 }
 
                 // Notes
@@ -396,6 +455,24 @@ struct EditPracticeView: View {
                             },
                             alignment: .topLeading
                         )
+                    VoiceMemoTranscriptStatus(
+                        isTranscribing: isTranscribingMemo,
+                        message: transcriptMessage
+                    )
+                }
+                .background {
+                    VoiceMemoTranscriptionTask(
+                        transcript: $voiceMemoTranscript,
+                        transcribedFileNames: $transcribedVoiceMemoFileNames,
+                        memoFileNames: voiceMemoFileNames,
+                        isTranscribing: $isTranscribingMemo,
+                        message: $transcriptMessage
+                    )
+                }
+                if !voiceMemoTranscript.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    Section {
+                        VoiceMemoTranscriptBox(transcript: voiceMemoTranscript)
+                    }
                 }
 
                 // Linked Recordings
@@ -458,7 +535,7 @@ struct EditPracticeView: View {
                                 } label: {
                                     Image(systemName: star <= (rating ?? 0) ? "star.fill" : "star")
                                         .font(.title)
-                                        .foregroundColor(.yellow)
+                                        .foregroundColor(star <= (rating ?? 0) ? Color.themeRating : Color.secondary.opacity(0.45))
                                         .frame(width: 44, height: 44)
                                         .contentShape(Rectangle())
                                 }
@@ -492,6 +569,8 @@ struct EditPracticeView: View {
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button("Cancel") {
+                        let current = Set(photoFileNames + voiceMemoFileNames)
+                        PracticeAttachmentStore.remove(Array(current.subtracting(originalAttachmentNames)))
                         dismiss()
                     }
                 }
@@ -511,31 +590,23 @@ struct EditPracticeView: View {
     }
 
     private func saveEntry() {
+        let currentNames = Set(photoFileNames + voiceMemoFileNames)
+        PracticeAttachmentStore.remove(Array(originalAttachmentNames.subtracting(currentNames)))
         var updatedEntry = PracticeEntry(
             date: date,
             duration: duration,
             notes: notes.isEmpty ? nil : notes,
             linkedRecordingIds: Array(selectedRecordings),
+            photoFileNames: photoFileNames,
+            voiceMemoFileNames: voiceMemoFileNames,
+            transcribedVoiceMemoFileNames: transcribedVoiceMemoFileNames,
+            voiceMemoTranscript: voiceMemoTranscript.isEmpty ? nil : voiceMemoTranscript,
             rating: rating
         )
         // Preserve the original ID
         updatedEntry.id = entry.id
         practiceService.updateEntry(updatedEntry)
         onSave(updatedEntry)
-    }
-
-    private func formatDuration(_ minutes: Int) -> String {
-        if minutes < 60 {
-            return String(localized: "\(minutes) minutes")
-        }
-        let hours = minutes / 60
-        let mins = minutes % 60
-        if mins == 0 {
-            return hours == 1
-                ? String(localized: "\(hours) hour")
-                : String(localized: "\(hours) hours")
-        }
-        return String(localized: "\(hours) hours \(mins) min")
     }
 
     private func ratingDescription(_ rating: Int) -> String {

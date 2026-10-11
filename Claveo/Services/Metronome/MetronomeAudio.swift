@@ -26,6 +26,9 @@ enum MetronomeAudio {
     }
 
     static func makeBuffer(for sound: MetronomeSound, gain: Double) -> AVAudioPCMBuffer? {
+        if let sample = sound.sampleResource {
+            return makeSampleBuffer(sample, gain: gain)
+        }
         let specification = specification(for: sound)
         guard let format = AVAudioFormat(
             commonFormat: .pcmFormatFloat32,
@@ -111,7 +114,143 @@ enum MetronomeAudio {
             return SoundSpecification(duration: 0.16, frequencies: [100, 205], decayRate: 14, noiseMix: 0.35)
         case .chimes:
             return SoundSpecification(duration: 0.26, frequencies: [500, 1_005, 1_515, 2_030], decayRate: 9)
+        case .clickKicker, .keys:
+            return SoundSpecification(duration: 0.05, frequencies: [1_000], decayRate: 40)
         }
+    }
+
+    private static func makeSampleBuffer(
+        _ sample: (name: String, ext: String, trimSilence: Bool, maxDuration: TimeInterval?),
+        gain: Double
+    ) -> AVAudioPCMBuffer? {
+        guard let url = bundledSampleURL(name: sample.name, extension: sample.ext),
+              let file = try? AVAudioFile(forReading: url),
+              let target = AVAudioFormat(
+                commonFormat: .pcmFormatFloat32,
+                sampleRate: sampleRate,
+                channels: 1,
+                interleaved: false
+              ),
+              file.length > 0,
+              let raw = AVAudioPCMBuffer(
+                pcmFormat: file.processingFormat,
+                frameCapacity: AVAudioFrameCount(file.length)
+              ) else {
+            return nil
+        }
+        do {
+            try file.read(into: raw)
+        } catch {
+            return nil
+        }
+        guard let converted = convert(raw, to: target) else { return nil }
+        let source = monoSamples(from: converted)
+        let trimmed = trim(
+            source,
+            sampleRate: target.sampleRate,
+            trimSilence: sample.trimSilence,
+            maxDuration: sample.maxDuration
+        )
+        guard !trimmed.isEmpty else { return nil }
+        return render(trimmed, sampleRate: target.sampleRate, gain: gain)
+    }
+
+    private static func bundledSampleURL(name: String, extension ext: String) -> URL? {
+        if let url = Bundle.main.url(forResource: name, withExtension: ext) {
+            return url
+        }
+        return Bundle(identifier: "com.olivertran.Claveo")?.url(forResource: name, withExtension: ext)
+    }
+
+    private static func convert(_ buffer: AVAudioPCMBuffer, to format: AVAudioFormat) -> AVAudioPCMBuffer? {
+        if buffer.format == format { return buffer }
+        guard let converter = AVAudioConverter(from: buffer.format, to: format) else { return nil }
+        let ratio = format.sampleRate / buffer.format.sampleRate
+        let capacity = AVAudioFrameCount((Double(buffer.frameLength) * ratio).rounded(.up)) + 32
+        guard let converted = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: capacity) else { return nil }
+        var error: NSError?
+        var supplied = false
+        let input = buffer
+        converter.convert(to: converted, error: &error) { _, status in
+            if supplied {
+                status.pointee = .endOfStream
+                return nil
+            }
+            supplied = true
+            status.pointee = .haveData
+            return input
+        }
+        guard error == nil, converted.frameLength > 0 else { return nil }
+        return converted
+    }
+
+    private static func monoSamples(from buffer: AVAudioPCMBuffer) -> [Double] {
+        guard let channels = buffer.floatChannelData else { return [] }
+        let count = Int(buffer.frameLength)
+        var samples = [Double](repeating: 0, count: count)
+        let channelCount = Int(buffer.format.channelCount)
+        for frame in 0..<count {
+            var mixed = 0.0
+            for channel in 0..<max(channelCount, 1) {
+                mixed += Double(channels[channel][frame])
+            }
+            samples[frame] = mixed / Double(max(channelCount, 1))
+        }
+        return samples
+    }
+
+    private static func trim(
+        _ samples: [Double],
+        sampleRate: Double,
+        trimSilence: Bool,
+        maxDuration: TimeInterval?
+    ) -> [Double] {
+        var start = 0
+        if trimSilence {
+            let threshold = 0.02
+            start = samples.firstIndex { abs($0) >= threshold } ?? 0
+            let lead = Int(0.01 * sampleRate)
+            start = max(0, start - lead)
+        }
+        var end = samples.count
+        if let maxDuration {
+            end = min(samples.count, start + Int((maxDuration * sampleRate).rounded(.up)))
+        }
+        guard start < end else { return [] }
+        return Array(samples[start..<end])
+    }
+
+    private static func render(_ samples: [Double], sampleRate: Double, gain: Double) -> AVAudioPCMBuffer? {
+        guard let format = AVAudioFormat(
+            commonFormat: .pcmFormatFloat32,
+            sampleRate: sampleRate,
+            channels: 1,
+            interleaved: false
+        ),
+              let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: AVAudioFrameCount(samples.count)),
+              let channel = buffer.floatChannelData?[0] else {
+            return nil
+        }
+        buffer.frameLength = AVAudioFrameCount(samples.count)
+        let peak = samples.map(abs).max() ?? 0
+        let normalization = peak > 0 ? 1 / peak : 0
+        let amplitude = normalizedPeak * min(max(gain, 0), 1)
+        let releaseFrames = max(1, Int((releaseDuration * sampleRate).rounded(.up)))
+        for frame in 0..<samples.count {
+            let remaining = samples.count - 1 - frame
+            let release = remaining < releaseFrames
+                ? Double(remaining) / Double(releaseFrames)
+                : 1
+            let shaped = samples[frame] * normalization * amplitude * release
+            channel[frame] = Float(max(
+                -Double(maximumSampleMagnitude),
+                min(Double(maximumSampleMagnitude), shaped)
+            ))
+        }
+        if samples.count > 0 {
+            channel[samples.count - 1] = 0
+        }
+        return buffer
     }
 
     private struct SoundSpecification {
@@ -124,12 +263,14 @@ enum MetronomeAudio {
 }
 
 extension Metronome {
-    func setupAudioSession() -> MetronomeStartupError? {
+    func setupAudioSession() async -> MetronomeStartupError? {
         do {
-            let session = AVAudioSession.sharedInstance()
-            try session.setCategory(.playback, mode: .default, options: [.mixWithOthers])
-            try session.setPreferredIOBufferDuration(0.005)
-            try session.setActive(true)
+            try await Task.detached {
+                let session = AVAudioSession.sharedInstance()
+                try session.setCategory(.playback, mode: .default, options: [.mixWithOthers])
+                try session.setPreferredIOBufferDuration(0.005)
+                try await AudioSessionActivation.activate(session)
+            }.value
             return nil
         } catch {
             return .audioSessionFailed(error.localizedDescription)

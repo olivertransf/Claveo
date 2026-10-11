@@ -16,26 +16,27 @@ final class MetronomeSoundPreview {
 
     private var engine: AVAudioEngine?
     private var player: AVAudioPlayerNode?
-    private var teardownTask: Task<Void, Never>?
+    private var playbackTask: Task<Void, Never>?
+    private var playGeneration = 0
 
     private init() {}
 
     func play(_ sound: MetronomeSound, gain: Double) {
         guard let buffer = MetronomeAudio.makeBuffer(for: sound, gain: 1) else { return }
 
-        teardownTask?.cancel()
-        teardownTask = nil
-
-        do {
-            let session = AVAudioSession.sharedInstance()
-            try session.setCategory(.playback, mode: .default, options: [.mixWithOthers])
-            try session.setActive(true)
-        } catch {
-            return
+        playGeneration += 1
+        let generation = playGeneration
+        playbackTask?.cancel()
+        playbackTask = Task { @MainActor [weak self] in
+            let ready = await Self.activatePlaybackSession()
+            guard ready, let self, generation == self.playGeneration else { return }
+            self.startPreview(buffer: buffer, gain: gain, generation: generation)
         }
+    }
 
+    private func startPreview(buffer: AVAudioPCMBuffer, gain: Double, generation: Int) {
         if engine == nil || player == nil || engine?.isRunning == false {
-            teardown()
+            teardownEngine()
             let engine = AVAudioEngine()
             let player = AVAudioPlayerNode()
             engine.attach(player)
@@ -55,18 +56,36 @@ final class MetronomeSoundPreview {
         player.play()
 
         // Idle engines keep the audio session alive, so release shortly after.
-        teardownTask = Task { @MainActor [weak self] in
+        playbackTask = Task { @MainActor [weak self] in
             try? await Task.sleep(nanoseconds: 1_500_000_000)
-            guard !Task.isCancelled else { return }
-            self?.teardown()
+            guard !Task.isCancelled, let self, generation == self.playGeneration else { return }
+            self.teardown()
         }
     }
 
+    private nonisolated static func activatePlaybackSession() async -> Bool {
+        await Task.detached {
+            let session = AVAudioSession.sharedInstance()
+            do {
+                try session.setCategory(.playback, mode: .default, options: [.mixWithOthers])
+                try await AudioSessionActivation.activate(session)
+                return true
+            } catch {
+                return false
+            }
+        }.value
+    }
+
     private func teardown() {
+        playbackTask?.cancel()
+        playbackTask = nil
+        teardownEngine()
+    }
+
+    private func teardownEngine() {
         player?.stop()
         engine?.stop()
         player = nil
         engine = nil
-        teardownTask = nil
     }
 }

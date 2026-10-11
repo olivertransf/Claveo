@@ -22,6 +22,8 @@ enum MetronomeSound: String, CaseIterable {
     case marimba = "Marimba"
     case drum = "Drum"
     case chimes = "Chimes"
+    case clickKicker = "Click Kicker"
+    case keys = "Keys"
 
     var localizedName: String {
         switch self {
@@ -35,6 +37,19 @@ enum MetronomeSound: String, CaseIterable {
         case .marimba: return String(localized: "Marimba")
         case .drum: return String(localized: "Drum")
         case .chimes: return String(localized: "Chimes")
+        case .clickKicker, .keys:
+            return rawValue
+        }
+    }
+
+    var sampleResource: (name: String, ext: String, trimSilence: Bool, maxDuration: TimeInterval?)? {
+        switch self {
+        case .clickKicker:
+            return ("ClickKicker", "wav", false, nil)
+        case .keys:
+            return ("KeysClick", "mp3", true, 0.18)
+        default:
+            return nil
         }
     }
 }
@@ -84,6 +99,7 @@ class Metronome: ObservableObject {
     @Published var subdivision: MetronomeSubdivision = .quarter
     @Published var hapticEnabled: Bool = true
     let beatPulse = MetronomeBeatPulse()
+    var startGeneration = 0
 
     var currentBeat: Int {
         get { beatPulse.currentBeat }
@@ -231,7 +247,7 @@ class Metronome: ObservableObject {
             let optionsValue = userInfo[AVAudioSessionInterruptionOptionKey] as? UInt ?? 0
             let options = AVAudioSession.InterruptionOptions(rawValue: optionsValue)
             if shouldResumeAfterInterruption, options.contains(.shouldResume) {
-                start()
+                Task { await start() }
             }
             shouldResumeAfterInterruption = false
         @unknown default:
@@ -248,7 +264,7 @@ class Metronome: ObservableObject {
 
         switch reason {
         case .newDeviceAvailable, .oldDeviceUnavailable, .routeConfigurationChange:
-            restartForAudioRouteChange()
+            Task { await restartForAudioRouteChange() }
         default:
             break
         }

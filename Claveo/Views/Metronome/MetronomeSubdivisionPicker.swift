@@ -8,7 +8,6 @@ import SwiftUI
 
 struct MetronomeSubdivisionPicker: View {
     @EnvironmentObject var themeManager: ThemeManager
-    @Environment(\.colorScheme) private var colorScheme
 
     let selection: MetronomeSubdivision
     let onSelect: (MetronomeSubdivision) -> Void
@@ -48,7 +47,7 @@ struct MetronomeSubdivisionPicker: View {
 
             shape
                 .strokeBorder(
-                    isSelected ? themeManager.accentColor : Color(.systemGray4),
+                    isSelected ? themeManager.accentColor : Color(.separator),
                     lineWidth: isSelected ? 2.5 : 2
                 )
 
@@ -63,14 +62,14 @@ struct MetronomeSubdivisionPicker: View {
 
     private func cellFill(isSelected: Bool) -> Color {
         if isSelected {
-            return themeManager.accentColor.opacity(colorScheme == .dark ? 0.24 : 0.14)
+            return themeManager.accentWash
         }
         return Color(.tertiarySystemFill)
     }
 
     private func glyphColor(selected: Bool) -> Color {
         if selected {
-            return themeManager.accentColorOption == .yellow ? .primary : themeManager.accentColor
+            return themeManager.accentColor
         }
         return .primary
     }

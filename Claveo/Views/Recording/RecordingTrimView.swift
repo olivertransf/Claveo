@@ -153,10 +153,27 @@ struct RecordingTrimView: View {
                 }
             }
             .onAppear {
-                previewPlayer.load(url: recording.fileURL)
                 startTime = 0
                 endTime = effectiveDuration
-                Task { await loadWaveform() }
+                Task {
+                    let url = recording.fileURL
+                    if RecordingDownload.isPlaceholder(at: url) {
+                        let ready = await RecordingDownload.waitUntilLocal(at: url) { fraction in
+                            Task { @MainActor in
+                                AudioRecorder.shared.setUserDownloadProgress(
+                                    id: recording.id,
+                                    fraction: fraction < 1 ? fraction : nil
+                                )
+                            }
+                        }
+                        AudioRecorder.shared.setUserDownloadProgress(id: recording.id, fraction: nil)
+                        if ready {
+                            AudioRecorder.shared.markRecordingLocal(recording.id)
+                        }
+                    }
+                    previewPlayer.load(url: recording.fileURL)
+                    await loadWaveform()
+                }
             }
             .onDisappear {
                 previewPlayer.stop()
@@ -297,7 +314,7 @@ struct RecordingTrimView: View {
 
                     Image(systemName: previewPlayer.isPlaying ? "pause.fill" : "play.fill")
                         .font(.system(size: 20, weight: .semibold))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(themeManager.onAccent)
                         .offset(x: previewPlayer.isPlaying ? 0 : 2)
                         .contentTransition(.symbolEffect(.replace))
                 }
@@ -467,7 +484,7 @@ private struct TrimWaveformView: View {
 
                 // Selection fill
                 RoundedRectangle(cornerRadius: 10, style: .continuous)
-                    .fill(accentColor.opacity(colorScheme == .dark ? 0.14 : 0.08))
+                    .fill(accentColor.opacity(colorScheme == .dark ? 0.28 : 0.18))
                     .frame(width: max(10, endX - startX), height: h - 8)
                     .position(x: (startX + endX) / 2, y: h / 2)
                     .allowsHitTesting(false)
@@ -606,7 +623,7 @@ private struct TrimWaveformView: View {
                 .shadow(color: Color.black.opacity(0.14), radius: 8, x: 0, y: 2)
 
             Capsule()
-                .fill(accentColor.opacity(0.85))
+                .fill(accentColor)
                 .frame(width: 4, height: 22)
         }
         .position(x: x, y: height / 2)

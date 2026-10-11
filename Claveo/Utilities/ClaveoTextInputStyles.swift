@@ -82,7 +82,7 @@ struct ClaveoMultilineTextInput: View {
             if text.isEmpty {
                 Text(placeholder)
                     .font(.body)
-                    .foregroundStyle(.tertiary)
+                    .foregroundStyle(.secondary)
                     .padding(.horizontal, 4)
                     .padding(.vertical, 8)
                     .allowsHitTesting(false)

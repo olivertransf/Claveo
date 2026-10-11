@@ -57,6 +57,7 @@ enum LibraryFiles {
             )) ?? []
             return files.compactMap { url -> Data? in
                 guard url.pathExtension == "json" else { return nil }
+                guard !RecordingDownload.isPlaceholder(at: url) else { return nil }
                 return try? iCloudManager.shared.readFile(from: url)
             }
         }
@@ -96,6 +97,7 @@ enum LibraryFiles {
             )) ?? []
             return files.compactMap { url -> T? in
                 guard url.pathExtension == "json" else { return nil }
+                guard !RecordingDownload.isPlaceholder(at: url) else { return nil }
                 guard let data = try? iCloudManager.shared.readFile(from: url) else { return nil }
                 return try? JSONDecoder().decode(T.self, from: data)
             }

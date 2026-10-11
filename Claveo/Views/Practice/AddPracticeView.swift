@@ -17,6 +17,12 @@ struct AddPracticeView: View {
     @State private var duration = 30 // minutes
     @State private var notes = ""
     @State private var selectedRecordings: Set<UUID> = []
+    @State private var photoFileNames: [String] = []
+    @State private var voiceMemoFileNames: [String] = []
+    @State private var transcribedVoiceMemoFileNames: [String] = []
+    @State private var voiceMemoTranscript = ""
+    @State private var isTranscribingMemo = false
+    @State private var transcriptMessage: String?
     @State private var rating: Int? = nil
     @State private var showingRecordingPicker = false
 
@@ -28,22 +34,19 @@ struct AddPracticeView: View {
                     DatePicker("Date", selection: $date, displayedComponents: [.date])
                         .datePickerStyle(.graphical)
 
-                    VStack(alignment: .leading) {
-                        Text("Duration: \(formatDuration(duration))")
-                            .font(.headline)
-                        Slider(value: .init(get: { Double(duration) }, set: { duration = Int($0) }),
-                               in: 5...480, step: 5)
-                        HStack {
-                            Text("5 min")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                            Spacer()
-                            Text("8 hours")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                        }
-                    }
+                    PracticeDurationControls(
+                        title: String(localized: "Duration"),
+                        minutes: $duration,
+                        maximum: SettingsManager.shared.settings.maximumPracticeMinutes
+                    )
                     .padding(.vertical, 8)
+                }
+
+                Section("Photos and Voice Memos") {
+                    PracticeEntryAttachmentsEditor(
+                        photoFileNames: $photoFileNames,
+                        voiceMemoFileNames: $voiceMemoFileNames
+                    )
                 }
 
                 // Notes
@@ -54,6 +57,24 @@ struct AddPracticeView: View {
                             Text("What did you practice today? Any goals, challenges, or progress notes...")
                                 .foregroundColor(.secondary)
                         }
+                    VoiceMemoTranscriptStatus(
+                        isTranscribing: isTranscribingMemo,
+                        message: transcriptMessage
+                    )
+                }
+                .background {
+                    VoiceMemoTranscriptionTask(
+                        transcript: $voiceMemoTranscript,
+                        transcribedFileNames: $transcribedVoiceMemoFileNames,
+                        memoFileNames: voiceMemoFileNames,
+                        isTranscribing: $isTranscribingMemo,
+                        message: $transcriptMessage
+                    )
+                }
+                if !voiceMemoTranscript.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    Section {
+                        VoiceMemoTranscriptBox(transcript: voiceMemoTranscript)
+                    }
                 }
 
                 // Linked Recordings
@@ -116,7 +137,7 @@ struct AddPracticeView: View {
                                 } label: {
                                     Image(systemName: star <= (rating ?? 0) ? "star.fill" : "star")
                                         .font(.title)
-                                        .foregroundColor(.yellow)
+                                        .foregroundColor(star <= (rating ?? 0) ? Color.themeRating : Color.secondary.opacity(0.45))
                                         .frame(width: 44, height: 44)
                                         .contentShape(Rectangle())
                                 }
@@ -140,6 +161,7 @@ struct AddPracticeView: View {
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button("Cancel") {
+                        PracticeAttachmentStore.remove(photoFileNames + voiceMemoFileNames)
                         dismiss()
                     }
                 }
@@ -164,23 +186,13 @@ struct AddPracticeView: View {
             duration: duration,
             notes: notes.isEmpty ? nil : notes,
             linkedRecordingIds: Array(selectedRecordings),
+            photoFileNames: photoFileNames,
+            voiceMemoFileNames: voiceMemoFileNames,
+            transcribedVoiceMemoFileNames: transcribedVoiceMemoFileNames,
+            voiceMemoTranscript: voiceMemoTranscript.isEmpty ? nil : voiceMemoTranscript,
             rating: rating
         )
         practiceService.addEntry(entry)
-    }
-
-    private func formatDuration(_ minutes: Int) -> String {
-        if minutes < 60 {
-            return String(localized: "\(minutes) minutes")
-        }
-        let hours = minutes / 60
-        let mins = minutes % 60
-        if mins == 0 {
-            return hours == 1
-                ? String(localized: "\(hours) hour")
-                : String(localized: "\(hours) hours")
-        }
-        return String(localized: "\(hours) hours \(mins) min")
     }
 
     private func ratingDescription(_ rating: Int) -> String {

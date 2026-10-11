@@ -39,8 +39,8 @@ enum SyncStatus: Equatable {
             return String(localized: "Updating from iCloud…")
         case .upToDate:
             return String(localized: "Up to Date")
-        case .syncing(let pending):
-            return String(localized: "Syncing \(pending) with iCloud…")
+        case .syncing:
+            return String(localized: "Syncing with iCloud…")
         case .offline:
             return String(localized: "Offline")
         case .error:
@@ -62,7 +62,6 @@ final class SyncEngine: ObservableObject {
     private var retryAttempt = 0
     private var retryTask: Task<Void, Never>?
     private var reloadTask: Task<Void, Never>?
-    private var checkingTask: Task<Void, Never>?
     private var started = false
 
     func start() {
@@ -79,33 +78,23 @@ final class SyncEngine: ObservableObject {
                 }
             }
         )
-        if !SettingsManager.shared.settings.storeFilesOnDeviceOnly {
-            beginChecking()
-        }
         restartQuery()
     }
 
     func retry() {
         retryAttempt = 0
-        if pendingCount > 0 {
-            status = .syncing(pending: pendingCount)
-        } else {
-            beginChecking()
-        }
         restartQuery()
         scheduleReload()
     }
 
-    /// The metadata query should replace this. If it never reports, leave the banner.
-    private func beginChecking() {
-        status = .checking
-        checkingTask?.cancel()
-        checkingTask = Task { @MainActor in
-            try? await Task.sleep(for: .seconds(8))
-            guard !Task.isCancelled else { return }
-            if case .checking = self.status {
-                self.status = .upToDate
-            }
+    func noteUserTransfer(active: Bool) {
+        if active {
+            status = .syncing(pending: 1)
+            return
+        }
+        if case .syncing = status {
+            status = .upToDate
+            lastSyncedAt = Date()
         }
     }
 
@@ -127,7 +116,6 @@ final class SyncEngine: ObservableObject {
     }
 
     private func apply(_ snapshot: MetadataLibrarySnapshot) {
-        checkingTask?.cancel()
         switch snapshot.phase {
         case .failed:
             status = .error(String(localized: "iCloud could not be checked."))
@@ -147,10 +135,7 @@ final class SyncEngine: ObservableObject {
 
         retryAttempt = 0
         pendingCount = snapshot.pending
-        if snapshot.pending > 0 {
-            status = .syncing(pending: snapshot.pending)
-        } else if snapshot.metadataChanged {
-            status = .updating
+        if case .syncing = status {
         } else {
             status = .upToDate
             lastSyncedAt = Date()
@@ -209,8 +194,19 @@ nonisolated final class MetadataQueryMonitor: @unchecked Sendable {
         var url: URL?
         var downloaded: Double
         var uploaded: Double
+        var isDownloading: Bool
+        var isUploading: Bool
         var conflicted: Bool
+        var contentModified: Date?
     }
+
+    private struct JSONFingerprint: Hashable, Sendable {
+        var name: String
+        var modified: TimeInterval
+    }
+
+    private var debounceGeneration = 0
+    private let debounceQueue = DispatchQueue(label: "claveo.sync.debounce")
 
     private let queue: OperationQueue = {
         let queue = OperationQueue()
@@ -224,7 +220,7 @@ nonisolated final class MetadataQueryMonitor: @unchecked Sendable {
     private var generation = 0
     private var query: NSMetadataQuery?
     private var observers: [NSObjectProtocol] = []
-    private var downloadedJSONNames = Set<String>()
+    private var jsonFingerprints = Set<JSONFingerprint>()
     private var didFinishInitialGather = false
 
     func restart(deviceOnly: Bool, onSnapshot: @escaping @Sendable (MetadataLibrarySnapshot) -> Void) {
@@ -253,9 +249,7 @@ nonisolated final class MetadataQueryMonitor: @unchecked Sendable {
         let query = NSMetadataQuery()
         query.searchScopes = [NSMetadataQueryUbiquitousDocumentsScope]
         query.predicate = NSPredicate(
-            format: "%K ENDSWITH '.json' OR %K ENDSWITH '.m4a' OR %K ENDSWITH '.wav'",
-            NSMetadataItemFSNameKey,
-            NSMetadataItemFSNameKey,
+            format: "%K ENDSWITH '.json'",
             NSMetadataItemFSNameKey
         )
         observers.append(
@@ -302,14 +296,30 @@ nonisolated final class MetadataQueryMonitor: @unchecked Sendable {
                 url: url,
                 downloaded: (item.value(forAttribute: NSMetadataUbiquitousItemPercentDownloadedKey) as? NSNumber)?.doubleValue ?? 100,
                 uploaded: (item.value(forAttribute: NSMetadataUbiquitousItemPercentUploadedKey) as? NSNumber)?.doubleValue ?? 100,
-                conflicted: (item.value(forAttribute: NSMetadataUbiquitousItemHasUnresolvedConflictsKey) as? NSNumber)?.boolValue ?? false
+                isDownloading: (item.value(forAttribute: NSMetadataUbiquitousItemIsDownloadingKey) as? NSNumber)?.boolValue ?? false,
+                isUploading: (item.value(forAttribute: NSMetadataUbiquitousItemIsUploadingKey) as? NSNumber)?.boolValue ?? false,
+                conflicted: (item.value(forAttribute: NSMetadataUbiquitousItemHasUnresolvedConflictsKey) as? NSNumber)?.boolValue ?? false,
+                contentModified: item.value(forAttribute: NSMetadataItemFSContentChangeDateKey) as? Date
             )
         }
         query.enableUpdates()
 
-        queue.addOperation { [weak self] in
-            guard let self, self.isCurrent(generation) else { return }
-            self.publish(items: items, initialGather: initialGather, onSnapshot: onSnapshot)
+        if initialGather {
+            _ = nextDebounceToken()
+            queue.addOperation { [weak self] in
+                guard let self, self.isCurrent(generation) else { return }
+                self.publish(items: items, initialGather: true, onSnapshot: onSnapshot)
+            }
+            return
+        }
+
+        let token = nextDebounceToken()
+        debounceQueue.asyncAfter(deadline: .now() + 0.35) { [weak self] in
+            guard let self, self.isDebounceCurrent(token), self.isCurrent(generation) else { return }
+            self.queue.addOperation { [weak self] in
+                guard let self, self.isCurrent(generation) else { return }
+                self.publish(items: items, initialGather: false, onSnapshot: onSnapshot)
+            }
         }
     }
 
@@ -320,21 +330,28 @@ nonisolated final class MetadataQueryMonitor: @unchecked Sendable {
     ) {
         var pending = 0
         var progress: [String: Double] = [:]
-        var downloadedJSON = Set<String>()
+        var fingerprints = Set<JSONFingerprint>()
+        var downloadBudget = 3
 
         for item in items {
-            if item.downloaded < 100 || item.uploaded < 100 {
+            if item.isDownloading || item.isUploading {
                 pending += 1
             }
-            if item.downloaded < 100 {
+            if item.isDownloading {
                 progress[item.name] = item.downloaded / 100
             }
             guard let url = item.url, url.pathExtension.lowercased() == "json" else { continue }
 
-            if item.downloaded >= 100 {
-                downloadedJSON.insert(item.name)
-            } else {
+            if item.downloaded >= 100, !item.isDownloading {
+                fingerprints.insert(
+                    JSONFingerprint(
+                        name: item.name,
+                        modified: item.contentModified?.timeIntervalSince1970 ?? 0
+                    )
+                )
+            } else if downloadBudget > 0, !item.isDownloading {
                 try? FileManager.default.startDownloadingUbiquitousItem(at: url)
+                downloadBudget -= 1
             }
             if item.conflicted {
                 LibraryFiles.resolveConflicts(at: url)
@@ -346,11 +363,11 @@ nonisolated final class MetadataQueryMonitor: @unchecked Sendable {
             metadataChanged = true
             didFinishInitialGather = true
         } else if didFinishInitialGather {
-            metadataChanged = downloadedJSON != downloadedJSONNames
+            metadataChanged = fingerprints != jsonFingerprints
         } else {
             metadataChanged = false
         }
-        downloadedJSONNames = downloadedJSON
+        jsonFingerprints = fingerprints
         onSnapshot(
             MetadataLibrarySnapshot(
                 phase: .running,
@@ -371,7 +388,7 @@ nonisolated final class MetadataQueryMonitor: @unchecked Sendable {
         }
         observers.removeAll()
         didFinishInitialGather = false
-        downloadedJSONNames.removeAll()
+        jsonFingerprints.removeAll()
     }
 
     private func bumpGeneration() -> Int {
@@ -379,6 +396,19 @@ nonisolated final class MetadataQueryMonitor: @unchecked Sendable {
         defer { lock.unlock() }
         generation += 1
         return generation
+    }
+
+    private func nextDebounceToken() -> Int {
+        lock.lock()
+        defer { lock.unlock() }
+        debounceGeneration += 1
+        return debounceGeneration
+    }
+
+    private func isDebounceCurrent(_ token: Int) -> Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        return debounceGeneration == token
     }
 
     private func isCurrent(_ generation: Int) -> Bool {

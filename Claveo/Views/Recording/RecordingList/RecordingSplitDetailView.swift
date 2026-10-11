@@ -88,7 +88,7 @@ struct RecordingSplitDetailView: View {
             if !recording.tags.isEmpty {
                 Text(recording.tags.map { RecordingTag.localizedName(for: $0) }.joined(separator: " · "))
                     .font(.caption)
-                    .foregroundStyle(.tertiary)
+                    .foregroundStyle(.secondary)
             }
         }
         .frame(maxWidth: .infinity)
@@ -160,7 +160,7 @@ struct RecordingSplitDetailView: View {
                     .multilineTextAlignment(.center)
                     .minimumScaleFactor(0.8)
             }
-            .foregroundStyle(role == .destructive ? Color.red : Color.primary)
+            .foregroundStyle(role == .destructive ? Color.themeIncorrect : Color.primary)
             .frame(maxWidth: .infinity)
             .padding(.vertical, 14)
             .padding(.horizontal, 6)

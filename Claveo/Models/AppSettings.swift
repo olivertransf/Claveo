@@ -29,6 +29,7 @@ struct AppSettings: Codable, Sendable {
     
     // Practice Settings
     var defaultPracticeTime: Int = 30 // minutes
+    var maximumPracticeMinutes: Int = PracticeDuration.defaultMaximum
     var practiceDurationOptions: [Int] = [15, 30, 45, 60] // minutes
     var practiceReminderEnabled: Bool = false
     var practiceReminderHour: Int = 18
@@ -82,7 +83,7 @@ struct AppSettings: Codable, Sendable {
         case lastMetronomeTempo, metronomeSound, metronomeEmphasizedSound, metronomeNonEmphasizedSound, metronomeVolume, metronomeHapticEnabled
         case metronomeAutoStopOnTabSwitch, stopToneWhenLeavingMetronomeTab, favoriteTempos
         case customTimeSignatureTop, customTimeSignatureBottom
-        case defaultPracticeTime, practiceDurationOptions
+        case defaultPracticeTime, maximumPracticeMinutes, practiceDurationOptions
         case practiceReminderEnabled, practiceReminderHour, practiceReminderMinute
         case accentColor, colorScheme, showTabBarText
         case storeFilesOnDeviceOnly
@@ -110,8 +111,17 @@ extension AppSettings {
         favoriteTempos = try c.decodeIfPresent([Int].self, forKey: .favoriteTempos) ?? []
         customTimeSignatureTop = try c.decodeIfPresent(Int.self, forKey: .customTimeSignatureTop)
         customTimeSignatureBottom = try c.decodeIfPresent(Int.self, forKey: .customTimeSignatureBottom)
-        defaultPracticeTime = try c.decodeIfPresent(Int.self, forKey: .defaultPracticeTime) ?? 30
-        practiceDurationOptions = try c.decodeIfPresent([Int].self, forKey: .practiceDurationOptions) ?? [15, 30, 45, 60]
+        maximumPracticeMinutes = PracticeDuration.clampMaximum(
+            try c.decodeIfPresent(Int.self, forKey: .maximumPracticeMinutes) ?? PracticeDuration.defaultMaximum
+        )
+        defaultPracticeTime = PracticeDuration.clamp(
+            try c.decodeIfPresent(Int.self, forKey: .defaultPracticeTime) ?? 30,
+            maximum: maximumPracticeMinutes
+        )
+        practiceDurationOptions = PracticeDuration.sanitizedOptions(
+            try c.decodeIfPresent([Int].self, forKey: .practiceDurationOptions) ?? [15, 30, 45, 60],
+            maximum: maximumPracticeMinutes
+        )
         practiceReminderEnabled = try c.decodeIfPresent(Bool.self, forKey: .practiceReminderEnabled) ?? false
         practiceReminderHour = try c.decodeIfPresent(Int.self, forKey: .practiceReminderHour) ?? 18
         practiceReminderMinute = try c.decodeIfPresent(Int.self, forKey: .practiceReminderMinute) ?? 0

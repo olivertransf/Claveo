@@ -51,9 +51,13 @@ class PracticeService: ObservableObject {
     private var hasPerformedInitialCloudSync = false
 
     init() {
-        let loaded = loadFromUserDefaultsReturning()
+        let stored = loadFromUserDefaultsReturning()
+        let loaded = stored.map(PracticeMemoTranscript.detached)
         allEntries = loaded
         applyActiveEntries(from: loaded)
+        if loaded != stored {
+            scheduleSave()
+        }
 
         NotificationCenter.default.addObserver(
             forName: UIApplication.willEnterForegroundNotification,
@@ -107,6 +111,7 @@ class PracticeService: ObservableObject {
             deletedEntry.lastModified = Date()
             allEntries[index] = deletedEntry
             entriesGeneration &+= 1
+            PracticeAttachmentStore.remove(deletedEntry.photoFileNames + deletedEntry.voiceMemoFileNames)
             scheduleSave()
         }
     }
@@ -371,6 +376,7 @@ class PracticeService: ObservableObject {
                 !($0.isDeleted && $0.lastModified < cutoff)
             }
             let merged = Self.mergeEntries(local: localSnapshot, cloud: cloudEntries)
+                .map(PracticeMemoTranscript.detached)
 
             await MainActor.run { [weak self] in
                 guard let self else { return }
@@ -385,6 +391,9 @@ class PracticeService: ObservableObject {
                 if merged != self.allEntries {
                     self.allEntries = merged
                     self.saveToUserDefaults()
+                }
+                for entry in merged where entry.isDeleted {
+                    PracticeAttachmentStore.remove(entry.photoFileNames + entry.voiceMemoFileNames)
                 }
 
                 // Always write back our merged view so devices converge, but never block UI.

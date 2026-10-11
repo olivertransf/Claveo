@@ -155,11 +155,11 @@ extension MetronomeView {
                         .contentTransition(.symbolEffect(.replace))
                 }
                 .font(.headline)
-                .foregroundStyle(.white)
+                .foregroundStyle(metronome.isPlaying ? Color.white : themeManager.onAccent)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 14)
                 .background(
-                    metronome.isPlaying ? Color.red : themeManager.accentColor,
+                    metronome.isPlaying ? Color.themeStop : themeManager.accentColor,
                     in: RoundedRectangle(cornerRadius: 14, style: .continuous)
                 )
             }
@@ -350,7 +350,8 @@ extension MetronomeView {
                             pulse: metronome.beatPulse,
                             index: index,
                             isAccented: isAccented,
-                            accentColor: themeManager.accentColor
+                            accentColor: themeManager.accentColor,
+                            onAccent: themeManager.onAccent
                         )
                     }
                     .buttonStyle(.plain)
@@ -378,7 +379,7 @@ extension MetronomeView {
                         } label: {
                             Text("\(tempo)")
                                 .font(.subheadline.weight(.semibold).monospacedDigit())
-                                .foregroundStyle(metronome.tempo == tempo ? .white : .primary)
+                                .foregroundStyle(metronome.tempo == tempo ? themeManager.onAccent : .primary)
                                 .padding(.horizontal, 14)
                                 .padding(.vertical, 8)
                                 .background {
@@ -455,6 +456,7 @@ extension MetronomeView {
                     Image(systemName: toneGenerator.isPlaying ? "stop.fill" : "play.fill")
                         .contentTransition(.symbolEffect(.replace))
                 }
+                .foregroundStyle(themeManager.onAccent)
                 .frame(maxWidth: .infinity)
             }
             .buttonStyle(.borderedProminent)
@@ -512,7 +514,7 @@ extension MetronomeView {
                                     Capsule(style: .continuous)
                                         .fill(selected ? themeManager.accentColor : Color(.tertiarySystemFill))
                                 }
-                                .foregroundStyle(selected ? .white : .primary)
+                                .foregroundStyle(selected ? themeManager.onAccent : .primary)
                         }
                     }
                 }
@@ -534,7 +536,7 @@ extension MetronomeView {
         if metronome.isPlaying {
             metronome.stop()
         } else {
-            metronome.start()
+            Task { await metronome.start() }
         }
     }
 
@@ -563,7 +565,7 @@ extension MetronomeView {
                     RoundedRectangle(cornerRadius: 10, style: .continuous)
                         .fill(isSelected ? themeManager.accentColor : Color(.tertiarySystemFill))
                 }
-                .foregroundStyle(isSelected ? .white : .primary)
+                .foregroundStyle(isSelected ? themeManager.onAccent : .primary)
         }
     }
 
@@ -582,6 +584,7 @@ private struct MetronomeBeatCell: View {
     let index: Int
     let isAccented: Bool
     let accentColor: Color
+    let onAccent: Color
     @Environment(\.colorScheme) private var colorScheme
 
     private var isActive: Bool {
@@ -595,8 +598,8 @@ private struct MetronomeBeatCell: View {
 
             if !isActive {
                 shape.strokeBorder(
-                    isAccented ? accentColor : Color(.systemGray4),
-                    lineWidth: isAccented ? 2.5 : 2
+                    isAccented ? accentColor : Color(.separator),
+                    lineWidth: isAccented ? 2.5 : 1.5
                 )
             }
 
@@ -618,13 +621,13 @@ private struct MetronomeBeatCell: View {
     private var fillColor: Color {
         if isActive { return accentColor }
         if isAccented {
-            return accentColor.opacity(colorScheme == .dark ? 0.24 : 0.14)
+            return accentColor.opacity(colorScheme == .dark ? 0.32 : 0.2)
         }
         return Color(.tertiarySystemFill)
     }
 
     private var numberColor: Color {
-        if isActive { return .white }
+        if isActive { return onAccent }
         return isAccented ? accentColor : .secondary
     }
 }

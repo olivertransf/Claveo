@@ -56,7 +56,9 @@ struct PieceManagementView: View {
                             }
                         } label: {
                             Label("Add to library", systemImage: "plus.circle.fill")
-                                .frame(maxWidth: .infinity)
+                                .font(.body.weight(.semibold))
+                                .foregroundStyle(themeManager.onAccent)
+                                .frame(maxWidth: .infinity, minHeight: 44)
                         }
                         .buttonStyle(.borderedProminent)
                         .tint(themeManager.accentColor)
@@ -109,10 +111,10 @@ struct PieceManagementView: View {
                         if !pieces.isEmpty {
                             Text("\(pieces.count)")
                                 .font(.caption.weight(.semibold))
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(themeManager.accentColor)
                                 .padding(.horizontal, 8)
                                 .padding(.vertical, 3)
-                                .background(Color(.tertiarySystemFill), in: Capsule())
+                                .background(themeManager.accentWash, in: Capsule())
                         }
                     }
                 }
@@ -172,7 +174,7 @@ struct PieceManagementView: View {
         HStack(alignment: .center, spacing: 14) {
             ZStack {
                 Circle()
-                    .fill(themeManager.accentColor.opacity(0.14))
+                    .fill(themeManager.accentWash)
                     .frame(width: 46, height: 46)
                 Image(systemName: "music.note")
                     .font(.body.weight(.semibold))
@@ -193,7 +195,7 @@ struct PieceManagementView: View {
             Spacer(minLength: 8)
             Image(systemName: "chevron.right")
                 .font(.caption.weight(.semibold))
-                .foregroundStyle(.tertiary)
+                .foregroundStyle(.secondary)
         }
         .padding(.vertical, 4)
         .contentShape(Rectangle())
