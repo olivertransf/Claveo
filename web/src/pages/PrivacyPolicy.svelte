@@ -14,7 +14,7 @@
   <header class="privacy-head">
     <span class="eyebrow">Legal</span>
     <h1>Privacy Policy</h1>
-    <p class="last-updated">Last updated: April 2026</p>
+    <p class="last-updated">Last updated: October 2026</p>
   </header>
 
   <div class="prose">
@@ -22,7 +22,7 @@
   <div class="privacy-section">
     <h2>Introduction</h2>
     <p>I, Oliver Tran, develop Claveo and am committed to protecting your privacy. In this policy, "I," "me," and "my" refer to me as the developer. This Privacy Policy explains how your data is handled when you use the Claveo mobile application.</p>
-    <p><strong>Important:</strong> I do not collect, transmit, or have access to any of your personal data. All data remains on your device and in your personal iCloud account.</p>
+    <p><strong>Important:</strong> I do not collect or have access to your personal data, and I do not run a server that receives it. Your recordings, photos, notes, and practice history stay on your device and in your personal iCloud account. Speech recognition, described below, is the only case where audio may leave your device, and then only to Apple.</p>
   </div>
 
   <div class="privacy-section">
@@ -30,8 +30,10 @@
     <p>Claveo stores the following types of data locally on your device:</p>
     <ul>
       <li><strong>Audio Recordings:</strong> When you record practice sessions, audio files are stored locally on your device and optionally synced to your personal iCloud account.</li>
+      <li><strong>Practice photos:</strong> Photos you take or choose of the edition you are practicing, stored with that practice entry.</li>
+      <li><strong>Voice memos:</strong> Short recordings you attach to a practice entry, plus a transcript when speech recognition produces one.</li>
       <li><strong>Metadata:</strong> Information you provide about recordings, including names, tags, notes, piece information, and measure numbers.</li>
-      <li><strong>Practice journal:</strong> Practice session entries (duration, notes, ratings, links to recordings) stored like other app documents, optionally in iCloud.</li>
+      <li><strong>Practice journal:</strong> Practice session entries (date, duration, notes, ratings, and links to recordings) stored like other app documents, optionally in iCloud.</li>
       <li><strong>App Settings:</strong> Your preferences and settings within the app, such as metronome tempo, tuner settings, tab order, and display preferences.</li>
     </ul>
     <p><strong>I do not collect this data.</strong> It is stored entirely on your device and in your personal iCloud account (if iCloud sync is enabled). I have no access to any of this information.</p>
@@ -41,8 +43,9 @@
     <h2>How Your Data is Used</h2>
     <p>Your data is used solely by the app to:</p>
     <ul>
-      <li>Provide app functionality (playing recordings, syncing across your devices)</li>
-      <li>Store your recordings and metadata for your personal use</li>
+      <li>Provide app functionality (playing recordings, showing your journal, syncing across your devices)</li>
+      <li>Store your recordings, photos, voice memos, transcripts, and metadata for your personal use</li>
+      <li>Turn a voice memo into text when you ask the app to transcribe it</li>
       <li>Sync your data across your devices via your personal iCloud account</li>
     </ul>
     <p>I do not use your data for analytics, advertising, or any other purpose. I cannot access your data.</p>
@@ -50,12 +53,12 @@
 
   <div class="privacy-section">
     <h2>Data Storage and Security</h2>
-    <p>All audio recordings and metadata are stored:</p>
+    <p>Audio recordings, practice photos, voice memos, transcripts, and metadata are stored:</p>
     <ul>
       <li>Locally on your device</li>
       <li>In your personal iCloud account (if iCloud is enabled)</li>
     </ul>
-    <p><strong>I do not have access to any of your data.</strong> All data remains under your control and is subject to Apple's iCloud privacy and security policies. I do not transmit data to any external servers or third parties.</p>
+    <p><strong>I do not have access to any of your data.</strong> All data remains under your control and is subject to Apple's iCloud privacy and security policies. I do not operate a server that receives your recordings, photos, notes, or transcripts, and I do not send them to advertisers or analytics companies.</p>
   </div>
 
   <div class="privacy-section">
@@ -63,9 +66,23 @@
     <p>Claveo requires microphone access to:</p>
     <ul>
       <li>Record audio practice sessions</li>
+      <li>Record voice memos on a practice entry</li>
       <li>Provide pitch detection for the tuner feature</li>
     </ul>
-    <p>The app uses the microphone only when you use recording or the tuner. I do not receive your audio; recording and pitch detection run on your device.</p>
+    <p>The app uses the microphone only while you are recording or using the tuner. I do not receive your audio. Recording and pitch detection run on your device.</p>
+  </div>
+
+  <div class="privacy-section">
+    <h2>Camera and Photos</h2>
+    <p>Claveo uses the camera only when you choose to photograph the edition you are practicing. You can also pick a photo you already have. The system photo picker lets you choose one image. It does not give the app access to your whole photo library.</p>
+    <p>The photo is saved with that practice entry on your device and, if iCloud is on, in your iCloud account. I do not receive it.</p>
+  </div>
+
+  <div class="privacy-section">
+    <h2>Speech Recognition</h2>
+    <p>If you record a voice memo, Claveo can transcribe it with Apple's speech recognition and save the text with that practice entry. The transcript can be wrong. Transcription runs only for a memo you recorded in the app.</p>
+    <p>When your device can recognize speech locally, the memo stays on the device. The first transcription may download an Apple speech model onto the device. That download is the model, not your recording.</p>
+    <p>If on-device recognition is not available, Apple's speech recognition service may receive that memo's audio in order to return a transcript. I do not receive the audio or the transcript. You can refuse or turn off speech recognition in iOS Settings, under Privacy &amp; Security, and the memo will still be saved without a transcript.</p>
   </div>
 
   <div class="privacy-section">
@@ -104,7 +121,7 @@
   </div>
 
   <footer class="privacy-footer">
-    <p>&copy; 2025 Oliver Tran. All rights reserved.</p>
+    <p>&copy; 2026 Oliver Tran. All rights reserved.</p>
   </footer>
   </div>
 </div>
