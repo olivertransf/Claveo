@@ -8,13 +8,14 @@
   export let darkMode = false;
 
   const slides = [
-    { screen: screens.recordings, title: 'Recordings', caption: 'Every take with tags, pieces, and playback speed.' },
-    { screen: screens.recordingDetails, title: 'Recording details', caption: 'Notes, measures, and trim without re-encoding.' },
+    { screen: screens.recordings, title: 'Recordings', caption: 'Every take, with waveform playback and speed control.' },
     { screen: screens.practice, title: 'Practice log', caption: 'Sessions, streaks, and ratings at a glance.' },
+    { screen: screens.practiceEntry, title: 'Practice entry', caption: 'Photos, notes, and a voice-memo transcript.' },
     { screen: screens.metronome, title: 'Metronome', caption: 'Tap tempo, beat patterns, and favorite tempos.' },
     { screen: screens.tuner, title: 'Tuner', caption: 'Live pitch, cents, and your own A4.' },
-    { screen: screens.dictionary, title: 'Dictionary', caption: 'Terms and forms, searchable offline.' },
-    { screen: screens.dictionaryDetails, title: 'Term details', caption: 'Clear definitions with related entries.' }
+    { screen: screens.keys, title: 'Key signatures', caption: 'Name the key from the signature on the staff.' },
+    { screen: screens.chords, title: 'Chords and scales', caption: 'Scale notes and the chords built on them.' },
+    { screen: screens.dictionary, title: 'Dictionary', caption: 'Terms and forms, grouped and searchable offline.' }
   ];
 
   let strip;
