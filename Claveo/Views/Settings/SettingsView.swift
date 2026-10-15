@@ -26,8 +26,10 @@ struct SettingsView: View {
     )
     @State private var showingResetSettingsAlert = false
     @State private var storageLocationText = iCloudManager.shared.getStorageLocation()
-    @State private var storagePathText = iCloudManager.shared.getStoragePath()
     @State private var storageUsesiCloud = iCloudManager.shared.isAvailable
+    @State private var recordingInputs: [RecordingInputChoice] = []
+    @State private var selectedRecordingInputID = ""
+    @State private var isRecordingInputListActive = false
 
     private var selectedPreset: FrequencyPreset {
         FrequencyPreset.preset(for: settingsManager.settings.a4ReferenceFrequency)
@@ -53,9 +55,29 @@ struct SettingsView: View {
                 maximum: settingsManager.settings.maximumPracticeMinutes
             )
             refreshStorageDisplay()
+            isRecordingInputListActive = true
+            Task { await refreshRecordingInputs() }
+        }
+        .onDisappear {
+            isRecordingInputListActive = false
+            AudioRecorder.shared.endInputPreviewIfIdle()
         }
         .onReceive(NotificationCenter.default.publisher(for: .claveoStorageLocationDidChange)) { _ in
             refreshStorageDisplay()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .claveoSelectedTabChanged)) { notification in
+            guard let index = notification.userInfo?["index"] as? Int else { return }
+            let showingSettings = index == 6
+            isRecordingInputListActive = showingSettings
+            if showingSettings {
+                Task { await refreshRecordingInputs() }
+            } else {
+                AudioRecorder.shared.endInputPreviewIfIdle()
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: AVAudioSession.routeChangeNotification)) { _ in
+            guard isRecordingInputListActive else { return }
+            Task { await refreshRecordingInputs() }
         }
         .onChange(of: practiceMaximum) { _, _ in commitPracticeDurations() }
         .onChange(of: practiceDefaultTime) { _, _ in commitPracticeDurations() }
@@ -240,10 +262,7 @@ struct SettingsView: View {
     }
 
     private var stereoCaptureAvailable: Bool {
-        let session = AVAudioSession.sharedInstance()
-        return (session.availableInputs ?? []).contains { port in
-            port.dataSources?.contains { $0.supportedPolarPatterns?.contains(.stereo) == true } == true
-        }
+        recordingInputs.contains(where: \.supportsStereo)
     }
 
     // MARK: - Recording
@@ -275,19 +294,38 @@ struct SettingsView: View {
 
             Toggle("Bluetooth Headset Microphone", isOn: Binding(
                 get: { settingsManager.settings.allowBluetoothHeadsetMic },
-                set: { settingsManager.update(\.allowBluetoothHeadsetMic, value: $0) }
+                set: { enabled in
+                    settingsManager.update(\.allowBluetoothHeadsetMic, value: enabled)
+                    Task { await refreshRecordingInputs() }
+                }
             ))
 
-            LabeledContent("Current Input") {
-                Text(AudioRecorder.shared.currentInputName.isEmpty
-                     ? String(localized: "iPhone Microphone")
-                     : AudioRecorder.shared.currentInputName)
-                    .foregroundStyle(.secondary)
+            if recordingInputs.isEmpty {
+                LabeledContent("Input") {
+                    Text("No input detected")
+                        .foregroundStyle(.secondary)
+                }
+            } else {
+                Picker("Input", selection: Binding(
+                    get: { selectedRecordingInputID },
+                    set: { newValue in
+                        guard newValue != selectedRecordingInputID else { return }
+                        selectedRecordingInputID = newValue
+                        guard let choice = recordingInputs.first(where: { $0.id == newValue }) else { return }
+                        RecordingInputPreferenceStore.save(
+                            RecordingInputPreference(portUID: choice.portUID, dataSourceID: choice.dataSourceID)
+                        )
+                    }
+                )) {
+                    ForEach(recordingInputs) { choice in
+                        Text(choice.name).tag(choice.id)
+                    }
+                }
             }
         } header: {
             Text("Recording")
         } footer: {
-            Text("\(quality.detail) About \(size.formatted(.number.precision(.fractionLength(1)))) MB per minute. \(micMode.detail) Lossless and Uncompressed keep the full range; use them for auditions and excerpts. A Bluetooth headset microphone uses the call path and lowers quality.")
+            Text("\(quality.detail) About \(size.formatted(.number.precision(.fractionLength(1)))) MB per minute. \(micMode.detail) Lossless and Uncompressed keep the full range; use them for auditions and excerpts. Choose a connected USB audio interface under Input. A Bluetooth headset microphone uses the call path and lowers quality.")
         }
     }
 
@@ -336,6 +374,12 @@ struct SettingsView: View {
                 }
             }
 
+            LabeledContent("Files") {
+                Text(iCloudManager.shared.filesAppLocationLabel())
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.trailing)
+            }
+
             if settingsManager.settings.storeFilesOnDeviceOnly {
                 Label("Files stay on this device", systemImage: "iphone")
                     .foregroundColor(.themeSecondaryLabel)
@@ -346,14 +390,10 @@ struct SettingsView: View {
                 Label("Using Local Storage", systemImage: "folder.fill")
                     .foregroundColor(.themeSecondaryLabel)
             }
-
-            Text(storagePathText)
-                .font(.system(.caption, design: .monospaced))
-                .foregroundColor(.secondary)
         } header: {
             Text("Storage")
         } footer: {
-            Text("iCloud Drive is the default when available. Turn it off to keep recordings and app data on this device only without syncing. Changing this affects where new files are saved; existing files stay where they were created.")
+            Text("iCloud Drive is the default when available. Files sync to the Apple ID signed in on this device, in the Files app under iCloud Drive → Claveo. Turn it off to keep recordings and app data on this device only. Changing this affects where new files are saved; existing files stay where they were created.")
         }
     }
 
@@ -379,8 +419,23 @@ struct SettingsView: View {
 
     private func refreshStorageDisplay() {
         storageLocationText = iCloudManager.shared.getStorageLocation()
-        storagePathText = iCloudManager.shared.getStoragePath()
         storageUsesiCloud = !settingsManager.settings.storeFilesOnDeviceOnly && iCloudManager.shared.isAvailable
+    }
+
+    private func refreshRecordingInputs(forceResolve: Bool = false) async {
+        guard isRecordingInputListActive else { return }
+        let choices = await AudioRecorder.shared.loadRecordingInputChoices()
+        guard isRecordingInputListActive else {
+            AudioRecorder.shared.endInputPreviewIfIdle()
+            return
+        }
+        recordingInputs = choices
+        if forceResolve || !choices.contains(where: { $0.id == selectedRecordingInputID }) {
+            selectedRecordingInputID = RecordingInputSelection.resolved(
+                available: choices,
+                saved: RecordingInputPreferenceStore.load()
+            )?.id ?? ""
+        }
     }
 
     private func resetSettings() {
@@ -394,6 +449,7 @@ struct SettingsView: View {
             await MainActor.run {
                 refreshStorageDisplay()
             }
+            await refreshRecordingInputs(forceResolve: true)
         }
     }
 

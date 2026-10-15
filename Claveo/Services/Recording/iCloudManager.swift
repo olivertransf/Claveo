@@ -335,8 +335,15 @@ final class iCloudManager: @unchecked Sendable {
         return isAvailable ? String(localized: "iCloud Drive") : String(localized: "Local Storage")
     }
 
-    nonisolated func getStoragePath() -> String {
-        getDocumentsURL().path
+    /// Files app location. The ubiquity container id contains the bundle prefix, so the sandbox
+    /// path is not a user-facing location.
+    func filesAppLocationLabel() -> String {
+        if prefersDeviceOnlyStorage || !isAvailable {
+            return UIDevice.current.userInterfaceIdiom == .pad
+                ? String(localized: "On My iPad → Claveo")
+                : String(localized: "On My iPhone → Claveo")
+        }
+        return String(localized: "iCloud Drive → Claveo")
     }
 
     nonisolated func startKeepingDownloaded(at url: URL) throws {

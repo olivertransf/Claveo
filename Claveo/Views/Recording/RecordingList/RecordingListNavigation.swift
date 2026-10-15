@@ -348,11 +348,11 @@ extension RecordingListView {
         var body: some View {
             NavigationStack {
                 VStack(alignment: .leading, spacing: 20) {
-                    Text("Your recordings are stored in:")
+                    Text("Your recordings are in the Files app under:")
                         .font(.headline)
 
-                    Text(iCloudManager.shared.getStoragePath())
-                        .font(.system(.body, design: .monospaced))
+                    Text(iCloudManager.shared.filesAppLocationLabel())
+                        .font(.body)
                         .padding()
                         .background(Color.themeTertiaryBackground)
                         .cornerRadius(8)
@@ -374,15 +374,9 @@ extension RecordingListView {
                     }
 
                     if !settingsManager.settings.storeFilesOnDeviceOnly && iCloudManager.shared.isAvailable {
-                        Text("You can access your recordings in the Files app under:")
+                        Text("These files sync to the Apple ID signed in on this device.")
                             .font(.subheadline)
                             .foregroundColor(.themeSecondaryLabel)
-
-                        Text("iCloud Drive → Claveo → Documents")
-                            .font(.system(.body, design: .monospaced))
-                            .padding()
-                            .background(Color.themeTertiaryBackground)
-                            .cornerRadius(8)
                     }
 
                     Spacer()

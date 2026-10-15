@@ -290,6 +290,18 @@ class AudioRecorder: NSObject, ObservableObject {
         recordingStartedAt = nil
     }
 
+    func loadRecordingInputChoices() async -> [RecordingInputChoice] {
+        let allowHeadsetMic = SettingsManager.shared.settings.allowBluetoothHeadsetMic
+        let recording = isRecording
+        return await Self.collectInputChoices(allowHeadsetMic: allowHeadsetMic, isRecording: recording)
+    }
+
+    /// Drops a settings-only recording session so the microphone indicator does not stay on.
+    func endInputPreviewIfIdle() {
+        guard !isRecording else { return }
+        try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
+    }
+
     private func activateRecordingAudioSession() async throws {
         let preferences = SettingsManager.shared.settings
         let prepared = try await Self.prepareRecordingSession(
@@ -314,59 +326,103 @@ class AudioRecorder: NSObject, ObservableObject {
     ) async throws -> PreparedRecordingSession {
         try await Task.detached {
             let session = AVAudioSession.sharedInstance()
-            var options: AVAudioSession.CategoryOptions = [.defaultToSpeaker, .allowBluetoothA2DP]
-            if allowHeadsetMic {
-                options.insert(.allowBluetoothHFP)
-            }
-
-            try session.setCategory(
-                .playAndRecord,
-                mode: wantsStereo ? .default : .measurement,
-                options: options
-            )
+            let options = categoryOptions(allowHeadsetMic: allowHeadsetMic)
+            // Default mode first so class-compliant USB interfaces stay selectable.
+            try session.setCategory(.playAndRecord, mode: .default, options: options)
             try session.setPreferredSampleRate(48_000)
-            try await activate(session)
+            try await AudioSessionActivation.activate(session)
 
-            let supportsStereo = sessionSupportsStereo(session)
-            let useStereo = wantsStereo && supportsStereo
-            if wantsStereo && !useStereo {
+            let choices = inputChoices(on: session)
+            let choice = RecordingInputSelection.resolved(
+                available: choices,
+                saved: RecordingInputPreferenceStore.load()
+            )
+            let useStereo = wantsStereo && (choice?.supportsStereo == true || sessionSupportsStereo(session))
+            if RecordingInputSelection.usesMeasurementMode(choice: choice, wantsStereo: useStereo) {
                 try session.setCategory(.playAndRecord, mode: .measurement, options: options)
-                try await activate(session)
+                try await AudioSessionActivation.activate(session)
             }
 
+            let inputName = applyPreferredInput(choice, on: session)
             try? session.setPreferredInputNumberOfChannels(useStereo ? 2 : 1)
-            if useStereo {
+            if useStereo && choice?.isExternal != true {
                 applyStereoCapture(on: session)
             }
-            let inputName = session.currentRoute.inputs.first?.portName ?? ""
             return PreparedRecordingSession(inputName: inputName)
         }.value
     }
 
-    private nonisolated static func activate(_ session: AVAudioSession) async throws {
-        if #available(iOS 27, *) {
-            try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
-                session.activate(options: []) { activated, error in
-                    if activated {
-                        continuation.resume()
-                    } else if let error {
-                        continuation.resume(throwing: error)
-                    } else {
-                        continuation.resume(throwing: CancellationError())
-                    }
-                }
+    private nonisolated static func collectInputChoices(
+        allowHeadsetMic: Bool,
+        isRecording: Bool
+    ) async -> [RecordingInputChoice] {
+        await Task.detached {
+            let session = AVAudioSession.sharedInstance()
+            let options = categoryOptions(allowHeadsetMic: allowHeadsetMic)
+            if !isRecording && !hasRecordingCategory(session, options: options) {
+                try? session.setCategory(.playAndRecord, mode: .default, options: options)
+                try? await AudioSessionActivation.activate(session)
             }
-        } else {
-            try session.setActive(true)
+            return inputChoices(on: session)
+        }.value
+    }
+
+    private nonisolated static func categoryOptions(allowHeadsetMic: Bool) -> AVAudioSession.CategoryOptions {
+        var options: AVAudioSession.CategoryOptions = [.defaultToSpeaker, .allowBluetoothA2DP]
+        if allowHeadsetMic {
+            options.insert(.allowBluetoothHFP)
         }
+        return options
+    }
+
+    private nonisolated static func hasRecordingCategory(
+        _ session: AVAudioSession,
+        options: AVAudioSession.CategoryOptions
+    ) -> Bool {
+        guard session.category == .playAndRecord else { return false }
+        let wantsHeadsetMic = options.contains(.allowBluetoothHFP)
+        let hasHeadsetMic = session.categoryOptions.contains(.allowBluetoothHFP)
+        return wantsHeadsetMic == hasHeadsetMic && session.categoryOptions.contains(.defaultToSpeaker)
+    }
+
+    private nonisolated static func inputChoices(on session: AVAudioSession) -> [RecordingInputChoice] {
+        RecordingInputChoice.choices(from: (session.availableInputs ?? []).map { RecordingInputPortSnapshot(port: $0) })
+    }
+
+    @discardableResult
+    private nonisolated static func applyPreferredInput(
+        _ choice: RecordingInputChoice?,
+        on session: AVAudioSession
+    ) -> String {
+        guard let choice,
+              let port = session.availableInputs?.first(where: { $0.uid == choice.portUID }) else {
+            return session.currentRoute.inputs.first?.portName ?? choice?.name ?? ""
+        }
+        try? session.setPreferredInput(port)
+        if let dataSourceID = choice.dataSourceID,
+           let source = port.dataSources?.first(where: { $0.dataSourceID.stringValue == dataSourceID }) {
+            try? port.setPreferredDataSource(source)
+        }
+        let routed = session.currentRoute.inputs.first?.portName ?? ""
+        if !routed.isEmpty {
+            return routed
+        }
+        return port.portName
     }
 
     private func resolvedMicMode(
         requested: RecordingMicMode,
         session: AVAudioSession
     ) -> RecordingMicMode {
-        guard requested == .stereo, Self.sessionSupportsStereo(session) else { return .natural }
-        return .stereo
+        guard requested == .stereo else { return .natural }
+        let choice = RecordingInputSelection.resolved(
+            available: Self.inputChoices(on: session),
+            saved: RecordingInputPreferenceStore.load()
+        )
+        if choice?.supportsStereo == true || Self.sessionSupportsStereo(session) {
+            return .stereo
+        }
+        return .natural
     }
 
     private nonisolated static func sessionSupportsStereo(_ session: AVAudioSession) -> Bool {

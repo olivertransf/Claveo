@@ -489,6 +489,8 @@ class SettingsManager: ObservableObject {
             "recordingQuality",
             "recordingMicMode",
             "allowBluetoothHeadsetMic",
+            RecordingInputPreferenceStore.portUIDKey,
+            RecordingInputPreferenceStore.dataSourceIDKey,
             "lastSelectedTab",
             "tabBarCustomizationOrder",
             "metronomeTimeSignature",
